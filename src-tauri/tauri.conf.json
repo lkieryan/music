@@ -1,83 +1,36 @@
 {
-      "build": {
-    "beforeDevCommand": "cd .. && npm run dev",
-    "beforeBuildCommand": "cd .. && npm run build",
-    "devPath": "http://localhost:5173",
-    "distDir": "../frontend/dist",
-    "withGlobalTauri": false
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "music",
+  "version": "0.1.0",
+  "identifier": "in.kieran.music",
+  "build": {
+    "beforeDevCommand": "trunk serve",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "trunk build",
+    "frontendDist": "../dist"
   },
-    "package": {
-      "productName": "MoeKoe Music Rust",
-      "version": "0.1.0"
-    },
-    "tauri": {
-      "allowlist": {
-        "all": false,
-        "shell": {
-          "all": false,
-          "open": true
-        },
-        "fs": {
-          "all": true,
-          "scope": [
-            "$APPDATA/*", 
-            "$TEMP/*", 
-            "$HOME/.moekoe-music/*",
-            "$MUSIC/*",
-            "$DOWNLOAD/*"
-          ]
-        },
-        "http": {
-          "all": true,
-          "request": true,
-          "scope": [
-            "https://*.kugou.com/*",
-            "https://mobilecdnbj.kugou.com/*",
-            "https://*.music.163.com/*",
-            "https://*.qq.com/*",
-            "https://*.bilibili.com/*"
-          ]
-        },
-        "notification": {
-          "all": true
-        },
-        "globalShortcut": {
-          "all": true
-        }
-      },
-      "bundle": {
-        "active": true,
-        "targets": "all",
-        "identifier": "com.moekoe.music.rust",
-        "icon": [
-          "icons/32x32.png",
-          "icons/128x128.png",
-          "icons/128x128@2x.png",
-          "icons/icon.icns",
-          "icons/icon.ico"
-        ]
-      },
-      "security": {
-        "csp": null
-      },
-      "windows": [
-        {
-          "fullscreen": false,
-          "resizable": true,
-          "title": "MoeKoe Music Rust",
-          "width": 1200,
-          "height": 800,
-          "minWidth": 800,
-          "minHeight": 600,
-          "center": true,
-          "decorations": true,
-          "transparent": false,
-          "alwaysOnTop": false
-        }
-      ],
-      "systemTray": {
-        "iconPath": "icons/icon.png",
-        "iconAsTemplate": true
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "music",
+        "width": 800,
+        "height": 600
       }
+    ],
+    "security": {
+      "csp": null
     }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
+}

@@ -1,0 +1,12 @@
+[package]
+name = "api-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+shared-models = { path = "../shared-models" }
+shared-utils = { path = "../shared-utils" }

@@ -1,0 +1,96 @@
+{
+  "app": [
+    {
+      "args": [
+        {
+          "arg_type": "tauri::State<preferences::preferences::PreferenceConfig>",
+          "name": "db"
+        },
+        {
+          "arg_type": "String",
+          "name": "key"
+        }
+      ],
+      "name": "load_selective",
+      "ret": "types::errors::Result<serde_json::Value>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::State<preferences::preferences::PreferenceConfig>",
+          "name": "db"
+        },
+        {
+          "arg_type": "String",
+          "name": "key"
+        },
+        {
+          "arg_type": "Option<serde_json::Value>",
+          "name": "value"
+        }
+      ],
+      "name": "save_selective",
+      "ret": "types::errors::Result<()>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::State<preferences::preferences::PreferenceConfig>",
+          "name": "db"
+        },
+        {
+          "arg_type": "String",
+          "name": "key"
+        }
+      ],
+      "name": "get_secure",
+      "ret": "types::errors::Result<serde_json::Value>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::State<preferences::preferences::PreferenceConfig>",
+          "name": "db"
+        },
+        {
+          "arg_type": "String",
+          "name": "key"
+        },
+        {
+          "arg_type": "Option<serde_json::Value>",
+          "name": "value"
+        }
+      ],
+      "name": "set_secure",
+      "ret": "types::errors::Result<()>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::State<preferences::preferences::PreferenceConfig>",
+          "name": "db"
+        },
+        {
+          "arg_type": "String",
+          "name": "key"
+        }
+      ],
+      "name": "load_selective_array",
+      "ret": "types::errors::Result<serde_json::Value>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::AppHandle",
+          "name": "app"
+        },
+        {
+          "arg_type": "Option<Vec<String>>",
+          "name": "paths"
+        }
+      ],
+      "name": "start_scan",
+      "ret": "types::errors::Result<()>"
+    }
+  ]
+}

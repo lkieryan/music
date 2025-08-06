@@ -1,0 +1,12 @@
+[env]
+TS_RS_EXPORT_DIR = { value = "src/types", relative = true }
+
+  [net]
+  git-fetch-with-cli = true
+
+  [source.crates-io]
+  replace-with = "ustc"
+
+  [source.ustc]
+  registry = "git://mirrors.ustc.edu.cn/crates.io-index"
+

@@ -1,0 +1,108 @@
+/* Define layer order for stability (must be declared before any layer usage) */
+@layer base, components, utilities, layout, menu-desktop;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "./temp/base.css";
+@import "./temp/additional.css";
+@import "./temp/scrollbar.css";
+@import "./temp/cursor.css";
+
+@layer base {
+  :root {
+    /* Surfaces */
+    --color-bg: #ffffff;
+    --color-surface: #f7f7f9;
+    --color-border: rgba(0,0,0,0.08);
+    --color-divider: rgba(0,0,0,0.06);
+
+    /* Text */
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-tertiary: #6b7280;
+    --text-disabled: rgba(17,24,39,0.38);
+
+    /* Accent */
+    --accent: #4f46e5;
+    --on-accent: #ffffff;
+
+    /* State backgrounds (Light) */
+    --state-hover-bg: rgba(0,0,0,0.06);
+    --state-pressed-bg: rgba(0,0,0,0.12);
+    --state-selected-bg: rgba(0,0,0,0.10);
+
+    /* Focus/Shadow */
+    --focus-ring: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    --shadow-1: 0 1px 1px rgba(0,0,0,0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #0f1115;
+      --color-surface: #171a1f;
+      --color-border: rgba(255,255,255,0.12);
+      --color-divider: rgba(255,255,255,0.10);
+
+      --text-primary: #e5e7eb;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #94a3b8;
+      --text-disabled: rgba(255,255,255,0.38);
+
+      --state-hover-bg: rgba(255,255,255,0.08);
+      --state-pressed-bg: rgba(255,255,255,0.12);
+      --state-selected-bg: rgba(255,255,255,0.18);
+
+      --focus-ring: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      --shadow-1: 0 1px 1px rgba(0,0,0,0.30);
+    }
+  }
+}
+
+
+
+body { margin: 0; padding: 0; }
+
+
+/* Gradient Generator CSS Variables */
+:root {
+  --main-browser-background: transparent;
+  --main-browser-background-toolbar: transparent;
+  --background-opacity: 1;
+  --grainy-background-opacity: 0;
+  --primary-color: #667eea;
+  --base-surface: #ffffff;
+  
+  /* Panel styling variables */
+  --panel-width: 360px;
+  --panel-padding: 10px;
+  --panel-border-radius: 12px;
+  --colors-border: rgba(0, 0, 0, 0.2);
+  
+  /* Thumb sizing for sliders */
+  --thumb-height: 40px;
+  --thumb-width: 10px;
+}
+
+/* Global grain background support */
+[show-grainy-background="true"]::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("../assets/images/grain-bg.png");
+  opacity: var(--grainy-background-opacity, 0);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark mode support for CSS variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --colors-border: rgba(255, 255, 255, 0.2);
+  }
+}

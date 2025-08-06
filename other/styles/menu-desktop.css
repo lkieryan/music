@@ -1,0 +1,143 @@
+@layer menu-desktop {
+  :root {
+    /* Map from tabs tokens */
+    --menu-radius: 8px;
+    --menu-icon-size: 16px;
+    --menu-item-height: 40px; /* regular */
+    --menu-inline-padding: 10px;
+    --menu-block-margin: 2px;
+
+    --menu-selected-bgcolor: color-mix(in srgb, rgba(255, 255, 255, 0.85) 100%, transparent);
+    --menu-hover-bgcolor: color-mix(in srgb, rgba(255, 255, 255, 0.7) 100%, transparent);
+    --menu-selected-shadow: 0 1px 1px 1px rgba(0, 0, 0, 0.09);
+    --menu-focus-outline: 2px solid color-mix(in srgb, var(--menu-accent, currentColor) 40%, transparent);
+    --menu-active-scale: 0.98;
+  }
+
+  /* Dark scheme adjustments */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --menu-selected-bgcolor: rgba(255, 255, 255, 0.14);
+      --menu-hover-bgcolor: rgba(255, 255, 255, 0.10);
+      --menu-selected-shadow: 0 1px 1px 1px rgba(0, 0, 0, 0.30);
+    }
+  }
+  .menu-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 8px 6px;
+    gap: 8px;
+  }
+
+  .menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .menu-section-header {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.8;
+    padding: 4px 2px;
+  }
+  .menu-list { display: flex; flex-direction: column; gap: 4px; }
+  .menu-list.scrollable { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+
+  .menu-item {
+    display: grid;
+    align-items: center;
+    gap: 8px;
+    height: var(--menu-item-height, 40px);
+    padding: 0 var(--menu-inline-padding);
+    border-radius: var(--menu-radius);
+    user-select: none;
+    cursor: pointer;
+    position: relative;
+    transition: transform .07s ease;
+    overflow: hidden;
+    /* Unified template: close, badge, label, icon */
+    grid-template-columns: auto auto 1fr auto;
+  }
+  /* tab-background like layer */
+  .menu-item::before {
+    content: "";
+    position: absolute;
+    inset: var(--menu-block-margin);
+    border-radius: var(--menu-radius);
+    background: transparent;
+    transition: background .1s ease-in-out, box-shadow .1s ease-in-out;
+    z-index: 0;
+  }
+  /* Map to system tokens */
+  .menu-item[data-active]::before {
+    background: var(--state-selected-bg, var(--menu-selected-bgcolor));
+    box-shadow: var(--shadow-1, var(--menu-selected-shadow));
+  }
+  .menu-item:hover::before {
+    background: var(--state-hover-bg, color-mix(in srgb, var(--menu-selected-bgcolor) 80%, transparent));
+  }
+  /* Press scale like tab */
+  .menu-item:active { transform: scale(var(--menu-active-scale)); }
+  .menu-item:active .menu-icon { transform: scale(.92); }
+
+  /* side indicator similar to container colored line in tabs */
+  .menu-item .menu-side-indicator {
+    position: absolute;
+    inset-block: var(--menu-block-margin);
+    inline-size: 3px;
+    border-radius: 2px;
+    background: var(--menu-accent, currentColor);
+    opacity: 0;
+    transition: opacity .15s ease;
+    z-index: 1;
+  }
+  .menu-item[data-active] .menu-side-indicator { opacity: 1; }
+  .menu-item[data-sidebar='left'] .menu-side-indicator { inset-inline-start: var(--menu-block-margin); }
+  .menu-item[data-sidebar='right'] .menu-side-indicator { inset-inline-end: var(--menu-block-margin); }
+
+  /* Order-based left/right layout */
+  .menu-close  { order: var(--order-close, 1); }
+  .menu-badge  { order: var(--order-badge, 2); }
+  .menu-label  { order: var(--order-label, 3); }
+  .menu-icon   { order: var(--order-icon, 4); }
+
+  /* Left sidebar: icon label badge close */
+  .menu-item[data-sidebar='left'] { --order-icon: 1; --order-label: 2; --order-badge: 3; --order-close: 4; }
+  /* Right sidebar: close badge label icon */
+  .menu-item[data-sidebar='right'] { --order-close: 1; --order-badge: 2; --order-label: 3; --order-icon: 4; }
+
+  /* Tabs use 16px icon in vertical list */
+  .menu-icon { width: var(--menu-icon-size); height: var(--menu-icon-size); background-size: cover; background-position: center; border-radius: 4px; z-index: 1; }
+  .menu-label { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .menu-badge { font-size: 11px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, currentColor 12%, transparent); }
+  .menu-close { inline-size: 28px; block-size: 28px; border-radius: 999px; border: none; background: transparent; display: none; z-index: 1; align-items: center; justify-content: center; }
+  /* Show close on hover or active like tabs */
+  .menu-item:is(:hover, [data-active]) .menu-close { display: inline-flex; }
+  .menu-close:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+
+  /* compact: icon only */
+  .menu-shell[data-density='compact'] .menu-item { height: 34px; padding: 0; place-items: center; grid-template-columns: 1fr; }
+  .menu-shell[data-density='compact'] .menu-label,
+  .menu-shell[data-density='compact'] .menu-close,
+  .menu-shell[data-density='compact'] .menu-badge { display: none; }
+
+  /* Focus visible */
+  .menu-item:focus-visible { outline: var(--menu-focus-outline); outline-offset: 2px; }
+  .menu-close:focus-visible { outline: var(--menu-focus-outline); outline-offset: 2px; }
+
+  /* Reduce motion: disable active scale */
+  @media (prefers-reduced-motion: reduce) {
+    .menu-item { transition: none; }
+    .menu-item:active, .menu-item:active .menu-icon { transform: none; }
+  }
+
+  /* High contrast: remove shadow for clarity */
+  @media (forced-colors: active) {
+    .menu-item::before { box-shadow: none; }
+  }
+
+  /* Section header stickiness */
+  .menu-section-header { position: sticky; top: 0; z-index: 2; background: inherit; padding: 6px 4px; font-size: 12px; font-weight: 600; opacity: .8; }
+}
+

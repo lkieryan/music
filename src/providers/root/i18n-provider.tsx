@@ -5,7 +5,7 @@ import { I18nextProvider } from "react-i18next"
 import { i18nAtom } from "~/i18n"
 
 export const I18nProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [currentI18NInstance, update] = useAtom(i18nAtom)
+  const [currentI18NInstance] = useAtom(i18nAtom)
 
   
 

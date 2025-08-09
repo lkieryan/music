@@ -22,18 +22,16 @@ uuid = { version = "1.17.0", default-features = false, optional = true, features
 ] }
 bitcode = { version = "0.6.6" }
 extism-convert = { version = "1.11.1", optional = true }
-diesel = { version = "2.2.0", features = ["sqlite", "chrono", "serde_json"], optional = true }
+diesel = { version = "2.2.0", features = ["sqlite","chrono", "serde_json"], optional = true }
 oauth2 = { version = "5.0", optional = true }
 
 [features]
+# Export TypeScript bindings without pulling DB
 ts-rs = []
+# DB related features are behind this flag
+db = ["dep:diesel", "dep:oauth2"]
 extensions = ["dep:extism-convert"]
 extensions-core = ["dep:extism-convert", "dep:uuid"]
-core = [
-    "dep:extism-convert",
-    "dep:uuid",
-    "dep:diesel",
-    "dep:oauth2",
-]
-default = ["core"]
+# Default can include both if you want full functionality in normal build
+default = ["db"]
 

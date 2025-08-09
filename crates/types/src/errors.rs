@@ -24,7 +24,7 @@ use std::{
 
 #[cfg(all(
     not(feature = "extensions"),
-    any(feature = "core", feature = "extensions-core")
+    any(feature = "db", feature = "extensions-core")
 ))]
 use std::io;
 
@@ -34,14 +34,14 @@ use serde_json::Value;
 #[cfg(all(not(feature = "extensions"), feature = "ui"))]
 use wasm_bindgen::JsValue;
 
-#[cfg(all(not(feature = "extensions"), feature = "core"))]
+#[cfg(all(not(feature = "extensions"), feature = "db"))]
 use core::str;
 
 #[cfg(not(feature = "extensions"))]
 #[derive(Debug, thiserror::Error)]
 pub enum MoosyncError {
-    #[cfg_attr(any(feature = "core", feature = "extensions-core"), error(transparent))]
-    #[cfg(any(feature = "core", feature = "extensions-core"))]
+    #[cfg_attr(any(feature = "db", feature = "extensions-core"), error(transparent))]
+    #[cfg(any(feature = "db", feature = "extensions-core"))]
     IO(#[from] io::Error),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
@@ -78,7 +78,7 @@ pub enum MoosyncError {
     MprisError(Box<dyn std::error::Error + Send + Sync>),
     #[error("{0}")]
     String(String),
-    #[cfg(feature = "core")]
+    #[cfg(feature = "db")]
     #[error("Transfer control to provider: {0}")]
     SwitchProviders(String),
     #[error("Invalidated cache")]

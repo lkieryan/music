@@ -1,10 +1,12 @@
 pub mod errors;
-pub mod preferences;
+pub mod settings;
 pub mod providers;
 pub mod themes;
 pub mod songs;
 pub mod entities;
+#[cfg(feature = "db")]
 pub mod schema;
 pub mod common;
 pub mod cache;
+#[cfg(feature = "db")]
 pub mod cache_schema;

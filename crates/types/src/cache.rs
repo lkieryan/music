@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#[cfg(feature = "core")]
+#[cfg(feature = "db")]
 use diesel::{AsChangeset, Insertable, Queryable};
 
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "core")]
+#[cfg(feature = "db")]
 use crate::cache_schema::cache;
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
-#[cfg_attr(feature = "core", derive(Insertable, Queryable, AsChangeset))]
-#[cfg_attr(feature = "core", diesel(table_name = cache))]
+#[cfg_attr(feature = "db", derive(Insertable, Queryable, AsChangeset))]
+#[cfg_attr(feature = "db", diesel(table_name = cache))]
 
 pub struct CacheModel {
     pub id: Option<i32>,

@@ -2,11 +2,11 @@ pub mod handler;
 
 use tauri::{App, AppHandle, Emitter, Manager};
 
-use preferences::preferences::PreferenceConfig;
+use settings::settings::SettingsConfig;
 use serde_json::Value;
 use types::providers::ProviderInstancePref;
 
-// Initialize providers subsystem: create state, and bootstrap from preferences
+// Initialize providers subsystem: create state, and bootstrap from settings
 pub fn initialize_providers(app: &mut App) {
     let handler = handler::ProviderHandler::new(app.handle().clone());
     app.manage(handler.clone());
@@ -27,7 +27,7 @@ pub fn bootstrap(handle: AppHandle) {
 pub async fn init_enabled_instances(handle: &AppHandle) {
     let handler = handle.state::<handler::ProviderHandler>();
     // Build set of enabled keys from prefs
-    let pref: tauri::State<'_, PreferenceConfig> = handle.state();
+    let pref: tauri::State<'_, SettingsConfig> = handle.state();
     let instances = pref
         .load_selective::<Vec<ProviderInstancePref>>("providers.instances".into())
         .unwrap_or_else(|_| Vec::new());
@@ -55,7 +55,7 @@ pub async fn init_enabled_instances(handle: &AppHandle) {
 #[tracing::instrument(level = "debug", skip(handle, instances))]
 pub async fn init_instances(handle: &AppHandle, instances: Vec<ProviderInstancePref>) {
     let handler = handle.state::<handler::ProviderHandler>();
-    let pref: tauri::State<'_, PreferenceConfig> = handle.state();
+    let pref: tauri::State<'_, SettingsConfig> = handle.state();
 
     for inst in instances.into_iter() {
         if !inst.enabled { continue; }

@@ -22,7 +22,7 @@ use std::{
 
 use database::database::Database;
 use file_scanner::ScannerHolder;
-use preferences::preferences::PreferenceConfig;
+use settings::settings::SettingsConfig;
 use tauri::{AppHandle, Manager, State};
 use types::{errors::Result, songs::Song};
 
@@ -31,9 +31,9 @@ pub fn get_scanner_state() -> ScannerHolder {
     ScannerHolder::new()
 }
 
-#[tracing::instrument(level = "debug", skip(preferences))]
-fn get_scan_paths(preferences: &State<PreferenceConfig>) -> Result<Vec<String>> {
-    let tmp: Vec<String> = preferences.load_selective("music_paths".to_string())?;
+#[tracing::instrument(level = "debug", skip(settings))]
+fn get_scan_paths(settings: &State<SettingsConfig>) -> Result<Vec<String>> {
+    let tmp: Vec<String> = settings.load_selective("music_paths".to_string())?;
 
     // TODO: Filter using exclude paths
     Ok(tmp)
@@ -86,19 +86,21 @@ pub fn start_scan(app: AppHandle, paths: Option<Vec<String>>) -> Result<()> {
 
 #[cfg(desktop)]
 pub fn start_scan_inner(app: AppHandle, mut paths: Option<Vec<String>>) -> Result<()> {
-    let preferences = app.state::<PreferenceConfig>();
+    let settings = app.state::<SettingsConfig>();
     if paths.is_none() {
-        paths = Some(get_scan_paths(&preferences)?);
+        use crate::settings;
+
+        paths = Some(get_scan_paths(&settings)?);
     }
 
-    let thumbnail_dir: String = preferences.load_selective("thumbnail_path".to_string())?;
+    let thumbnail_dir: String = settings.load_selective("thumbnail_path".to_string())?;
     tracing::debug!("Got thumbnail dir {:?}", thumbnail_dir);
 
-    let artist_split: String = preferences
+    let artist_split: String = settings
         .load_selective("artist_splitter".to_string())
         .unwrap_or(";".to_string());
 
-    let scan_threads: f64 = preferences
+    let scan_threads: f64 = settings
         .load_selective("scan_threads".to_string())
         .unwrap_or(-1f64);
 

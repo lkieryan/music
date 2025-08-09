@@ -37,7 +37,7 @@ database = { path = "../crates/database" }
 types = { path = "../crates/types" }
 file_scanner = { path = "../crates/file_scanner" }
 tauri-invoke-proc = { path = "../crates/tauri-invoke-proc" }
-preferences = { path = "../crates/preferences" }
+settings = { path = "../crates/settings" }
 providers = { path = "../crates/providers" }
 macros = { path = "../crates/macros" }
 notify = "8.0.0"

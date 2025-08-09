@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 substring = "1.4.5"
-types = { path = "../types", default-features = false, features = ["core"] }
+types = { path = "../types", default-features = false, features = ["db"] }
 blake3 = { version = "1.8.2", default-features = false }
 fast_image_resize = "5.1.4"
 image = { version = "0.25.6" }

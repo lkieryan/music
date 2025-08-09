@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "gen:types": "cargo test export_bindings --manifest-path crates/types/Cargo.toml --quiet"
+    "gen:types": "cargo test --manifest-path crates/types/Cargo.toml --no-default-features --features ts-rs --quiet export_bindings"
   },
   "dependencies": {
     "@headlessui/react": "2.2.4",

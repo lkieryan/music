@@ -30,9 +30,6 @@ export const SettingModalContent: FC<{
 const Content = () => {
   const key = useDeferredValue(useSettingTab() || "general")
   const pages = getSettingPages()
-  console.log("getSettingPages result:", pages)
-  console.log("pages keys:", Object.keys(pages))
-  console.log("key:", key)
   const { Component, loader } = pages[key]
 
   const [scroller, setScroller] = useState<HTMLDivElement | null>(null)

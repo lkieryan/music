@@ -113,9 +113,9 @@ export function SettingModalLayout(
             )}
             <div className="flex h-0 flex-1" ref={elementRef}>
               <div className="backdrop-blur-sm bg-background/60 border-r border border-border flex min-h-0 min-w-44 max-w-[20ch] flex-col rounded-l-xl px-2 py-6">
-                <div className="font-default mb-4 flex h-8 items-center gap-2 px-2 font-bold">
+                {/* todo <div className="font-default mb-4 flex h-8 items-center gap-2 px-2 font-bold">
                  logo
-                </div>
+                </div> */}
                 <nav className="flex grow flex-col">
                   <SidebarItems />
                 </nav>

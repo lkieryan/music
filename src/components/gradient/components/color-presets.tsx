@@ -4,7 +4,7 @@ import { PRESET_COLORS } from '../constants'
 interface ColorPresetsProps {
   currentPage: number
   onPageChange: (page: number) => void
-  onPresetSelect: (lightness: number, algo: string, numDots: number, position: string, colors?: string[]) => void
+  onPresetSelect: (lightness: number, algo: string, numDots: number, position: string) => void
   className?: string
 }
 
@@ -16,13 +16,12 @@ export default function ColorPresets({
 }: ColorPresetsProps) {
   const totalPages = PRESET_COLORS.length
 
-  const handlePresetClick = (preset: any) => {
+  const handlePresetClick = (preset: typeof PRESET_COLORS[0][0]) => {
     onPresetSelect(
       preset.lightness,
       preset.algo,
       preset.numDots,
-      preset.position,
-      preset.colors
+      preset.position
     )
   }
 
@@ -39,24 +38,18 @@ export default function ColorPresets({
   const currentPresets = PRESET_COLORS[currentPage] || []
 
   return (
-    <div className={`gradient-color-pages-wrapper ${className}`} style={{ alignItems: 'center', display: 'flex' }}>
+    <div className={`items-center flex ${className}`}>
       <button
         onClick={goToPreviousPage}
         disabled={currentPage === 0}
-        style={{
-          maxWidth: '28px',
-          maxHeight: '28px',
-          margin: '0',
-          border: 'none',
-          background: 'rgba(0, 0, 0, 0.1)',
-          borderRadius: '4px',
-          cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
-          opacity: currentPage === 0 ? 0.5 : 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '12px',
-        }}
+        className={`
+          max-w-7 max-h-7 m-0 border-none bg-black/10 rounded 
+          flex items-center justify-center text-xs
+          ${currentPage === 0 
+            ? 'cursor-not-allowed opacity-50' 
+            : 'cursor-pointer opacity-100'
+          }
+        `}
         aria-label="Previous page"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -64,31 +57,20 @@ export default function ColorPresets({
         </svg>
       </button>
 
-      <div
+      <div 
+        className="flex justify-around mx-2.5 items-center w-full overflow-auto scroll-smooth"
         style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          margin: '0 10px',
-          alignItems: 'center',
-          width: '100%',
-          overflow: 'auto',
           scrollbarWidth: 'none',
-          scrollBehavior: 'smooth',
           maskImage: 'linear-gradient(to right, transparent 0%, black 2.5%, black 97.5%, transparent 100%)',
         }}
       >
-        <div style={{ 
-          justifyContent: 'space-around', 
-          minWidth: '100%',
-          display: 'flex',
-          gap: '8px',
-        }}>
+        <div className="justify-around min-w-full flex gap-2">
           {currentPresets.map((preset, index) => {
             const isAnalogous = preset.numDots === 3
             
             let backgroundStyle: React.CSSProperties = {}
             
-            if (isAnalogous && preset.colors) {
+            if (isAnalogous && 'colors' in preset && preset.colors) {
               // Multi-color analogous preset
               backgroundStyle = {
                 background: [
@@ -97,7 +79,7 @@ export default function ColorPresets({
                   `linear-gradient(to top, ${preset.colors[2]} 0%, transparent 60%)`
                 ].join(', ')
               }
-            } else if (preset.style) {
+            } else if ('style' in preset && preset.style) {
               // Single color preset
               const colorMatch = preset.style.match(/background:\s*([^;]+);?/)
               if (colorMatch) {
@@ -113,26 +95,9 @@ export default function ColorPresets({
                 data-algo={preset.algo}
                 data-num-dots={preset.numDots}
                 data-position={preset.position}
+                className="w-[22px] h-[22px] rounded-full cursor-pointer relative transition-transform duration-100 hover:scale-105 active:scale-95"
                 style={{
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  transition: 'transform 0.1s',
                   ...backgroundStyle,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)'
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.transform = 'scale(0.95)'
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)'
                 }}
               />
             )
@@ -143,20 +108,14 @@ export default function ColorPresets({
       <button
         onClick={goToNextPage}
         disabled={currentPage === totalPages - 1}
-        style={{
-          maxWidth: '28px',
-          maxHeight: '28px',
-          margin: '0',
-          border: 'none',
-          background: 'rgba(0, 0, 0, 0.1)',
-          borderRadius: '4px',
-          cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
-          opacity: currentPage === totalPages - 1 ? 0.5 : 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '12px',
-        }}
+        className={`
+          max-w-7 max-h-7 m-0 border-none bg-black/10 rounded 
+          flex items-center justify-center text-xs
+          ${currentPage === totalPages - 1 
+            ? 'cursor-not-allowed opacity-50' 
+            : 'cursor-pointer opacity-100'
+          }
+        `}
         aria-label="Next page"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

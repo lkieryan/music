@@ -24,11 +24,15 @@ export default function GradientPicker({
   setDragging,
   draggedDot,
   setDraggedDot,
-  currentLightness,
+  // currentLightness, // 未使用
   className = '',
 }: GradientPickerProps) {
   const pickerRef = useRef<HTMLDivElement>(null)
   const recentlyDragged = useRef(false)
+  
+  // 性能优化：节流拖动更新
+  const dragUpdateRef = useRef<number | null>(null)
+  const lastDragPosition = useRef<{ x: number; y: number } | null>(null)
 
   const handleMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement
@@ -65,13 +69,24 @@ export default function GradientPicker({
     const relativeX = pixelX - rect.left
     const relativeY = pixelY - rect.top
 
-    // Update dot position
+    // 🚀 性能优化：立即更新视觉位置（60fps）
     draggedDot.style.left = `${relativeX}px`
     draggedDot.style.top = `${relativeY}px`
 
-    // Find dot ID and update position
-    const dotId = parseInt(draggedDot.getAttribute('data-dot-id') || '0')
-    onDotDrag(dotId, { x: relativeX, y: relativeY })
+    // 🚀 性能优化：节流状态更新（避免过度重新渲染）
+    lastDragPosition.current = { x: relativeX, y: relativeY }
+    
+    if (dragUpdateRef.current) {
+      cancelAnimationFrame(dragUpdateRef.current)
+    }
+    
+    dragUpdateRef.current = requestAnimationFrame(() => {
+      if (lastDragPosition.current && dragging && draggedDot) {
+        const dotId = parseInt(draggedDot.getAttribute('data-dot-id') || '0')
+        onDotDrag(dotId, lastDragPosition.current)
+      }
+      dragUpdateRef.current = null
+    })
   }, [dragging, draggedDot, onDotDrag])
 
   const handleMouseUp = useCallback((event: MouseEvent) => {
@@ -85,6 +100,20 @@ export default function GradientPicker({
     if (dragging && draggedDot) {
       event.preventDefault()
       event.stopPropagation()
+      
+      // 🚀 性能优化：清理待处理的RAF
+      if (dragUpdateRef.current) {
+        cancelAnimationFrame(dragUpdateRef.current)
+        dragUpdateRef.current = null
+      }
+      
+      // 确保最后一次位置更新
+      if (lastDragPosition.current) {
+        const dotId = parseInt(draggedDot.getAttribute('data-dot-id') || '0')
+        onDotDrag(dotId, lastDragPosition.current)
+        lastDragPosition.current = null
+      }
+      
       setDragging(false)
       draggedDot.removeAttribute('data-dragging')
       setDraggedDot(null)
@@ -94,7 +123,7 @@ export default function GradientPicker({
         recentlyDragged.current = false
       }, 100)
     }
-  }, [dragging, draggedDot, setDragging, setDraggedDot, onDotRemove])
+  }, [dragging, draggedDot, setDragging, setDraggedDot, onDotRemove, onDotDrag])
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0 || dragging || recentlyDragged.current) return
@@ -134,20 +163,25 @@ export default function GradientPicker({
       document.removeEventListener('mouseup', handleMouseUp)
     }
   }, [handleMouseMove, handleMouseUp])
+  
+  // 🚀 性能优化：组件卸载时清理RAF
+  useEffect(() => {
+    return () => {
+      if (dragUpdateRef.current) {
+        cancelAnimationFrame(dragUpdateRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div
       ref={pickerRef}
-      className={`theme-picker-gradient ${className}`}
+      className={`relative overflow-hidden rounded-lg bg-black/5 dark:bg-white/[0.03] ${className}`}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
       onContextMenu={(e) => e.preventDefault()}
       style={{
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: '8px',
         minHeight: `${PICKER_SIZE - 20}px`,
-        background: 'light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.03))',
         backgroundImage: `radial-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 0)`,
         backgroundPosition: '-23px -23px',
         backgroundSize: '6px 6px',
@@ -167,9 +201,10 @@ export default function GradientPicker({
             data-dot-id={dot.ID}
             data-position={JSON.stringify({ x: Math.round(dot.position.x), y: Math.round(dot.position.y) })}
             data-type={dot.type}
+            data-dragging={dragging && draggedDot?.getAttribute('data-dot-id') === dot.ID.toString() ? 'true' : 'false'}
             style={{
               position: 'absolute',
-              zIndex: isPrimary ? 2 : 2,
+              zIndex: isPrimary ? 999 : 2,
               width: isPrimary ? `${PRIMARY_DOT_SIZE}px` : `${DOT_SIZE}px`,
               height: isPrimary ? `${PRIMARY_DOT_SIZE}px` : `${DOT_SIZE}px`,
               borderRadius: '50%',
@@ -184,25 +219,13 @@ export default function GradientPicker({
               transition: dragging ? 'none' : 'transform 0.2s',
               boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 0px 2px',
               '--theme-picker-dot-color': `rgb(${r}, ${g}, ${b})`,
-            }}
+            } as React.CSSProperties}
           />
         )
       })}
       
       {dots.length === 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            fontWeight: 600,
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            whiteSpace: 'nowrap',
-            pointerEvents: 'none',
-            fontSize: 'small',
-            margin: 0,
-          }}
-        >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap pointer-events-none text-sm font-semibold m-0">
         </div>
       )}
     </div>

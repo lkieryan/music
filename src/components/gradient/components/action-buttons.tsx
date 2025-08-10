@@ -17,51 +17,19 @@ export default function ActionButtons({
   className = ''
 }: ActionButtonsProps) {
   return (
-    <div
-      className={`gradient-color-actions ${className}`}
-      style={{
-        display: 'flex',
-        position: 'absolute',
-        bottom: '12px',
-        left: '50%',
-        zIndex: 1,
-        transform: 'translateX(-50%)',
-        gap: '5px',
-      }}
-    >
+    <div className={`flex absolute bottom-3 left-1/2 z-[3] -translate-x-1/2 gap-1.5 ${className}`}>
       <button
         onClick={onAddDot}
         disabled={!canAddDot}
-        style={{
-          border: 'none',
-          padding: '0',
-          minWidth: 'fit-content',
-          transition: 'background 0.2s',
-          appearance: 'none',
-          maxHeight: '26px',
-          maxWidth: '26px',
-          minHeight: '26px',
-          color: 'rgba(0, 0, 0, 0.7)',
-          background: canAddDot ? 'transparent' : 'rgba(0, 0, 0, 0.1)',
-          borderRadius: '4px',
-          cursor: canAddDot ? 'pointer' : 'not-allowed',
-          opacity: canAddDot ? 1 : 0.5,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '16px',
-          fontWeight: 'bold',
-        }}
-        onMouseEnter={(e) => {
-          if (canAddDot) {
-            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
+        className={`
+          border-none p-0 transition-colors duration-200 appearance-none 
+          h-[26px] w-[26px] rounded cursor-pointer 
+          flex items-center justify-center text-sm font-bold
+          ${canAddDot 
+            ? 'text-gray-700 dark:text-gray-300 bg-transparent hover:bg-black/10 dark:hover:bg-white/10 opacity-100' 
+            : 'text-gray-500 dark:text-gray-500 bg-black/10 dark:bg-white/10 cursor-not-allowed opacity-50'
           }
-        }}
-        onMouseLeave={(e) => {
-          if (canAddDot) {
-            e.currentTarget.style.background = 'transparent'
-          }
-        }}
+        `}
         title="Add color dot"
       >
         <PlusIcon width={16} height={16} />
@@ -70,36 +38,15 @@ export default function ActionButtons({
       <button
         onClick={onRemoveDot}
         disabled={!canRemoveDot}
-        style={{
-          border: 'none',
-          padding: '0',
-          minWidth: 'fit-content',
-          transition: 'background 0.2s',
-          appearance: 'none',
-          maxHeight: '26px',
-          maxWidth: '26px',
-          minHeight: '26px',
-          color: 'rgba(0, 0, 0, 0.7)',
-          background: canRemoveDot ? 'transparent' : 'rgba(0, 0, 0, 0.1)',
-          borderRadius: '4px',
-          cursor: canRemoveDot ? 'pointer' : 'not-allowed',
-          opacity: canRemoveDot ? 1 : 0.5,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '16px',
-          fontWeight: 'bold',
-        }}
-        onMouseEnter={(e) => {
-          if (canRemoveDot) {
-            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
+        className={`
+          border-none p-0 transition-colors duration-200 appearance-none 
+          h-[26px] w-[26px] rounded cursor-pointer 
+          flex items-center justify-center text-sm font-bold
+          ${canRemoveDot 
+            ? 'text-gray-700 dark:text-gray-300 bg-transparent hover:bg-black/10 dark:hover:bg-white/10 opacity-100' 
+            : 'text-gray-500 dark:text-gray-500 bg-black/10 dark:bg-white/10 cursor-not-allowed opacity-50'
           }
-        }}
-        onMouseLeave={(e) => {
-          if (canRemoveDot) {
-            e.currentTarget.style.background = 'transparent'
-          }
-        }}
+        `}
         title="Remove color dot"
       >
         <UnpinIcon width={16} height={16} />

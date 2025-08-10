@@ -24,44 +24,19 @@ export default function OpacitySlider({ value, onChange, disabled = false, class
   const thumbWidth = 10 + opacity * 15
 
   return (
-    <div className={`gradient-opacity-wrapper ${className}`} style={{ position: 'relative' }}>
+    <div className={`relative ${className}`}>
       <div
         id="gradient-slider-wave"
-        style={{
-          position: 'absolute',
-          left: '-5px',
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-        }}
+        className="absolute -left-1.5 w-full h-full pointer-events-none z-[1] flex items-center justify-start"
       >
-        <div
-          style={{
-            position: 'absolute',
-            width: 'calc(100% - 8px)',
-            height: '16px',
-            background: 'rgba(0, 0, 0, 0.1)',
-            borderRadius: '999px',
-            pointerEvents: 'none',
-            zIndex: -1,
-            top: '50%',
-            left: '8px',
-            transform: 'translateY(-50%)',
-          }}
-        />
+        <div className="absolute w-[calc(100%-8px)] h-4 bg-black/10 dark:bg-white/10 rounded-full pointer-events-none -z-[1] top-1/2 left-2 -translate-y-1/2" />
         <svg
           viewBox="0 -7.605 455 70"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="xMinYMid meet"
+          className="overflow-visible ml-1 scale-[1.2]"
           style={{
-            overflow: 'visible',
             minWidth: 'calc(100% * 1.1)',
-            scale: '1.2',
-            marginLeft: '4px',
           }}
         >
           <path
@@ -96,16 +71,11 @@ export default function OpacitySlider({ value, onChange, disabled = false, class
             value={value}
             onChange={handleChange}
             disabled={disabled}
+            className="gradient-opacity-slider !m-0 bg-transparent z-[2] px-1.5 w-full"
             style={{
-              margin: '0 !important',
-              background: 'transparent',
-              zIndex: 2,
-              padding: '0 5px',
-              width: '100%',
               '--thumb-height': `${thumbHeight}px`,
               '--thumb-width': `${thumbWidth}px`,
-            }}
-            className="gradient-opacity-slider"
+            } as React.CSSProperties}
           />
         )
       }

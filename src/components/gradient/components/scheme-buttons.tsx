@@ -22,17 +22,7 @@ export default function SchemeButtons({
 
   return (
     <div
-      className={`gradient-scheme ${className}`}
-      style={{
-        display: 'flex',
-        position: 'absolute',
-        top: '20px',
-        left: '50%',
-        zIndex: 3,
-        transform: 'translateX(-50%)',
-        gap: '5px',
-        maxHeight: '32px',
-      }}
+      className={`flex absolute top-5 left-1/2 z-[3] -translate-x-1/2 gap-1.5 max-h-8 ${className}`}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
@@ -41,40 +31,15 @@ export default function SchemeButtons({
         <button
           key={scheme.id}
           onClick={() => onSchemeChange(scheme.id)}
-          style={{
-            border: 'none',
-            padding: '0',
-            minWidth: 'fit-content',
-            transition: 'background 0.2s',
-            appearance: 'none',
-            maxHeight: '26px',
-            maxWidth: '26px',
-            minHeight: '26px',
-            minWidth: '26px',
-            color: currentScheme === scheme.id 
-              ? 'rgba(0, 0, 0, 1)' 
-              : 'rgba(0, 0, 0, 0.7)',
-            background: currentScheme === scheme.id 
-              ? 'rgba(0, 0, 0, 0.15)' 
-              : 'transparent',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '14px',
-            fontWeight: 'bold',
-          }}
-          onMouseEnter={(e) => {
-            if (currentScheme !== scheme.id) {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
+          className={`
+            border-none p-0 transition-colors duration-200 appearance-none 
+            h-[26px] w-[26px] rounded cursor-pointer 
+            flex items-center justify-center text-sm font-bold
+            ${currentScheme === scheme.id 
+              ? 'text-gray-900 dark:text-gray-100 bg-black/15 dark:bg-white/15' 
+              : 'text-gray-700 dark:text-gray-300 bg-transparent hover:bg-black/10 dark:hover:bg-white/10'
             }
-          }}
-          onMouseLeave={(e) => {
-            if (currentScheme !== scheme.id) {
-              e.currentTarget.style.background = 'transparent'
-            }
-          }}
+          `}
           title={scheme.title}
         >
           {scheme.svg}

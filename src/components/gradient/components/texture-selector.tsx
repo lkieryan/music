@@ -77,17 +77,10 @@ export default function TextureSelector({ value, onChange, className = '' }: Tex
     return (
       <div
         key={i}
-        className={`theme-picker-texture-dot ${isActive ? 'active' : ''}`}
+        className={`h-1 w-1 rounded-full bg-black/30 dark:bg-white/30 absolute transition-opacity duration-200 -translate-x-1/2 -translate-y-1/2 pointer-events-none ${
+          isActive ? 'opacity-100' : 'opacity-40'
+        }`}
         style={{
-          height: '4px',
-          width: '4px',
-          borderRadius: '50%',
-          background: 'rgba(0, 0, 0, 0.3)',
-          position: 'absolute',
-          transition: 'opacity 0.2s',
-          transform: 'translate(-50%, -50%)',
-          pointerEvents: 'none',
-          opacity: isActive ? 1 : 0.4,
           left: `${x}%`,
           top: `${y}%`,
         }}
@@ -103,46 +96,23 @@ export default function TextureSelector({ value, onChange, className = '' }: Tex
   return (
     <div
       ref={wrapperRef}
-      className={`gradient-texture-wrapper ${className}`}
-      style={{
-        width: '4rem',
-        height: '4rem',
-        position: 'relative',
-        right: '15px',
-      }}
+      className={`w-16 h-16 relative -right-[15px] ${className}`}
     >
       {/* Background grain effect */}
       <div
+        className="absolute w-3/5 h-3/5 pointer-events-none top-1/2 rounded-full left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1]"
         style={{
-          position: 'absolute',
-          width: '60%',
-          height: '60%',
           opacity: value,
           mixBlendMode: 'hard-light',
-          pointerEvents: 'none',
-          top: '50%',
-          borderRadius: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 1,
           background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
       />
       
       {/* Border circle */}
       <div
+        className="absolute w-3/5 h-3/5 border border-black/20 dark:border-white/20 rounded-full z-[2] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
         style={{
-          position: 'absolute',
-          width: '60%',
-          height: '60%',
-          border: '1px solid rgba(0, 0, 0, 0.2)',
-          borderRadius: '50%',
           background: 'linear-gradient(-45deg, transparent -10%, rgba(0, 0, 0, 0.1) 110%)',
-          zIndex: 2,
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          pointerEvents: 'none',
         }}
       />
       
@@ -152,25 +122,12 @@ export default function TextureSelector({ value, onChange, className = '' }: Tex
       {/* Handler */}
       <div
         onMouseDown={handleMouseDown}
+        className="w-1.5 h-3 bg-gray-600 dark:bg-gray-400 absolute transition-[height] duration-100 z-[2] rounded-sm cursor-pointer origin-center hover:h-3.5"
         style={{
-          width: '6px',
-          height: '12px',
-          background: '#757575',
-          position: 'absolute',
-          transition: 'height 0.1s',
-          zIndex: 2,
-          borderRadius: '2px',
-          cursor: 'pointer',
           transform: `rotate(${handlerRotation + 90}deg)`,
           top: `${50 + handlerTop}%`,
           left: `${50 + handlerLeft}%`,
           transformOrigin: 'center center',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.height = '14px'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.height = '12px'
         }}
       />
     </div>

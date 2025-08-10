@@ -1,0 +1,88 @@
+/* 渐变生成器自定义样式 - 无法用Tailwind实现的样式 */
+
+/* 自定义滑块样式 */
+.gradient-opacity-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  outline: none;
+}
+
+.gradient-opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #374151; /* gray-700 */
+  border-radius: 999px;
+  height: var(--thumb-height, 40px);
+  width: var(--thumb-width, 10px);
+  cursor: pointer;
+  border: none;
+}
+
+.gradient-opacity-slider::-moz-range-thumb {
+  background: #374151; /* gray-700 */
+  border-radius: 999px;
+  height: var(--thumb-height, 40px);
+  width: var(--thumb-width, 10px);
+  cursor: pointer;
+  border: none;
+}
+
+/* 暗色模式下的滑块拇指 */
+@media (prefers-color-scheme: dark) {
+  .gradient-opacity-slider::-webkit-slider-thumb {
+    background: #d1d5db; /* gray-300 */
+  }
+
+  .gradient-opacity-slider::-moz-range-thumb {
+    background: #d1d5db; /* gray-300 */
+  }
+}
+
+.gradient-opacity-slider::-webkit-slider-track {
+  background: transparent;
+  border-radius: 999px;
+  height: 18px;
+}
+
+.gradient-opacity-slider::-moz-range-track {
+  background: transparent;
+  border-radius: 999px;
+  height: 18px;
+}
+
+/* 拖拽状态的特殊变换和性能优化 */
+[data-dragging="true"] {
+  transform: scale(1.2) translate(-50%, -50%) !important;
+  transition: none !important;
+}
+
+/* 颜色点样式和性能优化 */
+.theme-picker-dot {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  animation: theme-picker-dot-animation 0.5s;
+}
+
+.theme-picker-dot.primary {
+  z-index: 999 !important;
+  pointer-events: all;
+  transition: transform 0.2s;
+}
+
+.theme-picker-dot.primary:hover {
+  transform: scale(1.05) translate(-50%, -50%);
+}
+
+/* 颜色点动画 */
+@keyframes theme-picker-dot-animation {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translate(-50%, -50%);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translate(-50%, -50%);
+  }
+}

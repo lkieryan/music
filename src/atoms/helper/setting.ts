@@ -1,6 +1,7 @@
 import { useRefValue } from "~/hooks/common/use-ref-value"
 import { EventBus } from "~/lib/event-bus"
 import { createAtomHooks } from "~/lib/jotai"
+import { getStorageNS } from "~/lib/ns"
 import { atom as jotaiAtom, useAtomValue } from "jotai"
 import { atomWithStorage, selectAtom } from "jotai/utils"
 import { useMemo } from "react"
@@ -20,7 +21,7 @@ export const createSettingAtom = <T extends object>(
   settingKey: string,
   createDefaultSettings: () => T,
 ) => {
-  const atom = atomWithStorage("todo", createDefaultSettings(), undefined, {
+  const atom = atomWithStorage(getStorageNS(settingKey), createDefaultSettings(), undefined, {
     getOnInit: true,
   })
 

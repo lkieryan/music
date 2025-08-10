@@ -75,8 +75,8 @@ export const Focusable: Component<
       setIsFocusWithIn(true)
       focusTargetRef.current = e.target as HTMLElement
       if (import.meta.env.DEV) {
-        highlightElement(containerRef.current!, "14, 165, 233")
-        console.info("[Focusable] focusin", containerRef.current)
+        // TODO: 暂时关闭高亮
+        // highlightElement(containerRef.current!, "14, 165, 233")
       }
     } else {
       setIsFocusWithIn(false)

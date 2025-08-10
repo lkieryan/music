@@ -5,7 +5,6 @@ import { modalStackAtom } from "./atom"
 
 export const useModalStackCalculationAndEffect = () => {
   const stack = useAtomValue(modalStackAtom)
-  console.log("stack-shared", stack)
   const topModalIndex = stack.findLastIndex((item) => item.modal)
   const overlayIndex = stack.findLastIndex((item) => item.overlay || item.modal)
   const overlayOptions = stack[overlayIndex]?.overlayOptions

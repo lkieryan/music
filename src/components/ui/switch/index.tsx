@@ -62,7 +62,7 @@ function Switch({
       onChange={handleChange}
       style={{ width: SWITCH_WIDTH, padding: THUMB_PADDING }}
       className={cn(
-        "focus-visible:ring-border cursor-switch data-[checked]:bg-accent bg-fill relative flex h-6 shrink-0 items-center justify-start rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "focus-visible:ring-border cursor-switch data-[checked]:bg-accent bg-fill relative flex h-6 shrink-0 items-center justify-start rounded-full transition-colors bg-black duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       as={as}

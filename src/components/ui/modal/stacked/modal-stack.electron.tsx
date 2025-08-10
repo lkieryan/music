@@ -11,7 +11,6 @@ export const ModalStack = () => {
   window.presentModal = present
 
   const stack = useAtomValue(modalStackAtom)
-  console.log("stack-electron", stack)
 
   const { topModalIndex, overlayOptions } = useModalStackCalculationAndEffect()
 

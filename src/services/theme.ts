@@ -1,4 +1,4 @@
-import { invoke } from '~/lib/tauri'
+import { invoke } from '@tauri-apps/api/core'
 import type { ThemeDetails } from '~/types/theme'
 
 export const ThemeCommands = {

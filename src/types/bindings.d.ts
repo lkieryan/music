@@ -10,6 +10,8 @@ export type ColorStop = { color: string, pos: number | null, };
 
 export type ConicLayer = { type: LayerType, angle: number | null, at: string | null, stops: Array<ColorStop>, opacity: number | null, blend_mode: string | null, position: string | null, size: string | null, repeat: string | null, };
 
+export type GeneralSettings = { gaplessSkip: string | null, language: string | null, theme: string | null, minimizeToTray: boolean | null, launchAtLogin: boolean | null, };
+
 export type ImageLayer = { type: LayerType, url: string, opacity: number | null, blend_mode: string | null, position: string | null, size: string | null, repeat: string | null, };
 
 export type LayerType = { "type": "linear" } | { "type": "radial" } | { "type": "conic" } | { "type": "image" };

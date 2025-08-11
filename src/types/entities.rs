@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use bitcode::{Decode, Encode};
-#[cfg(feature = "core")]
+#[cfg(feature = "db")]
 use diesel::{
     backend::Backend,
     deserialize::{self, FromSql, FromSqlRow},
@@ -27,7 +27,7 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "core")]
+#[cfg(feature = "db")]
 use crate::schema::{
     album_bridge, albums, analytics, artist_bridge, artists, genre_bridge, genres, playlist_bridge,
     playlists,
@@ -39,11 +39,11 @@ use super::{
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Encode, Decode)]
-#[cfg_attr(feature = "core", derive(FromSqlRow, AsExpression))]
-#[cfg_attr(feature = "core", diesel(sql_type = diesel::sql_types::Text))]
+#[cfg_attr(feature = "db", derive(FromSqlRow, AsExpression))]
+#[cfg_attr(feature = "db", diesel(sql_type = diesel::sql_types::Text))]
 pub struct EntityInfo(pub String);
 
-#[cfg(feature = "core")]
+#[cfg(feature = "db")]
 impl<DB> FromSql<Text, DB> for EntityInfo
 where
     DB: Backend,
@@ -56,7 +56,7 @@ where
     }
 }
 
-#[cfg(feature = "core")]
+#[cfg(feature = "db")]
 impl ToSql<Text, Sqlite> for EntityInfo
 where
     String: ToSql<Text, Sqlite>,
@@ -75,11 +75,11 @@ where
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = albums))]
-#[cfg_attr(feature = "core", diesel(primary_key(album_id)))]
+#[cfg_attr(feature = "db", diesel(table_name = albums))]
+#[cfg_attr(feature = "db", diesel(primary_key(album_id)))]
 pub struct QueryableAlbum {
     pub album_id: Option<String>,
     pub album_name: Option<String>,
@@ -145,11 +145,11 @@ impl SearchByTerm for QueryableAlbum {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = album_bridge))]
-#[cfg_attr(feature = "core", diesel(primary_key(id)))]
+#[cfg_attr(feature = "db", diesel(table_name = album_bridge))]
+#[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct AlbumBridge {
     pub id: Option<i32>,
     pub song: Option<String>,
@@ -169,11 +169,11 @@ impl BridgeUtils for AlbumBridge {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = artists))]
-#[cfg_attr(feature = "core", diesel(primary_key(artist_id)))]
+#[cfg_attr(feature = "db", diesel(table_name = artists))]
+#[cfg_attr(feature = "db", diesel(primary_key(artist_id)))]
 pub struct QueryableArtist {
     pub artist_id: Option<String>,
     pub artist_mbid: Option<String>,
@@ -237,11 +237,11 @@ impl SearchByTerm for QueryableArtist {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = artist_bridge))]
-#[cfg_attr(feature = "core", diesel(primary_key(id)))]
+#[cfg_attr(feature = "db", diesel(table_name = artist_bridge))]
+#[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct ArtistBridge {
     pub id: Option<i32>,
     pub song: Option<String>,
@@ -261,11 +261,11 @@ impl BridgeUtils for ArtistBridge {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = genres))]
-#[cfg_attr(feature = "core", diesel(primary_key(genre_id)))]
+#[cfg_attr(feature = "db", diesel(table_name = genres))]
+#[cfg_attr(feature = "db", diesel(primary_key(genre_id)))]
 pub struct QueryableGenre {
     pub genre_id: Option<String>,
     pub genre_name: Option<String>,
@@ -324,11 +324,11 @@ impl SearchByTerm for QueryableGenre {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = genre_bridge))]
-#[cfg_attr(feature = "core", diesel(primary_key(id)))]
+#[cfg_attr(feature = "db", diesel(table_name = genre_bridge))]
+#[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct GenreBridge {
     pub id: Option<i32>,
     pub song: Option<String>,
@@ -357,11 +357,11 @@ pub struct GetEntityOptions {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = playlist_bridge))]
-#[cfg_attr(feature = "core", diesel(primary_key(id)))]
+#[cfg_attr(feature = "db", diesel(table_name = playlist_bridge))]
+#[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct PlaylistBridge {
     pub id: Option<i32>,
     pub song: Option<String>,
@@ -381,11 +381,11 @@ impl BridgeUtils for PlaylistBridge {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = playlists))]
-#[cfg_attr(feature = "core", diesel(primary_key(playlist_id)))]
+#[cfg_attr(feature = "db", diesel(table_name = playlists))]
+#[cfg_attr(feature = "db", diesel(primary_key(playlist_id)))]
 
 pub struct QueryablePlaylist {
     pub playlist_id: Option<String>,
@@ -459,11 +459,11 @@ pub struct SearchResult {
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[cfg_attr(
-    feature = "core",
+    feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
 )]
-#[cfg_attr(feature = "core", diesel(table_name = analytics))]
-#[cfg_attr(feature = "core", diesel(primary_key(id)))]
+#[cfg_attr(feature = "db", diesel(table_name = analytics))]
+#[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct Analytics {
     pub id: Option<String>,
     pub song_id: Option<String>,

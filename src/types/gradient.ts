@@ -25,11 +25,24 @@ export interface ColorDot {
   type?: string
 }
 
+export interface GradientInternalState {
+  opacity?: number
+  texture?: number
+  showGrain?: boolean
+  dots?: ColorDot[]
+  useAlgo?: string
+  currentLightness?: number
+  isDarkMode?: boolean
+  colorPage?: number
+  customColors?: string[]
+}
+
 export interface GradientGeneratorDialogProps {
   open: boolean
   onClose: () => void
   onChange?: (data: GradientState) => void
-  initialState?: Partial<GradientState>
+  onInternalStateChange?: (data: GradientInternalState) => void
+  initialState?: GradientInternalState
   disabled?: boolean
 }
 

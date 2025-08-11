@@ -19,7 +19,7 @@ declare global {
   export type I18nKeys = OmitStringType<Parameters<typeof t>[0]>
   export type I18nKeysForSettings = OmitStringType<Parameters<typeof settingsT>[0]>
   export type I18nKeysForShortcuts = OmitStringType<Parameters<typeof shortcutsT>[0]>
-
+  export type Strictify<T> = { [K in keyof T]-?: NonNullable<T[K]> }
 }
 
 export {}

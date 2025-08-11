@@ -38,25 +38,44 @@
     --shadow-1: 0 1px 1px rgba(0,0,0,0.08);
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --color-bg: #0f1115;
-      --color-surface: #171a1f;
-      --color-border: rgba(255,255,255,0.12);
-      --color-divider: rgba(255,255,255,0.10);
+  /* 暗色主题变量 - 使用 data-theme 属性而不是媒体查询 */
+  [data-theme="dark"] {
+    --color-bg: #0f1115;
+    --color-surface: #171a1f;
+    --color-border: rgba(255,255,255,0.12);
+    --color-divider: rgba(255,255,255,0.10);
 
-      --text-primary: #e5e7eb;
-      --text-secondary: #cbd5e1;
-      --text-tertiary: #94a3b8;
-      --text-disabled: rgba(255,255,255,0.38);
+    --text-primary: #e5e7eb;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --text-disabled: rgba(255,255,255,0.38);
 
-      --state-hover-bg: rgba(255,255,255,0.08);
-      --state-pressed-bg: rgba(255,255,255,0.12);
-      --state-selected-bg: rgba(255,255,255,0.18);
+    --state-hover-bg: rgba(255,255,255,0.08);
+    --state-pressed-bg: rgba(255,255,255,0.12);
+    --state-selected-bg: rgba(255,255,255,0.18);
 
-      --focus-ring: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
-      --shadow-1: 0 1px 1px rgba(0,0,0,0.30);
-    }
+    --focus-ring: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    --shadow-1: 0 1px 1px rgba(0,0,0,0.30);
+  }
+
+  /* 浅色主题变量 - 明确定义 */
+  [data-theme="light"] {
+    --color-bg: #ffffff;
+    --color-surface: #f7f7f9;
+    --color-border: rgba(0,0,0,0.08);
+    --color-divider: rgba(0,0,0,0.06);
+
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-tertiary: #6b7280;
+    --text-disabled: rgba(17,24,39,0.38);
+
+    --state-hover-bg: rgba(0,0,0,0.06);
+    --state-pressed-bg: rgba(0,0,0,0.12);
+    --state-selected-bg: rgba(0,0,0,0.10);
+
+    --focus-ring: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    --shadow-1: 0 1px 1px rgba(0,0,0,0.08);
   }
 }
 
@@ -73,6 +92,9 @@ body { margin: 0; padding: 0; }
   --grainy-background-opacity: 0;
   --primary-color: #667eea;
   --base-surface: #ffffff;
+  /* Theme transition tuning */
+  --theme-transition-duration: 350ms;
+  --theme-transition-easing: cubic-bezier(0.2, 0, 0.2, 1);
   
   /* Panel styling variables */
   --panel-width: 360px;
@@ -92,6 +114,23 @@ body { margin: 0; padding: 0; }
   --thumb-width: 10px;
 }
 
+/*
+  Theme transition (Plan 1):
+  Gate color-related transitions behind a short-lived attribute to avoid
+  constant transitions during normal interactions. This ensures that
+  UI colors (text/borders/fills) animate only during theme switching.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme-transition="true"],
+  html[data-theme-transition="true"] * {
+    transition: color var(--theme-transition-duration) var(--theme-transition-easing),
+                background-color var(--theme-transition-duration) var(--theme-transition-easing),
+                border-color var(--theme-transition-duration) var(--theme-transition-easing),
+                fill var(--theme-transition-duration) var(--theme-transition-easing),
+                stroke var(--theme-transition-duration) var(--theme-transition-easing);
+  }
+}
+
 /* Global grain background support */
 [show-grainy-background="true"]::before {
   content: '';
@@ -108,8 +147,68 @@ body { margin: 0; padding: 0; }
 }
 
 /* Dark mode support for CSS variables */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --colors-border: rgba(255, 255, 255, 0.2);
+[data-theme="dark"] {
+  --colors-border: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] {
+  --colors-border: rgba(0, 0, 0, 0.2);
+}
+
+@layer base {
+  /* shadcn colors */
+
+  :root,
+  #shadow-html {
+    --radius: 0.5rem;
   }
+
+  [data-theme="light"] {
+    --background: 0 0% 100%;
+
+    --border: 20 5.9% 90%;
+    --radius: 0.5rem;
+  }
+
+  [data-theme="dark"] {
+    --background: 0 0% 7.1%;
+
+    --border: 0 0% 22.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply text-text;
+  }
+}
+
+.prose {
+  table * {
+    font-size: 1rem;
+  }
+
+  table table {
+    margin: 0;
+  }
+
+  p {
+    @apply break-words;
+  }
+
+  word-break: break-word;
+}
+
+@layer utilities {
+  [data-hide-in-print] {
+    @apply print:!hidden;
+  }
+}
+
+i {
+  @apply select-none;
 }

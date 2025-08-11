@@ -19,7 +19,8 @@ export function getGradient(
     return forToolbar
       ? getToolbarModifiedBase(isDarkMode)
       : isDarkMode
-        ? 'rgba(0, 0, 0, 0.4)'
+        ? '#2a2a2a' // TODO: 暂时使用黑色，后续需要优化
+        // ? 'rgba(0, 0, 0, 0.4)'
         : 'transparent'
   } else if (themedColors.length === 1) {
     return getSingleRGBColor(themedColors[0], opacity, forToolbar, isDarkMode, isLegacyVersion, canBeTransparent, isMica, MIN_OPACITY)

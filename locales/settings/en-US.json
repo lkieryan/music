@@ -1,4 +1,31 @@
 {
-    "titles.general": "General"
+    "general.app": "Application",
+    "general.language": "Language",
+    "general.launch_at_login": "Launch at login",
+    "themes.label": "App Theme",
+    "themes.mode": "Mode",
+    "themes.mode.system": "Follow System",
+    "themes.mode.light": "Light Mode",
+    "themes.mode.dark": "Dark Mode",
+    "themes.layout": "Layout",
+    "themes.toolbar.label": "Toolbar Mode",
+    "themes.toolbar.single": "Single Toolbar",
+    "themes.toolbar.multi": "Multi Toolbar",
+    "themes.toolbar.compact": "Compact Mode",
+    "themes.sidebar.label": "Sidebar Position",
+    "themes.sidebar.left": "Left",
+    "themes.sidebar.right": "Right",
+    "themes.player.label": "Player Position",
+    "themes.player.none": "Hidden",
+    "themes.player.global-bottom": "Global Bottom",
+    "themes.player.content-bottom": "Content Bottom",
+    "themes.player.sidebar": "Sidebar",
+    "themes.player.visible": "Show Player",
+    "themes.player.height": "Player Height",
+    "themes.background.label": "Background",
+    "themes.background.open": "Open Background Generator",
+    "themes.background.clear": "Clear Custom",
+    "titles.general": "General",
+    "titles.themes": "Theme"
 }
   

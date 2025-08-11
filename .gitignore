@@ -26,4 +26,4 @@ dist-ssr
 */target/*
 .kiro/*
 crates/types/target/*
-other/*
+

@@ -1,21 +1,21 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import type { ColorDot, GradientState } from '~/types/gradient'
+import type { ColorDot, GradientState, GradientInternalState } from '~/types/gradient'
 import { MIN_OPACITY, MAX_DOTS, EXPLICIT_LIGHTNESS_TYPE } from '~/components/gradient/constants'
 import { getColorFromPosition, calculateCompliments } from '~/lib/color'
 import { getGradient, getMostDominantColor, shouldBeDarkMode } from '~/lib/gradient'
 
-export function useGradientState(initialState?: Partial<GradientState>) {
+export function useGradientState(initialState?: GradientInternalState) {
   const [opacity, setOpacity] = useState(initialState?.opacity ?? 0.5)
   const [texture, setTexture] = useState(initialState?.texture ?? 0)
   const [showGrain, setShowGrain] = useState(initialState?.showGrain ?? false)
   // Legacy darken percent (0-50)
   const [legacyDarkenPercent, setLegacyDarkenPercent] = useState<number>(0)
-  const [dots, setDots] = useState<ColorDot[]>([])
-  const [useAlgo, setUseAlgo] = useState('')
-  const [currentLightness, setCurrentLightness] = useState(50)
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [colorPage, setColorPage] = useState(0)
-  const [customColors, setCustomColors] = useState<string[]>([])
+  const [dots, setDots] = useState<ColorDot[]>(initialState?.dots ?? [])
+  const [useAlgo, setUseAlgo] = useState(initialState?.useAlgo ?? '')
+  const [currentLightness, setCurrentLightness] = useState(initialState?.currentLightness ?? 50)
+  const [isDarkMode, setIsDarkMode] = useState(initialState?.isDarkMode ?? false)
+  const [colorPage, setColorPage] = useState(initialState?.colorPage ?? 0)
+  const [customColors, setCustomColors] = useState<string[]>(initialState?.customColors ?? [])
 
   // Dragging state
   const [dragging, setDragging] = useState(false)
@@ -59,7 +59,7 @@ export function useGradientState(initialState?: Partial<GradientState>) {
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
 
-  const createDot = useCallback((color: ColorDot, fromPreset = false) => {
+  const createDot = useCallback((color: ColorDot) => {
     const [r, g, b] = Array.isArray(color.c) ? color.c : [0, 0, 0]
     
     if (color.isCustom) {
@@ -221,8 +221,6 @@ export function useGradientState(initialState?: Partial<GradientState>) {
         : effectiveDark
     }
 
-    console.log('resolvedDark', resolvedDark)
-
     const radialGradient = getGradient(
       dots,
       effectiveOpacity,
@@ -261,14 +259,14 @@ export function useGradientState(initialState?: Partial<GradientState>) {
     }
 
     return result
-  }, [dots, opacity, texture, isDarkMode])
+  }, [dots, opacity, texture, isDarkMode, legacyDarkenPercent])
 
   const loadPreset = useCallback((
     lightness: number,
     algo: string,
     numDots: number,
     position: string,
-    colors?: string[]
+    // colors?: string[] // 目前未使用
   ) => {
     const [x, y] = position.split(',').map(pos => parseInt(pos))
     setCurrentLightness(lightness)
@@ -279,7 +277,7 @@ export function useGradientState(initialState?: Partial<GradientState>) {
       setDots(prevDots => prevDots.slice(0, numDots))
     }
 
-    let newDots: ColorDot[] = [
+    const newDots: ColorDot[] = [
       {
         ID: 0,
         position: { x, y },

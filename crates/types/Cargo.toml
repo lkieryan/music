@@ -35,3 +35,6 @@ extensions-core = ["dep:extism-convert", "dep:uuid"]
 # Default can include both if you want full functionality in normal build
 default = ["db"]
 
+# UI-only helpers in types crate
+ui = []
+

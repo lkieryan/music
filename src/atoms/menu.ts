@@ -23,7 +23,7 @@ export const toolbarDensityAtom = atom<ToolbarDensity>('regular')
 export const fixedMenusAtom = atom<MenuItem[]>([
   { id: 'home', label: 'Home', icon: '/vite.svg', fixed: true, path: '/', accent: '#667eea' },
   { id: 'library', label: 'Library', icon: '/vite.svg', fixed: true, path: '/', accent: '#22c55e' },
-  { id: 'settings', label: 'Settings', icon: '/vite.svg', fixed: true, path: '/', accent: '#f59e0b' },
+  { id: 'settings', label: 'Settings', icon: '/vite.svg', fixed: true, path: '/settings', accent: '#f59e0b' },
   { id: 'about', label: 'About', icon: '/vite.svg', fixed: true, path: '/', accent: '#ec4899' },
 ])
 

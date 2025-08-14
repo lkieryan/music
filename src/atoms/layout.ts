@@ -17,7 +17,7 @@ export const sidebarMinWidth = 160
 export const sidebarMaxWidth = 520
 
 // Player layout
-export type PlayerPlacement = 'none' | 'global-bottom' | 'content-bottom' | 'sidebar'
+export type PlayerPlacement = 'none' | 'global-bottom' | 'content-bottom' | 'sidebar-bottom' | 'sidebar-middle'
 export const playerPlacementAtom = atomWithStorage<PlayerPlacement>('layout.playerPlacement', 'none')
 export const playerHeightAtom = atomWithStorage<number>('layout.playerHeight', 64)
 export const playerVisibleAtom = atomWithStorage<boolean>('layout.playerVisible', true)

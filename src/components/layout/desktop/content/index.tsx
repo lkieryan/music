@@ -16,7 +16,7 @@ import { WindowControlsToolbar } from '../header/toolbar'
 // 检测操作系统
 const getOS = (): 'windows' | 'mac' | 'linux' => {
   if (typeof window === 'undefined') return 'windows'
-  
+
   const userAgent = window.navigator.userAgent.toLowerCase()
   if (userAgent.includes('mac')) return 'mac'
   if (userAgent.includes('linux')) return 'linux'
@@ -30,49 +30,67 @@ const AppContentWrapper: FC<{ rightSide: boolean }> = ({ rightSide }) => {
   const playerVisible = useAtomValue(playerVisibleAtom)
   const playerHeight = useAtomValue(playerHeightAtom)
   return (
-    <div className="flex flex-row flex-1 min-h-0">
+    <div className="flex flex-row flex-1 min-h-0 max-h-screen overflow-hidden">
       {rightSide ? (
         <>
-          <AppContent />
+          <AppContent rightSide={rightSide} />
           <SidebarBox positionEnd>
-            <div className="sticky top-0 z-[2] bg-transparent min-h-[38px] items-stretch">
-              {singleToolbar && (
-                <Header />
+            <div className="flex flex-col h-full">
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="sticky top-0 z-[2] bg-transparent min-h-[38px] items-stretch">
+                  {singleToolbar && (
+                    <Header />
+                  )}
+                </div>
+                {/* Essentials comes before dynamic menu (align with Browser layout) */}
+                <EssentialsSection />
+                {/* Player in middle position (between essentials and menu) */}
+                {playerVisible && playerPlacement === 'sidebar-middle' && (
+                  <SidebarPlayer height={playerHeight} position="middle" />
+                )}
+                {/* Desktop menu placed after Essentials */}
+                <MenuShell />
+              </div>
+              {/* Player in bottom position (fixed at sidebar bottom) */}
+              {playerVisible && playerPlacement === 'sidebar-bottom' && (
+                <SidebarPlayer height={playerHeight} position="bottom" />
               )}
             </div>
-            {/* Essentials comes before dynamic menu (align with Browser layout) */}
-            <EssentialsSection />
-            {/* Desktop menu placed after Essentials */}
-            <MenuShell />
-            {playerVisible && playerPlacement === 'sidebar' && (
-              <SidebarPlayer height={playerHeight} />
-            )}
           </SidebarBox>
         </>
       ) : (
         <>
           <SidebarBox>
-            <div className="sticky top-0 z-[2] bg-transparent min-h-[38px] flex items-center">
-              {singleToolbar ? (          
-                <Header />
-              ) : (
-                <div className="flex items-center justify-between w-full h-full px-3">
-                  {getOS() === 'mac' && (
-                    <WindowControlsToolbar />
+            <div className="flex flex-col h-full">
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="sticky top-0 z-[2] bg-transparent min-h-[38px] flex items-center">
+                  {singleToolbar ? (
+                    <Header />
+                  ) : (
+                    <div className="flex items-center justify-between w-full h-full px-3">
+                      {getOS() === 'mac' && (
+                        <WindowControlsToolbar />
+                      )}
+                    </div>
                   )}
                 </div>
+                {/* Essentials comes before dynamic menu (align with Browser layout) */}
+                <EssentialsSection />
+                {/* Player in middle position (between essentials and menu) */}
+                {playerVisible && playerPlacement === 'sidebar-middle' && (
+                  <SidebarPlayer height={playerHeight} position="middle" />
+                )}
+                {/* Desktop menu placed after Essentials */}
+                <MenuShell />
+              </div>
+              {/* Player in bottom position (fixed at sidebar bottom) */}
+              {playerVisible && playerPlacement === 'sidebar-bottom' && (
+                <SidebarPlayer height={playerHeight} position="bottom" />
               )}
             </div>
-            {/* Essentials comes before dynamic menu (align with Browser layout) */}
-            <EssentialsSection />
-            {/* Desktop menu placed after Essentials */}
-            <MenuShell />
-            {playerVisible && playerPlacement === 'sidebar' && (
-              <SidebarPlayer height={playerHeight} />
-            )}
           </SidebarBox>
-          
-          <AppContent />
+
+          <AppContent rightSide={rightSide} />
         </>
       )}
     </div>
@@ -83,21 +101,31 @@ const AppContentPanel: FC<PropsWithChildren<{
   tabId: string
   kind?: 'internal' | 'external'
   src?: string
-}>> = ({ tabId, kind = 'internal', src, children }) => {
+  rightSide?: boolean
+}>> = ({ tabId, kind = 'internal', src, children, rightSide }) => {
+  const { singleToolbar } = useDesktopLayout()
+
   return (
-    <div className="relative min-h-0 flex-1" data-selected-index={0}>
-      <section 
-        className="p-2.5 relative w-full h-full rounded-[10px] shadow-none overflow-auto bg-transparent"
-        style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-        data-tab-id={tabId}
-      >
-        {kind === 'external' && src ? (
-          <iframe className="w-full h-full border-0" src={src} title={`tab-${tabId}`} />
-        ) : (
-          // Use the existing route tree; render nested routes here
-          children ?? <Outlet />
-        )}
-      </section>
+    <div className="relative min-h-0 flex-1 overflow-hidden" data-selected-index={0}>
+      {/* Backdrop container wrapping the content section */}
+      <div className={cn(
+        "h-full bg-transparent backdrop-blur-sm backdrop-saturate-[120%] pb-2 flex flex-col",
+        singleToolbar && "pt-2",
+        rightSide ? "pl-2" : "pr-2"
+      )}>
+        <section
+          className="flex-1 min-h-0 rounded-[10px] bg-white/10 p-2.5 overflow-auto"
+          style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+          data-tab-id={tabId}
+        >
+          {kind === 'external' && src ? (
+            <iframe className="w-full h-full border-0" src={src} title={`tab-${tabId}`} />
+          ) : (
+            // Use the existing route tree; render nested routes here
+            children ?? <Outlet />
+          )}
+        </section>
+      </div>
     </div>
   )
 }
@@ -153,12 +181,12 @@ const SingleToolbarWindowControls: FC = () => {
   }, [isHovering, showWindowControls, hideWindowControls, clearHideTimeout])
 
   return (
-    <div 
+    <div
       className={cn(
         "backdrop-blur-sm backdrop-saturate-[120%] border-b border-black/5 dark:border-white/10",
         "transform-gpu",
-        showControls 
-          ? "h-[32px] opacity-100 translate-y-0 scale-100 transition-all duration-200 ease-out" 
+        showControls
+          ? "h-[32px] opacity-100 translate-y-0 scale-100 transition-all duration-200 ease-out"
           : "h-0 opacity-0 -translate-y-4 scale-95 overflow-hidden pointer-events-none transition-all duration-150 ease-in"
       )}
       data-variant="single-controls"
@@ -184,21 +212,20 @@ const SingleToolbarWindowControls: FC = () => {
   )
 }
 
-export const AppContent: FC = () => {
+export const AppContent: FC<{ rightSide?: boolean }> = ({ rightSide }) => {
   const { singleToolbar } = useDesktopLayout()
   const playerPlacement = useAtomValue(playerPlacementAtom)
   const playerVisible = useAtomValue(playerVisibleAtom)
   const playerHeight = useAtomValue(playerHeightAtom)
-  const os = getOS()
-  
+
   return (
-    <div className="flex-1 min-w-0" data-tabcontainer>
+    <div className="flex-1 min-w-0 min-h-0 max-h-full overflow-hidden" data-tabcontainer>
       <div className="flex flex-col h-full min-h-0">
         {/* 多工具栏模式：Windows/Linux显示操作栏，Mac不显示（Mac的控制按钮在侧边栏） */}
         {!singleToolbar && <Header />}
         {/* 单工具栏模式：所有系统都显示隐藏的窗口控制栏 */}
         {singleToolbar && <SingleToolbarWindowControls />}
-        <AppContentPanel tabId="t1" />
+        <AppContentPanel tabId="t1" rightSide={rightSide} />
         {playerVisible && playerPlacement === 'content-bottom' && (
           <ContentPlayer height={playerHeight} />
         )}

@@ -11,3 +11,17 @@ export const AppLayout = withResponsiveComponent<object>(
     })),
 )
 
+export const LyricLayout = withResponsiveComponent<object>(
+  () =>
+    import("~/components/layout/lyric/horizontal").then((m) => ({
+      default: m.HorizontalLayout,
+    })),
+  () =>
+      import("~/components/layout/lyric/vertical").then((m) => ({
+      default: m.VerticalLayout,
+    })),
+)
+
+export const AutoLyricLayout =  () => 
+  import("~/components/layout/lyric/auto").then((m) => m.AutoLyricLayout)
+

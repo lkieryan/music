@@ -1,12 +1,12 @@
 import type { FC, PropsWithChildren, CSSProperties } from 'react'
 import { useAtomValue } from 'jotai'
-import { 
-  compactModeAtom, 
-  playerPlacementAtom, 
-  playerVisibleAtom, 
-  playerHeightAtom, 
-  sidebarPositionAtom, 
-  toolbarModeAtom 
+import {
+  compactModeAtom,
+  playerPlacementAtom,
+  playerVisibleAtom,
+  playerHeightAtom,
+  sidebarPositionAtom,
+  toolbarModeAtom
 } from '~/atoms/layout'
 import { LayoutProvider } from '~/providers/layout-provider'
 // Header is rendered inside sidebar in single-toolbar mode via TabboxWrapper
@@ -39,33 +39,33 @@ const BaseLayout: FC<PropsWithChildren<{
   isFullscreen = false,
   children,
 }) => {
-  return (
-    <div
-      className="w-screen h-screen relative overflow-hidden"
-      data-right-side={rightSide}
-      data-single-toolbar={singleToolbar}
-      data-sidebar-expanded={sidebarExpanded}
-      data-fullscreen={isFullscreen}
-    >
-      {/* Background gradient layers - replacing ::before and ::after pseudo-elements */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300"
-        style={{
-          background: 'var(--app-background-gradient, var(--main-browser-background, linear-gradient(135deg, #667eea 0%, #764ba2 100%)))',
-          opacity: 'var(--app-background-opacity, var(--background-opacity, 1))'
-        }}
-      />
-      <div 
-        className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300"
-        style={{
-          background: 'var(--app-background-gradient-old, var(--main-browser-background-old, linear-gradient(135deg, #667eea 0%, #764ba2 100%)))',
-          opacity: 'calc(1 - var(--app-background-opacity, var(--background-opacity, 1)))'
-        }}
-      />
-      {children}
-    </div>
-  )
-}
+    return (
+      <div
+        className="w-screen h-screen relative overflow-hidden"
+        data-right-side={rightSide}
+        data-single-toolbar={singleToolbar}
+        data-sidebar-expanded={sidebarExpanded}
+        data-fullscreen={isFullscreen}
+      >
+        {/* Background gradient layers - replacing ::before and ::after pseudo-elements */}
+        <div
+          className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300"
+          style={{
+            background: 'var(--app-background-gradient, var(--main-browser-background, linear-gradient(135deg, #667eea 0%, #764ba2 100%)))',
+            opacity: 'var(--app-background-opacity, var(--background-opacity, 1))'
+          }}
+        />
+        <div
+          className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300"
+          style={{
+            background: 'var(--app-background-gradient-old, var(--main-browser-background-old, linear-gradient(135deg, #667eea 0%, #764ba2 100%)))',
+            opacity: 'calc(1 - var(--app-background-opacity, var(--background-opacity, 1)))'
+          }}
+        />
+        {children}
+      </div>
+    )
+  }
 
 export const DesktopLayout: FC<LayoutShellProps> = ({ toolbarMode, sidebarPosition, compactMode }) => {
   // Always read atoms, then decide which source wins to avoid conditional hooks
@@ -107,7 +107,7 @@ export const DesktopLayout: FC<LayoutShellProps> = ({ toolbarMode, sidebarPositi
           style={{ ['--player-height' as unknown as keyof CSSProperties]: `${playerHeight}px` } as CSSProperties}
         >
           {/* single toolbar is rendered inside sidebar (see TabboxWrapper) */}
-          <div className="relative z-[1] min-w-[1px] flex flex-col flex-1">
+          <div className="relative z-[1] min-w-[1px] flex flex-col flex-1 min-h-0">
             <AppContentWrapper rightSide={rightSide} />
           </div>
           {/* Global bottom player (spans sidebar + content) */}

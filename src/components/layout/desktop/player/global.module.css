@@ -1,0 +1,148 @@
+/* 播放器容器样式 */
+.playBar {
+  padding: 12px;
+  padding-left: calc(12px + env(safe-area-inset-left));
+  padding-right: calc(12px + env(safe-area-inset-right));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  transition: transform 0.2s ease;
+  margin: auto;
+}
+
+.playBar > * {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.playBar.hide {
+  transform: translateY(calc(100% + 12px));
+  pointer-events: none;
+}
+
+/* 封面按钮样式 */
+.coverButton {
+  --cover-button-size: 64px;
+  
+  flex: 0;
+  width: var(--cover-button-size);
+  height: var(--cover-button-size);
+  min-width: var(--cover-button-size);
+  min-height: var(--cover-button-size);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  background-position: center;
+  background-size: cover;
+  padding: 0;
+  display: block;
+  position: relative;
+}
+
+.lyricIconButton {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: var(--cover-button-size);
+  height: var(--cover-button-size);
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  color: white;
+}
+
+.coverButton:hover .lyricIconButton {
+  opacity: 1;
+  transform: scale(0.9);
+}
+
+.coverButton:active .lyricIconButton {
+  opacity: 0.75;
+  transform: scale(0.85);
+}
+
+.coverButton::before {
+  pointer-events: none;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(80, 78, 78, 0.15);
+  content: "";
+  display: block;
+  position: absolute;
+  width: var(--cover-button-size);
+  height: var(--cover-button-size);
+  top: 0;
+  left: 0;
+  transition: background-color 0.2s ease, backdrop-filter 0.2s ease;
+  background: rgba(100, 100, 100, 0.1);
+}
+
+.coverButton:hover::before {
+  background-color: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+}
+
+.coverButton:active::before {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* 文本滚动样式 */
+.textMarquee {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 播放列表卡片样式 */
+.playlistCard {
+  border-radius: 8px;
+  border: solid 1px rgba(128, 128, 128, 0.3);
+  backdrop-filter: blur(20px) brightness(0.5);
+  transition: transform 0.2s ease;
+  max-width: 400px;
+  max-height: 50vh;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* 媒体按钮样式 - 复刻原版 AMLL MediaButton */
+.mediaButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  color: currentColor;
+  position: relative;
+  min-width: 48px;
+  min-height: 48px;
+  outline: none;
+}
+
+.mediaButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.mediaButton:hover::before {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mediaButton:active::before {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.95);
+}
+
+.mediaButton:focus-visible::before {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}

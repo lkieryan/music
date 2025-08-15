@@ -74,7 +74,7 @@ export const SidebarBox: FC<PropsWithChildren<{ positionEnd?: boolean }>> = ({ p
 
   return (
     <aside
-      className="bg-transparent backdrop-blur-sm backdrop-saturate-[120%] h-full overflow-y-auto overflow-x-hidden overscroll-contain relative"
+      className="bg-transparent backdrop-blur-sm backdrop-saturate-[120%] max-h-screen overflow-x-hidden relative"
       data-position-end={positionEnd || undefined}
       style={
         !isCompact 

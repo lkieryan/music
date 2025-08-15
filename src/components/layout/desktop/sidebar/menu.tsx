@@ -19,7 +19,7 @@ export const MenuShell: FC = () => {
   const density = useAtomValue(toolbarDensityAtom)
 
   return (
-    <aside className="flex flex-col h-screen px-1.5 py-2 gap-2">
+    <aside className="flex flex-col px-1.5 py-2 gap-2">
       {/* Fixed Section */}
       <div className="flex flex-col gap-1.5" role="menu" aria-label="Fixed">
         <div className={cn(

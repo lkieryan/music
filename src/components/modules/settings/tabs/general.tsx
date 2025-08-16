@@ -4,7 +4,6 @@ import {
   setGeneralSetting,
   useGeneralSettingKey,
   useGeneralSettingValue,
-  useGeneralSettingSelector,
   setGeneral,
 } from "~/atoms/settings/general"
 import { createSetting } from "../helper/builder"
@@ -20,6 +19,7 @@ import { currentSupportedLanguages } from "~/i18n"
 const { defineSettingItem: _defineSettingItem, SettingBuilder } = createSetting(
   useGeneralSettingValue,
   setGeneralSetting,
+  (k, v) => setGeneral(k as any, v as any),
 )
 
 
@@ -152,6 +152,8 @@ const TranslationModeSelector = () => {
     </SettingItemGroup>
   )
 }
+
+
 
 const ActionLanguageSelector = () => {
   const { t } = useTranslation("settings")

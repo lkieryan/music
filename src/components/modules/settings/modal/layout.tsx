@@ -77,7 +77,7 @@ export function SettingModalLayout(
         }}
         transition={Spring.presets.smooth}
         className={cn(
-          "relative flex overflow-hidden rounded-xl rounded-br-none border",
+          "relative flex overflow-hidden rounded-xl rounded-br-none border border-border/20",
           !overlay && "shadow-perfect",
         )}
         style={resizeableStyle}
@@ -112,7 +112,7 @@ export function SettingModalLayout(
               <div className="absolute inset-x-0 top-0 z-[1] h-8" onPointerDown={handleDrag} />
             )}
             <div className="flex h-0 flex-1" ref={elementRef}>
-              <div className="backdrop-blur-sm bg-background/60 border-r border border-border flex min-h-0 min-w-44 max-w-[20ch] flex-col rounded-l-xl px-2 py-6">
+              <div className="backdrop-blur-sm bg-background/60 border-r border-border/30 flex min-h-0 min-w-44 max-w-[20ch] flex-col rounded-l-xl px-2 py-6">
                 {/* todo <div className="font-default mb-4 flex h-8 items-center gap-2 px-2 font-bold">
                  logo
                 </div> */}
@@ -124,7 +124,7 @@ export function SettingModalLayout(
                   <EnhancedSettingsIndicator />
                 </div>
               </div>
-              <div className="bg-background relative flex h-full min-w-0 flex-1 flex-col pt-1">
+              <div className="bg-background/60 relative flex h-full min-w-0 flex-1 flex-col pt-1">
                 <Suspense>{children}</Suspense>
               </div>
             </div>

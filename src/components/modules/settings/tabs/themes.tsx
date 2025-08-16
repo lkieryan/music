@@ -5,11 +5,11 @@ import {
 } from "~/atoms/settings/general"
 import { useThemeAtomValue, useSetTheme } from "~/atoms/settings/themes"
 import { useAtom } from "jotai"
-import { 
-  toolbarModeAtom, 
-  sidebarPositionAtom, 
-  playerPlacementAtom, 
-  playerVisibleAtom, 
+import {
+  toolbarModeAtom,
+  sidebarPositionAtom,
+  playerPlacementAtom,
+  playerVisibleAtom,
   playerHeightAtom,
   type ToolbarMode,
   type SidebarPosition,
@@ -21,6 +21,7 @@ import {
   SettingTabbedSegment,
   SettingSwitch,
   SettingActionItem,
+  SettingInput,
 } from "../control"
 import { SettingItemGroup } from "../section"
 import { ResponsiveSelect } from "~/components/ui/select/responsive"
@@ -47,7 +48,7 @@ export const SettingThemes = () => {
           AppThemeSegment,
           BackgroundSetting,
           {
-            type: "title", 
+            type: "title",
             value: t("themes.layout"),
           },
           SidebarPositionSegment,
@@ -65,20 +66,20 @@ export const AppThemeSegment = () => {
   const { t } = useTranslation("settings")
   const theme = useThemeAtomValue()
   const setTheme = useSetTheme()
-  
+
   // 使用与 SchemeButtons 相同的映射逻辑
   const currentDisplayValue = theme === 'system' ? 'auto' : theme
-  
+
   const handleThemeChange = async (value: string) => {
     const themeMap = {
       'auto': 'system',
-      'light': 'light', 
+      'light': 'light',
       'dark': 'dark'
     } as const
-    
+
     await setTheme(themeMap[value as keyof typeof themeMap])
   }
-  
+
   return (
     <SettingTabbedSegment
       key="theme"
@@ -109,7 +110,7 @@ export const AppThemeSegment = () => {
 export const ToolbarModeSegment = () => {
   const { t } = useTranslation("settings")
   const [toolbarMode, setToolbarMode] = useAtom(toolbarModeAtom)
-  
+
   return (
     <SettingItemGroup>
       <div className="mb-3 mt-4 flex items-center justify-between">
@@ -144,7 +145,7 @@ export const ToolbarModeSegment = () => {
 export const SidebarPositionSegment = () => {
   const { t } = useTranslation("settings")
   const [sidebarPosition, setSidebarPosition] = useAtom(sidebarPositionAtom)
-  
+
   return (
     <SettingTabbedSegment
       key="sidebarPosition"
@@ -172,7 +173,7 @@ export const SidebarPositionSegment = () => {
 export const PlayerPlacementSegment = () => {
   const { t } = useTranslation("settings")
   const [playerPlacement, setPlayerPlacement] = useAtom(playerPlacementAtom)
-  
+
   return (
     <SettingItemGroup>
       <div className="mb-3 mt-4 flex items-center justify-between">
@@ -186,6 +187,10 @@ export const PlayerPlacementSegment = () => {
           }}
           items={[
             {
+              label: t("themes.player.none"),
+              value: "none",
+            },
+            {
               label: t("themes.player.global-bottom"),
               value: "global-bottom",
             },
@@ -194,8 +199,12 @@ export const PlayerPlacementSegment = () => {
               value: "content-bottom",
             },
             {
-              label: t("themes.player.sidebar"),
-              value: "sidebar",
+              label: t("themes.player.sidebar-bottom"),
+              value: "sidebar-bottom",
+            },
+            {
+              label: t("themes.player.sidebar-middle"),
+              value: "sidebar-middle",
             },
           ]}
         />
@@ -207,7 +216,7 @@ export const PlayerPlacementSegment = () => {
 export const PlayerVisibleSetting = () => {
   const { t } = useTranslation("settings")
   const [playerVisible, setPlayerVisible] = useAtom(playerVisibleAtom)
-  
+
   return (
     <SettingItemGroup>
       <SettingSwitch
@@ -215,35 +224,32 @@ export const PlayerVisibleSetting = () => {
         onCheckedChange={setPlayerVisible}
         label={t("themes.player.visible")}
       />
-    </SettingItemGroup> 
+    </SettingItemGroup>
   )
 }
 
 export const PlayerHeightSetting = () => {
   const { t } = useTranslation("settings")
   const [playerHeight, setPlayerHeight] = useAtom(playerHeightAtom)
-  
+
   return (
     <SettingItemGroup>
-      <div className="mb-3 mt-4 flex items-center justify-between">
-        <span className="shrink-0 text-sm font-medium">{t("themes.player.height")}</span>
-        <input
-          type="number"
-          min={40}
-          max={160}
-          value={playerHeight}
-          onChange={(e) => {
-            const value = parseInt(e.target.value) || 64
-            if (value >= 40 && value <= 160) {
-              setPlayerHeight(value)
-            }
-          }}
-          className="w-48 h-8 px-2 text-xs border border-border rounded-md bg-background text-text"
-        />
-      </div>
+      <SettingInput
+        type="number"
+        label={t("themes.player.height")}
+        value={String(playerHeight)}
+        onChange={(e) => {
+          const value = parseInt(e.target.value) || 64
+          if (value >= 40 && value <= 160) {
+            setPlayerHeight(value)
+          }
+        }}
+        inputClassName="w-48"
+      />
     </SettingItemGroup>
   )
 }
+
 
 export const BackgroundSetting = () => {
   const { t } = useTranslation("settings")
@@ -267,7 +273,7 @@ export const BackgroundSetting = () => {
           buttonText={t("themes.background.open")}
         />
       </SettingItemGroup>
-      
+
       {isGradientOpen && (
         <GradientGeneratorDialog
           open={isGradientOpen}

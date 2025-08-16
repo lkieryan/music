@@ -1,40 +1,19 @@
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { ResponsiveSelect } from "~/components/ui/select/responsive"
-import { IN_ELECTRON } from "~/constants"
 import { nextFrame } from "~/lib/dom"
 import { getStorageNS } from "~/lib/ns"
-import { useQuery } from "@tanstack/react-query"
 import * as React from "react"
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 
 import { setUISetting, useUISettingSelector } from "~/atoms/settings/ui"
 import { useModalStack } from "~/components/ui/modal/stacked/hooks"
-import { ipcServices } from "~/lib/client"
 
 const FALLBACK_FONT = "Default (UI Font)"
 const DEFAULT_FONT = "SN Pro"
 const CUSTOM_FONT = "Custom"
-const useFontDataElectron = () => {
-  const { t } = useTranslation("settings")
-  const { data } = useQuery({
-    queryFn: () => ipcServices?.setting.getSystemFonts(),
-    queryKey: ["systemFonts"],
-  })
 
-  return (
-    [
-      { label: t("appearance.content_font.default"), value: "inherit" },
-      { label: t("appearance.font.system"), value: "system-ui" },
-    ] as { label: string; value: string }[]
-  ).concat(
-    (data || []).map((font) => ({
-      label: font,
-      value: font,
-    })),
-  )
-}
 
 const useFontDataWeb = () => {
   const { t } = useTranslation("settings")
@@ -69,7 +48,7 @@ const useFontDataWeb = () => {
   ]
 }
 
-const useFontData = IN_ELECTRON ? useFontDataElectron : useFontDataWeb
+const useFontData = useFontDataWeb
 export const ContentFontSelector = () => {
   const { t } = useTranslation("settings")
   const data = useFontData()

@@ -48,7 +48,8 @@ export const SettingInput: Component<{
   type: string
   vertical?: boolean
   labelClassName?: string
-}> = ({ value, label, onChange, labelClassName, className, type, vertical }) => {
+  inputClassName?: string
+}> = ({ value, label, onChange, labelClassName, className, type, vertical, inputClassName }) => {
   const id = useId()
 
   return (
@@ -62,7 +63,15 @@ export const SettingInput: Component<{
       <Label className={cn("shrink-0", labelClassName)} htmlFor={id}>
         {label}
       </Label>
-      <Input type={type} id={id} value={value} onChange={onChange} className="text-xs" />
+      <div className={cn(inputClassName)}>
+        <Input
+          type={type}
+          id={id}
+          value={value}
+          onChange={onChange}
+          className={cn("text-xs w-full")}
+        />
+      </div>
     </div>
   )
 }

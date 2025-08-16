@@ -107,6 +107,24 @@ export const createSettingBuilder =
                 className="mt-4"
                 value={settingObject[assertSetting.key] as string}
                 onChange={(event) => assertSetting.onChange(event.target.value as T[keyof T])}
+                inputClassName={assertSetting.componentProps?.inputClassName}
+                label={assertSetting.label}
+              />
+            )
+            break
+          }
+          case "number": {
+            ControlElement = (
+              <SettingInput
+                vertical={assertSetting.vertical}
+                labelClassName={assertSetting.componentProps?.labelClassName}
+                type="number"
+                className="mt-4"
+                value={String(settingObject[assertSetting.key] as number)}
+                onChange={(event) =>
+                  assertSetting.onChange(Number(event.target.value) as any)
+                }
+                inputClassName={assertSetting.componentProps?.inputClassName}
                 label={assertSetting.label}
               />
             )

@@ -4,7 +4,11 @@ import type { SettingItem } from "./setting-builder"
 import { createSettingBuilder } from "./setting-builder"
 
 export const createDefineSettingItem =
-  <T>(_getSetting: () => T, setSetting: (key: any, value: Partial<T>) => void) =>
+  <T>(
+    _getSetting: () => T,
+    setSetting: (key: any, value: Partial<T>) => void,
+    setPersisted?: (key: any, value: Partial<T>) => void,
+  ) =>
   <K extends keyof T>(
     key: K,
     options: {
@@ -12,6 +16,7 @@ export const createDefineSettingItem =
       description?: string | JSX.Element
       onChange?: (value: T[K]) => void
       hide?: boolean
+      persist?: boolean
     } & Omit<SettingItem<any>, "onChange" | "description" | "label" | "hide" | "key">,
   ): any => {
     const { label, description, onChange, hide, ...rest } = options
@@ -22,7 +27,12 @@ export const createDefineSettingItem =
       description,
       onChange: (value: any) => {
         if (onChange) return onChange(value as any)
-        setSetting(key, value as any)
+        const shouldPersist = Boolean(options.persist)
+        if (shouldPersist && setPersisted) {
+          setPersisted(key, value as any)
+        } else {
+          setSetting(key, value as any)
+        }
       },
       disabled: hide,
       ...rest,
@@ -32,9 +42,10 @@ export const createDefineSettingItem =
 export const createSetting = <T extends object>(
   useSetting: () => T,
   setSetting: (key: any, value: Partial<T>) => void,
+  setPersisted?: (key: any, value: Partial<T>) => void,
 ) => {
   const SettingBuilder = createSettingBuilder(useSetting)
-  const defineSettingItem = createDefineSettingItem(useSetting, setSetting)
+  const defineSettingItem = createDefineSettingItem(useSetting, setSetting, setPersisted)
   return {
     SettingBuilder,
     defineSettingItem,

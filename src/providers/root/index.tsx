@@ -9,6 +9,11 @@ import { BackgroundProvider } from '~/providers/background'
 import { ModalStackProvider } from "~/components/ui/modal"
 import { GlobalFocusableProvider } from "~/components/common/focusable/global-focusable-provider"
 import { I18nProvider } from '~/providers/root/i18n-provider'
+import { LyricPage } from '~/components/modules/lyric'
+import { MusicPlayerProvider } from '~/providers/player/music-player-provider'
+import { LyricProvider } from '~/providers/player/lyric-provider'
+import { FFTToLowPassProvider } from '~/providers/player/fft-to-low-pass-provider'
+import { MusicQualityTagProvider } from '~/providers/player/music-quality-tag-provider'
 
 const loadFeatures = () =>
     import('./framer-lazy-feature').then((res) => res.default)
@@ -26,6 +31,11 @@ export function RootProvider({ children }: PropsWithChildren) {
                   <AppThemeProvider>
                     <ThemeProvider>
                       {children}
+                      <MusicPlayerProvider />
+                      <LyricProvider />
+                      <FFTToLowPassProvider />
+                      <MusicQualityTagProvider />
+                      <LyricPage />
                     </ThemeProvider>
                   </AppThemeProvider>
                 </I18nProvider>

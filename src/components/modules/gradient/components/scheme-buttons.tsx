@@ -50,7 +50,6 @@ export default function SchemeButtons({
             maxHeight: '26px',
             maxWidth: '26px',
             minHeight: '26px',
-            minWidth: '26px',
             color: currentScheme === scheme.id 
               ? 'rgba(0, 0, 0, 1)' 
               : 'rgba(0, 0, 0, 0.7)',

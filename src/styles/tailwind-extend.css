@@ -1,6 +1,8 @@
 /* This CSS File do not import anywhere, just write atom class for tailwindcss. The tailwindcss intellisense will be work. */
 
+@tailwind base;
 @tailwind components;
+@tailwind utilities;
 
 @layer components {
   .drag-region {

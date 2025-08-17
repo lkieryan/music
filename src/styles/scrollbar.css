@@ -4,32 +4,32 @@ body::-webkit-scrollbar {
 
 html:not([data-viewport="mobile"]) {
   /*  for firefox */
-  scrollbar-color: theme(colors.fill);
+  scrollbar-color: theme('colors.neutral.300') transparent;
   scrollbar-width: thin;
 }
 
 html.dark:not([data-viewport="mobile"]) {
-  scrollbar-color: theme(colors.neutral.500);
+  scrollbar-color: theme('colors.neutral.500');
 }
 
-html:not([data-viewport="mobile"])[data-theme="dark"] {
+html:not([data-viewport="mobile"]) [data-theme="dark"] {
   *::-webkit-scrollbar-thumb {
-    border: 6px solid theme(colors.neutral.500);
+    border: 6px solid theme('colors.neutral.500');
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: theme(colors.neutral.400/0.5);
+    background: theme('colors.neutral.400/0.5');
   }
 }
 
 html:not([data-viewport="mobile"]) *::-webkit-scrollbar-thumb {
   background-color: transparent;
-  border: 6px solid theme(colors.fill);
+  border: 6px solid theme('colors.neutral.300');
   @apply rounded-xl;
 }
 
 html:not([data-viewport="mobile"]) *::-webkit-scrollbar-thumb:hover {
-  border-color: theme(colors.neutral.400/0.8);
+  border-color: theme('colors.neutral.400/0.8');
 }
 
 html:not([data-viewport="mobile"]) *::-webkit-scrollbar {
@@ -39,13 +39,13 @@ html:not([data-viewport="mobile"]) *::-webkit-scrollbar {
 }
 
 html:not([data-viewport="mobile"]) *::-webkit-scrollbar-thumb {
-  background: theme(colors.material-medium);
+  background: theme('colors.neutral.400');
 }
 
 html:not([data-viewport="mobile"]) *::-webkit-scrollbar-thumb:hover {
-  background: theme(colors.material-thin);
+  background: theme('colors.neutral.300');
 }
 
 html:not([data-viewport="mobile"]) *::-webkit-scrollbar-corner {
-  background: theme(colors.zinc.100);
+  background: theme('colors.zinc.100');
 }

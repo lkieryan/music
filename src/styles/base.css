@@ -1,4 +1,3 @@
-@layer base {
 html,
 #shadow-html {
   --fo-font-family: "SN Pro", system-ui, sans-serif;
@@ -63,5 +62,4 @@ button {
 
 #react-scan-toolbar {
   @apply no-drag-region max-lg:!hidden;
-}
 }

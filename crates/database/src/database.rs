@@ -1,19 +1,3 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 use std::cmp::min;
 
 use std::fmt::Write;
@@ -24,6 +8,7 @@ use diesel::{
     connection::SimpleConnection,
     delete, insert_into,
     r2d2::{self, ConnectionManager, Pool, PooledConnection},
+    OptionalExtension,
     update, Connection, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection,
 };
 use diesel::{BoolExpressionMethods, Insertable, TextExpressionMethods};
@@ -44,16 +29,18 @@ use types::{
         self,
         album_bridge::dsl::album_bridge,
         albums::{album_id, dsl::albums},
-        allsongs::{_id, dsl::allsongs, path as song_path},
+        allsongs::{_id, dsl::allsongs},
         artist_bridge::dsl::artist_bridge,
         artists::{artist_id, dsl::artists},
         genre_bridge::dsl::genre_bridge,
         genres::{dsl::genres, genre_id},
+        play_history::dsl::play_history,
+        play_queue::dsl::play_queue,
         playlist_bridge::dsl::playlist_bridge,
     },
     {
         entities::{
-            AlbumBridge, ArtistBridge, GenreBridge, GetEntityOptions, QueryableAlbum,
+            AlbumBridge, ArtistBridge, GenreBridge, GetEntityOptions, PlayerStoreKv, QueryableAlbum,
             QueryableArtist, QueryableGenre, QueryablePlaylist,
         },
         songs::{GetSongOptions, QueryableSong, Song},
@@ -205,17 +192,25 @@ impl Database {
         Ok(songs)
     }
 
+
     pub fn insert_songs_by_ref(&self, songs: &mut [Song]) -> Result<()> {
         let mut conn = self.pool.get().unwrap();
         trace!("Inserting songs");
         for song in songs {
             if song.song._id.is_none() {
-                song.song._id = Some(Uuid::new_v4().to_string());
+                // Use file hash as ID if available, otherwise generate random ID
+                if let Some(hash) = &song.song.hash {
+                    song.song._id = Some(hash.clone());
+                    tracing::debug!("Using file hash as ID: {}", hash);
+                } else {
+                    song.song._id = Some(Uuid::new_v4().to_string());
+                    tracing::debug!("Generated random ID for song");
+                }
             }
 
             let changed = insert_into(allsongs)
                 .values(&song.song)
-                .on_conflict(song_path)
+                .on_conflict(_id)
                 .do_update()
                 .set(&song.song)
                 .execute(&mut conn).map_err(error_helpers::to_database_error)?;
@@ -1188,6 +1183,83 @@ impl Database {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
+    pub fn add_play_history(&self, song_id: String, play_duration: f64) -> Result<()> {
+        use diesel::dsl::now;
+        
+        let mut conn = self.pool.get().unwrap();
+        
+        insert_into(play_history)
+            .values((
+                schema::play_history::song_id.eq(&song_id),
+                schema::play_history::played_at.eq(now),
+                schema::play_history::play_duration.eq(play_duration),
+            ))
+            .execute(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+            
+        tracing::debug!("Added play history for song: {} with duration: {}", song_id, play_duration);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub fn clear_play_queue(&self) -> Result<()> {
+        let mut conn = self.pool.get().unwrap();
+        
+        delete(play_queue)
+            .execute(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+            
+        tracing::debug!("Cleared play queue");
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub fn add_to_play_queue(&self, song_id: String, position: i32) -> Result<()> {
+        use diesel::dsl::now;
+        
+        let mut conn = self.pool.get().unwrap();
+        
+        insert_into(play_queue)
+            .values((
+                schema::play_queue::song_id.eq(&song_id),
+                schema::play_queue::position.eq(position),
+                schema::play_queue::added_at.eq(now),
+            ))
+            .execute(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+            
+        tracing::debug!("Added song to play queue: {} at position {}", song_id, position);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub fn get_play_queue(&self) -> Result<Vec<(String, i32)>> {
+        let mut conn = self.pool.get().unwrap();
+        
+        let queue_items: Vec<(String, i32)> = play_queue
+            .select((schema::play_queue::song_id, schema::play_queue::position))
+            .order(schema::play_queue::position.asc())
+            .load(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+            
+        tracing::debug!("Retrieved play queue with {} items", queue_items.len());
+        Ok(queue_items)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub fn remove_from_play_queue(&self, song_id: String) -> Result<()> {
+        let mut conn = self.pool.get().unwrap();
+        
+        delete(play_queue)
+            .filter(schema::play_queue::song_id.eq(&song_id))
+            .execute(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+            
+        tracing::debug!("Removed song from play queue: {}", song_id);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
     pub fn export_playlist(&self, playlist_id: String) -> Result<String> {
         let mut conn = self.pool.get().unwrap();
 
@@ -1289,6 +1361,126 @@ impl Database {
         }
 
         Ok(ret.replace("\n\n", "\n"))
+    }
+
+    // Player Store KV methods
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub fn get_player_store_value(&self, key: &str) -> Result<Option<String>> {
+        use types::schema::player_store_kv::dsl::*;
+        let mut conn = self.pool.get().unwrap();
+        
+        let result = player_store_kv
+            .filter(types::schema::player_store_kv::key.eq(key))
+            .select(types::schema::player_store_kv::value)
+            .first::<String>(&mut conn)
+            .optional()
+            .map_err(error_helpers::to_database_error)?;
+        
+        tracing::debug!("Retrieved player store value for key: {:?}", key);
+        Ok(result)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self, value))]
+    pub fn set_player_store_value(&self, key: &str, value: &str) -> Result<()> {
+        use diesel::dsl::now;
+        use types::schema::player_store_kv;
+        let mut conn = self.pool.get().unwrap();
+        
+        // First try to update existing record
+        let updated_rows = update(player_store_kv::table.filter(player_store_kv::key.eq(key)))
+            .set((
+                player_store_kv::value.eq(value),
+                player_store_kv::updated_at.eq(now),
+            ))
+            .execute(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+        
+        // If no rows were updated, insert new record
+        if updated_rows == 0 {
+            insert_into(player_store_kv::table)
+                .values((
+                    player_store_kv::key.eq(key),
+                    player_store_kv::value.eq(value),
+                    player_store_kv::updated_at.eq(now),
+                ))
+                .execute(&mut conn)
+                .map_err(error_helpers::to_database_error)?;
+        }
+        
+        tracing::debug!("Set player store value for key: {:?}", key);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self, values))]
+    pub fn set_player_store_values(&self, values: Vec<(&str, &str)>) -> Result<()> {
+        use diesel::dsl::now;
+        use types::schema::player_store_kv;
+        let mut conn = self.pool.get().unwrap();
+        
+        conn.transaction::<(), diesel::result::Error, _>(|conn| {
+            for (key_str, value_str) in values {
+                // First try to update existing record
+                let updated_rows = update(player_store_kv::table.filter(player_store_kv::key.eq(key_str)))
+                    .set((
+                        player_store_kv::value.eq(value_str),
+                        player_store_kv::updated_at.eq(now),
+                    ))
+                    .execute(conn)?;
+                
+                // If no rows were updated, insert new record
+                if updated_rows == 0 {
+                    insert_into(player_store_kv::table)
+                        .values((
+                            player_store_kv::key.eq(key_str),
+                            player_store_kv::value.eq(value_str),
+                            player_store_kv::updated_at.eq(now),
+                        ))
+                        .execute(conn)?;
+                }
+            }
+            Ok(())
+        })
+        .map_err(error_helpers::to_database_error)?;
+        
+        tracing::debug!("Set multiple player store values");
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self, keys))]
+    pub fn get_player_store_values(&self, keys: Vec<&str>) -> Result<std::collections::HashMap<String, String>> {
+        use types::schema::player_store_kv::dsl::*;
+        let mut conn = self.pool.get().unwrap();
+        
+        let results: Vec<PlayerStoreKv> = player_store_kv
+            .filter(types::schema::player_store_kv::key.eq_any(keys))
+            .load(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+        
+        let mut map = std::collections::HashMap::new();
+        for item in results {
+            map.insert(item.key, item.value);
+        }
+        
+        tracing::debug!("Retrieved {} player store values", map.len());
+        Ok(map)
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub fn delete_player_store_value(&self, key: &str) -> Result<()> {
+        use types::schema::player_store_kv::dsl::*;
+        let mut conn = self.pool.get().unwrap();
+        
+        delete(player_store_kv.filter(types::schema::player_store_kv::key.eq(key)))
+            .execute(&mut conn)
+            .map_err(error_helpers::to_database_error)?;
+        
+        tracing::debug!("Deleted player store value for key: {:?}", key);
+        Ok(())
+    }
+
+    /// Get a connection from the pool for external use
+    pub fn get_connection(&self) -> Result<r2d2::PooledConnection<ConnectionManager<LoggingConnection<SqliteConnection>>>> {
+        self.pool.get().map_err(|e| types::errors::MusicError::String(format!("Failed to get DB connection: {}", e)))
     }
 }
 

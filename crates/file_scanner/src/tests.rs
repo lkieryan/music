@@ -53,7 +53,7 @@ https://chiru.no/stream.flac"#;
             1 => assert_eq!(song.unwrap().song.title.unwrap(), "320"),
             2 => assert_eq!(song.unwrap().song.title.unwrap(), "stream.flac"),
             _ => {
-                println!("{:?}", song);
+
                 unreachable!()
             }
         }

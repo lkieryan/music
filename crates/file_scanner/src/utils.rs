@@ -1,40 +1,28 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-use lazy_static::lazy_static;
-use lofty::{
-    picture::Picture, prelude::Accessor, prelude::AudioFile, prelude::TaggedFileExt, probe::Probe,
-    read_from_path,
-};
-use regex::Regex;
 use std::{
-    f64, fs,
+    fs,
+    io::Read,
     num::NonZeroU32,
     path::{Path, PathBuf},
 };
+
+use fast_image_resize::{self as fr, ResizeOptions};
+use image::ColorType;
+use lazy_static::lazy_static;
+use lofty::{
+    file::{AudioFile, TaggedFileExt},
+    picture::Picture,
+    probe::Probe,
+    read_from_path,
+    tag::Accessor,
+};
+use md5;
+use regex::Regex;
 use types::{
     entities::{QueryableAlbum, QueryableArtist, QueryableGenre},
+    errors::Result,
     songs::{QueryableSong, Song, SongType},
 };
 use uuid::Uuid;
-
-use image::ColorType;
-use types::errors::Result;
-
-use fast_image_resize::{self as fr, ResizeOptions};
 
 use crate::types::FileList;
 
@@ -45,8 +33,34 @@ pub fn check_directory(dir: PathBuf) -> Result<()> {
     if !dir.is_dir() {
         fs::create_dir_all(dir)?
     }
-
     Ok(())
+}
+
+#[tracing::instrument(level = "debug", skip(thumbnail_dir, data))]
+fn store_picture_from_bytes(thumbnail_dir: &Path, data: &[u8]) -> Result<(PathBuf, PathBuf)> {
+    // Ensure target directory exists
+    if !thumbnail_dir.exists() {
+        fs::create_dir_all(thumbnail_dir)?;
+    }
+
+    let hash = blake3::hash(data).to_hex();
+    let hash_str = hash.as_str();
+
+    let low_path = thumbnail_dir.join(format!("{}-low.png", hash_str));
+    let high_path = thumbnail_dir.join(format!("{}.png", hash_str));
+
+    if !Path::new(high_path.to_str().unwrap()).exists() {
+        generate_image(data, high_path.clone(), 400)?;
+    }
+
+    if !Path::new(low_path.to_str().unwrap()).exists() {
+        generate_image(data, low_path.clone(), 80)?;
+    }
+
+    Ok((
+        dunce::canonicalize(high_path)?,
+        dunce::canonicalize(low_path)?,
+    ))
 }
 
 #[tracing::instrument(level = "debug", skip(dir))]
@@ -140,14 +154,16 @@ fn generate_image(data: &[u8], path: PathBuf, dimensions: u32) -> Result<()> {
         }),
     ).map_err(error_helpers::to_media_error)?;
 
-    image::save_buffer(
-        path,
+    // Save buffer and log any error explicitly to help diagnose why "saved" may not print
+    if let Err(e) = image::save_buffer(
+        path.clone(),
         dst_image.buffer(),
         dst_width.get(),
         dst_height.get(),
         ColorType::Rgba8,
-    ).map_err(error_helpers::to_media_error)?;
-
+    ) {
+        return Err(error_helpers::to_media_error(e));
+    }
     Ok(())
 }
 
@@ -156,6 +172,11 @@ fn store_picture(thumbnail_dir: &Path, picture: &Picture) -> Result<(PathBuf, Pa
     let data = picture.data();
     let hash = blake3::hash(data).to_hex();
     let hash_str = hash.as_str();
+    
+    // Ensure target directory exists to avoid save failures
+    if !thumbnail_dir.exists() {
+        fs::create_dir_all(thumbnail_dir)?;
+    }
 
     let low_path = thumbnail_dir.join(format!("{}-low.png", hash_str));
     let high_path = thumbnail_dir.join(format!("{}.png", hash_str));
@@ -202,6 +223,14 @@ fn scan_lrc(mut path: PathBuf) -> Option<String> {
     None
 }
 
+#[tracing::instrument(level = "debug", skip(path))]
+fn calculate_file_md5(path: &PathBuf) -> Result<String> {
+    let data = fs::read(path)?;
+    let digest = md5::compute(&data);
+
+    Ok(format!("{:x}", digest))
+}
+
 #[tracing::instrument(level = "debug", skip(path, thumbnail_dir, size, guess, artist_split))]
 pub fn scan_file(
     path: &PathBuf,
@@ -216,12 +245,23 @@ pub fn scan_file(
         artists: Some(vec![]),
         genre: Some(vec![]),
     };
-    song.song._id = Some(Uuid::new_v4().to_string());
+    // Don't set ID here - let database logic use MD5 hash as ID
     song.song.title = Some(path.file_name().unwrap().to_string_lossy().to_string());
     song.song.path = Some(dunce::canonicalize(path)?.to_string_lossy().to_string());
     song.song.size = Some(size);
     song.song.duration = Some(0f64);
     song.song.type_ = SongType::LOCAL;
+    
+    // Calculate file MD5 hash
+    match calculate_file_md5(path) {
+        Ok(hash) => {
+            song.song.hash = Some(hash);
+            tracing::debug!("Calculated MD5 hash for file: {}", path.display());
+        }
+        Err(e) => {
+            tracing::warn!("Failed to calculate MD5 for file {}: {:?}", path.display(), e);
+        }
+    }
 
     let file = if guess {
         read_from_path(path.clone())
@@ -251,9 +291,16 @@ pub fn scan_file(
     if tags.is_some() {
         let metadata = tags.unwrap();
 
-        let picture = metadata.pictures().first();
-        if picture.is_some() {
-            match store_picture(thumbnail_dir, picture.unwrap()) {
+        let mut found_picture: Option<&Picture> = None;
+        for tag in file.tags() {
+            if let Some(p) = tag.pictures().first() {
+                found_picture = Some(p);
+                break;
+            }
+        }
+
+        if let Some(picture) = found_picture.or_else(|| metadata.pictures().first()) {
+            match store_picture(thumbnail_dir, picture) {
                 Ok((high_path, low_path)) => {
                     song.song.song_cover_path_high = Some(high_path.to_string_lossy().to_string());
                     song.song.song_cover_path_low = Some(low_path.to_string_lossy().to_string());
@@ -266,22 +313,41 @@ pub fn scan_file(
             let mut base_path = path.clone();
             base_path.pop();
             let files_res = base_path.read_dir();
-            if let Ok(mut files) = files_res {
-                song.song.song_cover_path_high = files.find_map(|e| {
-                    if let Ok(dir_entry) = e {
-                        let file_name = dir_entry
-                            .path()
-                            .file_stem()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .to_lowercase();
+            if let Ok(files) = files_res {
+                let mut fallback_image: Option<PathBuf> = None;
+                for entry in files.flatten() {
+                    let p = entry.path();
+                    if !p.is_file() { continue; }
+                    let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
+                    let ext = p.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
+                    let name_match = stem.starts_with("cover")
+                        || stem.starts_with("folder")
+                        || stem.starts_with("front")
+                        || stem.starts_with("album")
+                        || stem.starts_with("art");
+                    let ext_match = matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp");
+                    if name_match && ext_match {
+                        fallback_image = Some(p.clone());
+                        break;
+                    }
+                }
 
-                        if file_name.starts_with("cover") {
-                            return Some(dir_entry.path().to_string_lossy().to_string());
+                if let Some(img_path) = fallback_image {
+                    match fs::read(&img_path) {
+                        Ok(bytes) => {
+                            match store_picture_from_bytes(thumbnail_dir, &bytes) {
+                                Ok((high_path, low_path)) => {
+                                    song.song.song_cover_path_high = Some(high_path.to_string_lossy().to_string());
+                                    song.song.song_cover_path_low = Some(low_path.to_string_lossy().to_string());
+                                }
+                                Err(e) => tracing::error!("Error generating thumbnails from fallback image {:?}: {:?}", img_path, e),
+                            }
+                        }
+                        Err(e) => {
+                            tracing::error!("Error reading fallback image {:?}: {:?}", img_path, e);
                         }
                     }
-                    None
-                });
+                }
             }
         }
 

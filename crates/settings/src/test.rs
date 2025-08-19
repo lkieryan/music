@@ -1,19 +1,3 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 use std::{env::temp_dir, fs, path::PathBuf, thread, time::Duration};
 
 use serde::{Deserialize, Serialize};
@@ -180,9 +164,6 @@ fn test_secure_settings() -> Result<()> {
         !raw_file_content.contains(&secure_data.password),
         "Config file should not contain plaintext password"
     );
-
-    // Optional: Print file content for debugging
-    // println!("File content: {}", raw_file_content);
 
     // Verify the file does contain some reference to the secure key
     assert!(

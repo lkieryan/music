@@ -22,7 +22,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 use whoami;
 
-use types::errors::{error_helpers, MoosyncError, Result};
+use types::errors::{error_helpers, MusicError, Result};
 
 // const SCHEMA: &str = include_str!("./schema.json");
 
@@ -134,7 +134,6 @@ impl SettingsConfig {
     where
         T: Serialize + Clone + Debug,
     {
-        println!("Saving selective {} - {:?}", key, value);
         let key = format!("prefs.{}", key);
         tracing::debug!("saving {} - {:?}", key, value);
 
@@ -202,7 +201,7 @@ impl SettingsConfig {
             }
         }
 
-        Err(MoosyncError::String("Value is not an array".into()))
+        Err(MusicError::String("Value is not an array".into()))
     }
 
     #[tracing::instrument(level = "debug", skip(self, key))]
@@ -226,7 +225,7 @@ impl SettingsConfig {
             let plaintext = String::from_utf8(
                 cipher
                     .decrypt(&nonce, ciphertext.as_slice())
-                    .map_err(|e| MoosyncError::String(e.to_string()))?,
+                    .map_err(|e| MusicError::String(e.to_string()))?,
             )?;
 
             Ok(serde_json::from_str(&plaintext)?)

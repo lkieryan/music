@@ -10,6 +10,7 @@ name = "types"
 path = "src/lib.rs"
 
 [dependencies]
+chrono = { version = "0.4.40", features = ["serde"] }
 serde_json = { version = "1.0" }
 serde = { version = "1", features = ["derive"] }
 ts-rs = "10.1"

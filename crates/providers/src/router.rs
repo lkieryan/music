@@ -4,7 +4,7 @@ use futures::future::join_all;
 use tokio::time::{timeout, Duration};
 use crate::provider::base::{BaseProvider, ProviderCapability, SearchResult, Song}; // supports() kept local
 use crate::registry::ProviderRegistry;
-use types::errors::{Result, MoosyncError};
+use types::errors::{Result, MusicError};
 
 const DEFAULT_TIMEOUT_SECS: u64 = 5;
 
@@ -23,7 +23,7 @@ pub async fn search_all(term: String, providers: Vec<Arc<dyn BaseProvider>>) -> 
                 let term_cloned = value.clone();
                 match timeout(Duration::from_secs(DEFAULT_TIMEOUT_SECS), p.search(term_cloned)).await {
                     Ok(res) => (key, res),
-                    Err(_) => (key, Err(MoosyncError::String("timeout".into()))),
+                    Err(_) => (key, Err(MusicError::String("timeout".into()))),
                 }
             }
         });
@@ -101,17 +101,17 @@ pub async fn search_with_selector(
        let p = providers[0].clone();
        match timeout(Duration::from_secs(DEFAULT_TIMEOUT_SECS), p.search(term.clone())).await {
            Ok(Ok(res)) => return Ok(res),
-           Ok(Err(MoosyncError::SwitchProviders(next_key))) => {
+           Ok(Err(MusicError::SwitchProviders(next_key))) => {
                if let Some(np) = registry.get(&next_key).await {
                    if supports(np.as_ref(), &ProviderCapability::Search) {
                        return timeout(Duration::from_secs(DEFAULT_TIMEOUT_SECS), np.search(term)).await
-                           .unwrap_or_else(|_| Err(MoosyncError::String("timeout".into())));
+                           .unwrap_or_else(|_| Err(MusicError::String("timeout".into())));
                    }
                }
-               return Err(MoosyncError::String(format!("delegated provider '{}' unavailable or does not support Search", next_key)));
+               return Err(MusicError::String(format!("delegated provider '{}' unavailable or does not support Search", next_key)));
            }
            Ok(Err(e)) => return Err(e),
-           Err(_) => return Err(MoosyncError::String("timeout".into())),
+           Err(_) => return Err(MusicError::String("timeout".into())),
        }
    }
    search_all(term, providers).await
@@ -135,14 +135,14 @@ pub async fn playback_url_with_selector(
             }
            match p.get_playback_url(song.clone(), player.clone()).await {
                Ok(url) => Ok(url),
-               Err(MoosyncError::SwitchProviders(next_key)) => {
+               Err(MusicError::SwitchProviders(next_key)) => {
                    // Try delegated provider once
                    if let Some(np) = registry.get(&next_key).await {
                        if supports(np.as_ref(), &ProviderCapability::StreamUrl) {
                            return np.get_playback_url(song.clone(), player.clone()).await;
                        }
                    }
-                   Err(MoosyncError::String(format!("delegated provider '{}' unavailable or does not support StreamUrl", next_key)))
+                   Err(MusicError::String(format!("delegated provider '{}' unavailable or does not support StreamUrl", next_key)))
                }
                Err(e) => Err(e),
            }
@@ -153,7 +153,7 @@ pub async fn playback_url_with_selector(
                 if let Some(p) = registry.get(&src).await {
                     if supports(p.as_ref(), &ProviderCapability::StreamUrl) {
                         if let Ok(url) = timeout(Duration::from_secs(DEFAULT_TIMEOUT_SECS), p.get_playback_url(song.clone(), player.clone())).await
-                            .unwrap_or_else(|_| Err(MoosyncError::String("timeout".into()))) {
+                            .unwrap_or_else(|_| Err(MusicError::String("timeout".into()))) {
                             return Ok(url);
                         }
                     }
@@ -170,11 +170,11 @@ pub async fn playback_url_with_selector(
                 // Try with timeout and handle delegation once.
                 match timeout(Duration::from_secs(DEFAULT_TIMEOUT_SECS), p.get_playback_url(song.clone(), player.clone())).await {
                     Ok(Ok(url)) => return Ok(url),
-                    Ok(Err(MoosyncError::SwitchProviders(next_key))) => {
+                    Ok(Err(MusicError::SwitchProviders(next_key))) => {
                         if let Some(np) = registry.get(&next_key).await {
                             if supports(np.as_ref(), &ProviderCapability::StreamUrl) {
                                 if let Ok(url) = timeout(Duration::from_secs(DEFAULT_TIMEOUT_SECS), np.get_playback_url(song.clone(), player.clone())).await
-                                    .unwrap_or_else(|_| Err(MoosyncError::String("timeout".into()))) {
+                                    .unwrap_or_else(|_| Err(MusicError::String("timeout".into()))) {
                                     return Ok(url);
                                 }
                             }

@@ -35,7 +35,7 @@ macro_rules! generate_command_cached {
 
             tracing::debug!("calling cached {}: {}", stringify!($method_name), cache_string);
             let cached = if invalidate_cache {
-                Err(types::errors::MoosyncError::InvalidatedCache)
+                Err(types::errors::MusicError::InvalidatedCache)
             } else {
                 cache.get(cache_string.as_str())
             };
@@ -103,7 +103,7 @@ macro_rules! generate_command_async_cached {
             tracing::debug!("calling cached async {}: {}", stringify!($method_name), cache_string);
 
             let cached = if invalidate_cache {
-                Err(types::errors::MoosyncError::InvalidatedCache)
+                Err(types::errors::MusicError::InvalidatedCache)
             } else {
                 cache.get(cache_string.as_str())
             };

@@ -6,7 +6,35 @@ use tauri::Manager;
 use providers::handler::{
   provider_search, provider_playback_url, provider_list_keys,
 };
-use scanner::{get_scanner_state, ScanTask};
+use scanner::{
+  start_scan,
+  get_scanner_state, ScanTask, 
+  start_auto_scanner, stop_auto_scanner, trigger_manual_scan, get_auto_scanner_status, get_local_songs
+};
+
+use audio::{
+  audio_play,
+  audio_pause,
+  audio_stop,
+  audio_seek,
+  audio_set_volume,
+  audio_get_volume,
+  // PlayerStore commands
+  get_current_song,
+  get_queue,
+  get_player_state,
+  add_to_queue,
+  remove_from_queue,
+  play_now,
+  shuffle_queue,
+  clear_queue,
+  toggle_player_mode,
+  get_player_mode,
+  set_player_mode,
+  next_song,
+  prev_song,
+  change_index,
+};
 use database::database::Database;
 use std::sync::Arc;
 
@@ -15,17 +43,20 @@ mod themes;
 mod providers;
 mod scanner;
 mod audio;
+mod playback;
 
-
-
+/// run the app
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+
+  let _ = rustls::crypto::ring::default_provider().install_default();
   let mut builder = tauri::Builder::default();
 
   builder = builder
+    .plugin(tauri_plugin_dialog::init())
     .invoke_handler(tauri::generate_handler![
      // Themes      themes::save_theme,      themes::remove_theme,      themes::load_theme,      themes::load_all_themes,      themes::get_css,      themes::export_theme,      themes::import_theme,
-     // settings
+      // settings
       save_selective,
       load_domain,
       save_domain_partial,
@@ -34,28 +65,38 @@ pub fn run() {
       get_secure,
       set_secure,
       // Providers
-      providers::handler::provider_search,
-      providers::handler::provider_playback_url,
-      providers::handler::provider_list_keys,
+      provider_search,
+      provider_playback_url,
+      provider_list_keys,
+      // Scanner 
+      start_auto_scanner,
+      stop_auto_scanner, 
+      trigger_manual_scan,
+      get_auto_scanner_status,
+      get_local_songs,
+      start_scan,
       // Audio Player Commands
-      audio::play_song,
-      audio::pause_playback,
-      audio::resume_playback,
-      audio::stop_playback,
-      audio::seek_to_position,
-      audio::set_volume,
-      audio::next_track,
-      audio::previous_track,
-      audio::set_play_mode,
-      audio::add_to_queue,
-      audio::remove_from_queue,
-      audio::get_queue,
-      audio::get_player_status,
-      audio::toggle_playback,
-      audio::get_current_song,
-      audio::clear_queue,
-      audio::add_songs_to_queue,
-      audio::play_playlist,
+      audio_play,
+      audio_pause,
+      audio_stop,
+      audio_seek,
+      audio_set_volume,
+      audio_get_volume,
+      // PlayerStore Commands
+      get_current_song,
+      get_queue,
+      get_player_state,
+      add_to_queue,
+      remove_from_queue,
+      play_now,
+      shuffle_queue,
+      clear_queue,
+      toggle_player_mode,
+      get_player_mode,
+      set_player_mode,
+      next_song,
+      prev_song,
+      change_index
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {
@@ -83,10 +124,9 @@ pub fn run() {
       let db = Arc::new(Database::new(db_path));
       app.manage(db.clone());
 
-      // Initialize audio player runtime handle (Send + Sync)
-      let player_handle = audio::PlayerHandle::spawn(db.clone())
-        .expect("Failed to initialize player handle");
-      app.manage(player_handle.clone());
+      // Initialize audio player via builder (single instance) and manage it
+      let audio_state = audio::build_audio_player(app.app_handle().clone());
+      app.manage(audio_state);
 
       // Initialize theme subsystem
       let theme_handler_state = themes::get_theme_handler_state(app);
@@ -94,9 +134,6 @@ pub fn run() {
 
       // Initialize providers subsystem (state + bootstrap from settings)
       providers::initialize_providers(app);
-
-      // Setup audio player event handling
-      audio::setup_player_events(app.handle().clone(), player_handle.clone());
 
       initial(app);
       handle_settings_changes(app.handle().clone());

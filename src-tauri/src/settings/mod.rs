@@ -34,20 +34,72 @@ pub fn handle_settings_changes(app: AppHandle) {
         let receiver = pref_config.get_receiver();
         for (key, value) in receiver {
             tracing::debug!("Received key: {} value: {}", key, value);
-            println!("Received key: {} value: {}", key, value);
             if UI_KEYS.contains(&key.as_str()) {
                 tracing::info!("Emitting settings-changed event");
                 if let Err(e) = app.emit("settings-changed", (key.clone(), value.clone())) {
                     tracing::error!("Error emitting settings-changed event{}", e);
                 } else {
                     tracing::info!("Emitted settings-changed event");
-                    println!("Emitted settings-changed event: {:?}", (key.clone(), value.clone()));
                 }
             }
 
+            // Mirror scan folders from prefs to flat scanner key (support both casing)
+            if key == "prefs.general.scan_folders" || key == "prefs.general.scanFolders" {
+                // scanner expects flat key `music_paths`
+                if let Err(e) = pref_config.save_selective("music_paths".to_string(), Some(value.clone())) {
+                    tracing::error!("Failed to mirror scan_folders to music_paths: {:?}", e);
+                } else {
+                    tracing::info!("Mirrored prefs.general.scan_folders -> music_paths");
+
+                    let scan_task = app.state::<crate::scanner::ScanTask>();
+                    if let Err(e) = scan_task.update_auto_scanner_config(&app) {
+                        tracing::warn!("Failed to update AutoScanner config after path change: {:?}", e);
+                    }
+
+                    if let Err(e) = scan_task.trigger_auto_scan(None) {
+                        tracing::warn!("Failed to trigger full scan after path change: {:?}", e);
+                    } else {
+                        tracing::info!("Triggered full scan after scan folder change");
+                    }
+                }
+            }
+
+            if key == "prefs.general.autoScanEnabled" {
+                if let Some(enabled) = value.as_bool() {
+                    if enabled {
+                        tracing::info!("Auto scan enabled, starting AutoScanner");
+                        app.state::<crate::scanner::ScanTask>().cancel_legacy_task();
+                        let app_handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let scan_task = app_handle.state::<crate::scanner::ScanTask>();
+                            if let Err(e) = scan_task.initialize_auto_scanner(&app_handle).await {
+                                tracing::error!("Failed to start AutoScanner after enabling: {:?}", e);
+                            }
+                        });
+                    } else {
+                        tracing::info!("Auto scan disabled, stopping AutoScanner");
+                        let app_handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let scan_task = app_handle.state::<crate::scanner::ScanTask>();
+                            scan_task.stop_auto_scanner().await;
+                        });
+                    }
+                }
+            }
+
+            if key == "prefs.general.scanMinDuration" {
+                let _ = pref_config.save_selective("general.scan_min_duration".to_string(), Some(value.clone()));
+                tracing::info!("Mirrored prefs.general.scanMinDuration -> general.scan_min_duration");
+                let _ = app.state::<crate::scanner::ScanTask>().update_auto_scanner_config(&app);
+            }
+            if key == "prefs.general.scanFormats" {
+                let _ = pref_config.save_selective("general.scan_formats".to_string(), Some(value.clone()));
+                tracing::info!("Mirrored prefs.general.scanFormats -> general.scan_formats");
+                let _ = app.state::<crate::scanner::ScanTask>().update_auto_scanner_config(&app);
+            }
+
            if key == "prefs.providers.instances" {
-               // Instances array replaced; re-init enabled instances (idempotent)
-               init_enabled_instances(&app).await;
+              init_enabled_instances(&app).await;
            }
 
             // if key == "prefs.general.launch_at_login" { // unified key (bool)
@@ -113,29 +165,53 @@ pub fn initial(app: &mut App) {
         );
     }
 
-    // Spawn scan task
-    let scan_task: State<ScanTask> = app.state();
-    let scan_duration = pref_config.load_selective::<u64>("scan_interval".into());
-    if let Ok(scan_duration) = scan_duration {
-        scan_task.spawn_scan_task(app.handle().clone(), scan_duration.max(30));
-    } else {
-        tracing::warn!("Could not spawn scan task, no / invalid duration found");
+    // Mirror scanFolders/scan_folders -> music_paths at startup (so scanner can pick them)
+    let startup_paths = pref_config
+        .load_selective::<serde_json::Value>("general.scanFolders".into())
+        .or_else(|_| pref_config.load_selective::<serde_json::Value>("general.scan_folders".into()));
+    if let Ok(paths) = startup_paths {
+        let _ = pref_config.save_selective("music_paths".to_string(), Some(paths));
+        tracing::info!("Mirrored general.scanFolders -> music_paths at startup");
     }
 
-    // let handle = app.handle().clone();
-    // tauri::async_runtime::spawn(async move {
-    //     let extension_handler = handle.state::<ExtensionHandler>();
-    //     if let Err(e) = extension_handler.find_new_extensions().await {
-    //         tracing::error!("Failed to find extensions: {:?}", e);
-    //     }
-    // });
+    // Check if auto scan is enabled and start AutoScanner accordingly (camelCase first)
+    let auto_scan_enabled = pref_config
+        .load_selective::<bool>("general.autoScanEnabled".into())
+        .or_else(|_| pref_config.load_selective::<bool>("general.auto_scan_enabled".into()))
+        .unwrap_or(false);
 
-    let handle = app.handle().clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        if let Err(e) = start_scan(handle, None) {
-            tracing::error!("Failed to scan: {:?}", e);
+    let scan_task: State<ScanTask> = app.state();
+    
+    if auto_scan_enabled {
+        // Start AutoScanner if auto scan is enabled
+        tracing::info!("Auto scan enabled at startup, initializing AutoScanner");
+        let app_handle = app.handle().clone();
+        tauri::async_runtime::spawn(async move {
+            let scan_task = app_handle.state::<ScanTask>();
+            if let Err(e) = scan_task.initialize_auto_scanner(&app_handle).await {
+                tracing::error!("Failed to initialize AutoScanner at startup: {:?}", e);
+            }
+        });
+    } else {
+        // Fall back to legacy scanning if auto scan is disabled
+        tracing::info!("Auto scan disabled, using legacy scan mode");
+        
+        // Spawn legacy scan task
+        let scan_duration = pref_config.load_selective::<u64>("scan_interval".into());
+        if let Ok(scan_duration) = scan_duration {
+            scan_task.spawn_scan_task(app.handle().clone(), scan_duration.max(30));
+        } else {
+            tracing::warn!("Could not spawn scan task, no / invalid duration found");
         }
-    });
+
+        // Run initial legacy scan
+        let handle = app.handle().clone();
+        tauri::async_runtime::spawn_blocking(move || {
+            if let Err(e) = start_scan(handle, None) {
+                tracing::error!("Failed to scan: {:?}", e);
+            }
+        });
+    }
 }
 
 generate_command!(load_selective, SettingsConfig, Value, key: String);

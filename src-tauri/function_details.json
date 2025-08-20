@@ -83,6 +83,60 @@
         {
           "arg_type": "tauri::AppHandle",
           "name": "app"
+        }
+      ],
+      "name": "start_auto_scanner",
+      "ret": "types::errors::Result<()>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::AppHandle",
+          "name": "app"
+        }
+      ],
+      "name": "stop_auto_scanner",
+      "ret": "types::errors::Result<()>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::AppHandle",
+          "name": "app"
+        },
+        {
+          "arg_type": "Option<Vec<String>>",
+          "name": "paths"
+        }
+      ],
+      "name": "trigger_manual_scan",
+      "ret": "types::errors::Result<()>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::AppHandle",
+          "name": "app"
+        }
+      ],
+      "name": "get_auto_scanner_status",
+      "ret": "types::errors::Result<String>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::AppHandle",
+          "name": "app"
+        }
+      ],
+      "name": "get_local_songs",
+      "ret": "types::errors::Result<Vec<providers::provider::base::Song>>"
+    },
+    {
+      "args": [
+        {
+          "arg_type": "tauri::AppHandle",
+          "name": "app"
         },
         {
           "arg_type": "Option<Vec<String>>",

@@ -1,20 +1,6 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 use bitcode::{Decode, Encode};
+#[cfg(feature = "ts-rs")]
+use ts_rs::TS;
 #[cfg(feature = "db")]
 use diesel::{
     backend::Backend,
@@ -30,7 +16,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "db")]
 use crate::schema::{
     album_bridge, albums, analytics, artist_bridge, artists, genre_bridge, genres, playlist_bridge,
-    playlists,
+    playlists, player_store_kv,
 };
 
 use super::{
@@ -39,6 +25,7 @@ use super::{
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Encode, Decode)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts", type = "string"))]
 #[cfg_attr(feature = "db", derive(FromSqlRow, AsExpression))]
 #[cfg_attr(feature = "db", diesel(sql_type = diesel::sql_types::Text))]
 pub struct EntityInfo(pub String);
@@ -74,6 +61,7 @@ where
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
@@ -144,6 +132,7 @@ impl SearchByTerm for QueryableAlbum {
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
@@ -168,6 +157,7 @@ impl BridgeUtils for AlbumBridge {
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset)
@@ -260,6 +250,7 @@ impl BridgeUtils for ArtistBridge {
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
@@ -347,6 +338,7 @@ impl BridgeUtils for GenreBridge {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 pub struct GetEntityOptions {
     pub artist: Option<QueryableArtist>,
     pub album: Option<QueryableAlbum>,
@@ -380,6 +372,7 @@ impl BridgeUtils for PlaylistBridge {
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
     derive(Insertable, Queryable, Identifiable, AsChangeset,)
@@ -444,6 +437,7 @@ impl SearchByTerm for QueryablePlaylist {
 }
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 pub struct SearchResult {
     #[serde(deserialize_with = "deserialize_default")]
     pub songs: Vec<Song>,
@@ -469,4 +463,17 @@ pub struct Analytics {
     pub song_id: Option<String>,
     pub play_count: Option<i32>,
     pub play_time: Option<f64>,
+}
+
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
+#[cfg_attr(
+    feature = "db",
+    derive(Insertable, Queryable, Identifiable, AsChangeset,)
+)]
+#[cfg_attr(feature = "db", diesel(table_name = player_store_kv))]
+#[cfg_attr(feature = "db", diesel(primary_key(key)))]
+pub struct PlayerStoreKv {
+    pub key: String,
+    pub value: String,
+    pub updated_at: Option<chrono::NaiveDateTime>,
 }

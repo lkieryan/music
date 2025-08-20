@@ -1,21 +1,3 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-// @generated automatically by Diesel CLI.
-
 diesel::table! {
     album_bridge (id) {
         id -> Nullable<Integer>,
@@ -124,6 +106,39 @@ diesel::table! {
 }
 
 diesel::table! {
+    play_history (id) {
+        id -> Nullable<Integer>,
+        song_id -> Text,
+        played_at -> Nullable<Timestamp>,
+        play_duration -> Nullable<Double>,
+    }
+}
+
+diesel::table! {
+    play_queue (id) {
+        id -> Nullable<Integer>,
+        song_id -> Text,
+        position -> Integer,
+        added_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    player_state (id) {
+        id -> Nullable<Integer>,
+        current_song_id -> Nullable<Text>,
+        current_position -> Nullable<Double>,
+        volume -> Nullable<Float>,
+        is_playing -> Nullable<Bool>,
+        is_paused -> Nullable<Bool>,
+        repeat_mode -> Nullable<Text>,
+        shuffle_enabled -> Nullable<Bool>,
+        queue_length -> Nullable<Integer>,
+        current_index -> Nullable<Integer>,
+    }
+}
+
+diesel::table! {
     playlists (playlist_id) {
         playlist_id -> Nullable<Text>,
         playlist_name -> Text,
@@ -137,6 +152,14 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    player_store_kv (key) {
+        key -> Text,
+        value -> Text,
+        updated_at -> Nullable<Timestamp>,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     album_bridge,
     albums,
@@ -146,6 +169,10 @@ diesel::allow_tables_to_appear_in_same_query!(
     artists,
     genre_bridge,
     genres,
+    play_history,
+    play_queue,
+    player_state,
+    player_store_kv,
     playlist_bridge,
     playlists,
 );

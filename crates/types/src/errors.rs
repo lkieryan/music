@@ -1,18 +1,4 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 #[cfg(not(feature = "extensions"))]
 use std::{
@@ -39,7 +25,7 @@ use core::str;
 
 #[cfg(not(feature = "extensions"))]
 #[derive(Debug, thiserror::Error)]
-pub enum MoosyncError {
+pub enum MusicError {
     #[cfg_attr(any(feature = "db", feature = "extensions-core"), error(transparent))]
     #[cfg(any(feature = "db", feature = "extensions-core"))]
     IO(#[from] io::Error),
@@ -86,7 +72,7 @@ pub enum MoosyncError {
 }
 
 #[cfg(all(not(feature = "extensions"), feature = "ui"))]
-impl From<serde_wasm_bindgen::Error> for MoosyncError {
+impl From<serde_wasm_bindgen::Error> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: serde_wasm_bindgen::Error) -> Self {
         Self::String(value.to_string())
@@ -94,7 +80,7 @@ impl From<serde_wasm_bindgen::Error> for MoosyncError {
 }
 
 #[cfg(all(not(feature = "extensions"), feature = "ui"))]
-impl From<JsValue> for MoosyncError {
+impl From<JsValue> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: JsValue) -> Self {
         let parsed: Value = serde_wasm_bindgen::from_value(value).unwrap();
@@ -102,14 +88,14 @@ impl From<JsValue> for MoosyncError {
     }
 }
 
-impl From<&'static str> for MoosyncError {
+impl From<&'static str> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: &'static str) -> Self {
         Self::String(value.to_string())
     }
 }
 
-impl From<String> for MoosyncError {
+impl From<String> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: String) -> Self {
         Self::String(value)
@@ -117,7 +103,7 @@ impl From<String> for MoosyncError {
 }
 
 #[cfg(not(feature = "extensions"))]
-impl From<FmtError> for MoosyncError {
+impl From<FmtError> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: FmtError) -> Self {
         Self::String(value.to_string())
@@ -125,7 +111,7 @@ impl From<FmtError> for MoosyncError {
 }
 
 #[cfg(not(feature = "extensions"))]
-impl From<ParseFloatError> for MoosyncError {
+impl From<ParseFloatError> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: ParseFloatError) -> Self {
         Self::ParseError(Box::new(value))
@@ -133,7 +119,7 @@ impl From<ParseFloatError> for MoosyncError {
 }
 
 #[cfg(not(feature = "extensions"))]
-impl From<ParseIntError> for MoosyncError {
+impl From<ParseIntError> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: ParseIntError) -> Self {
         Self::ParseError(Box::new(value))
@@ -141,7 +127,7 @@ impl From<ParseIntError> for MoosyncError {
 }
 
 #[cfg(not(feature = "extensions"))]
-impl From<FromUtf8Error> for MoosyncError {
+impl From<FromUtf8Error> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: FromUtf8Error) -> Self {
         Self::ParseError(Box::new(value))
@@ -149,14 +135,14 @@ impl From<FromUtf8Error> for MoosyncError {
 }
 
 #[cfg(not(feature = "extensions"))]
-impl From<SystemTimeError> for MoosyncError {
+impl From<SystemTimeError> for MusicError {
     #[tracing::instrument(level = "debug", skip(value))]
     fn from(value: SystemTimeError) -> Self {
         Self::FileSystemError(Box::new(value))
     }
 }
 
-impl serde::Serialize for MoosyncError {
+impl serde::Serialize for MusicError {
     #[tracing::instrument(level = "debug", skip(self, serializer))]
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
     where
@@ -168,87 +154,87 @@ impl serde::Serialize for MoosyncError {
 
 #[cfg(feature = "extensions")]
 #[derive(Debug, thiserror::Error)]
-pub enum MoosyncError {
+pub enum MusicError {
     #[error("{0}")]
     String(String),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
 }
 
-pub type Result<T> = std::result::Result<T, MoosyncError>;
+pub type Result<T> = std::result::Result<T, MusicError>;
 
-/// Helper functions for converting errors to MoosyncError variants
+/// Helper functions for converting errors to MusicError variants
 /// These can be used with .map_err() directly
 #[cfg(not(feature = "extensions"))]
 pub mod error_helpers {
-    use super::MoosyncError;
+    use super::MusicError;
 
-    pub fn to_playback_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::PlaybackError(Box::new(e))
+    pub fn to_playback_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::PlaybackError(Box::new(e))
     }
 
-    pub fn to_database_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::DatabaseError(Box::new(e))
+    pub fn to_database_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::DatabaseError(Box::new(e))
     }
 
-    pub fn to_network_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::NetworkError(Box::new(e))
+    pub fn to_network_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::NetworkError(Box::new(e))
     }
 
-    pub fn to_auth_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::AuthError(Box::new(e))
+    pub fn to_auth_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::AuthError(Box::new(e))
     }
 
     pub fn to_file_system_error<E: std::error::Error + Send + Sync + 'static>(
         e: E,
-    ) -> MoosyncError {
-        MoosyncError::FileSystemError(Box::new(e))
+    ) -> MusicError {
+        MusicError::FileSystemError(Box::new(e))
     }
 
-    pub fn to_media_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::MediaError(Box::new(e))
+    pub fn to_media_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::MediaError(Box::new(e))
     }
 
-    pub fn to_config_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::ConfigError(Box::new(e))
+    pub fn to_config_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::ConfigError(Box::new(e))
     }
 
-    pub fn to_parse_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::ParseError(Box::new(e))
+    pub fn to_parse_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::ParseError(Box::new(e))
     }
 
-    pub fn to_validation_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::ValidationError(Box::new(e))
+    pub fn to_validation_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::ValidationError(Box::new(e))
     }
 
-    pub fn to_provider_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::ProviderError(Box::new(e))
+    pub fn to_provider_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::ProviderError(Box::new(e))
     }
 
-    pub fn to_extension_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::ExtensionError(Box::new(e))
+    pub fn to_extension_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::ExtensionError(Box::new(e))
     }
 
-    pub fn to_cache_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::CacheError(Box::new(e))
+    pub fn to_cache_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::CacheError(Box::new(e))
     }
 
-    pub fn to_webview_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::WebviewError(Box::new(e))
+    pub fn to_webview_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::WebviewError(Box::new(e))
     }
 
-    pub fn to_plugin_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::PluginError(Box::new(e))
+    pub fn to_plugin_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::PluginError(Box::new(e))
     }
 
-    pub fn to_mpris_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MoosyncError {
-        MoosyncError::MprisError(Box::new(e))
+    pub fn to_mpris_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> MusicError {
+        MusicError::MprisError(Box::new(e))
     }
 }
 
 #[macro_export]
 macro_rules! moosync_err {
     ($variant:ident, $err:expr) => {
-        Err($crate::errors::MoosyncError::$variant(Box::new($err)))
+        Err($crate::errors::MusicError::$variant(Box::new($err)))
     };
 }

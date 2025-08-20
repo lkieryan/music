@@ -1,23 +1,9 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 use std::{fmt::Display, str::FromStr};
 
-use crate::errors::MoosyncError;
+use crate::errors::MusicError;
 use bitcode::{Decode, Encode};
+#[cfg(feature = "ts-rs")]
+use ts_rs::TS;
 #[cfg(feature = "db")]
 use diesel::{
     backend::Backend,
@@ -39,6 +25,7 @@ use super::{
 };
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq, Eq, Copy, Encode, Decode)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(feature = "db", derive(FromSqlRow, AsExpression))]
 #[cfg_attr(feature = "db", diesel(sql_type = diesel::sql_types::Text))]
 pub enum SongType {
@@ -64,7 +51,7 @@ impl Display for SongType {
 }
 
 impl FromStr for SongType {
-    type Err = MoosyncError;
+    type Err = MusicError;
 
     #[tracing::instrument(level = "debug", skip(s))]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -74,7 +61,7 @@ impl FromStr for SongType {
             "SPOTIFY" => Ok(SongType::SPOTIFY),
             "DASH" => Ok(SongType::DASH),
             "HLS" => Ok(SongType::HLS),
-            _ => Err(MoosyncError::String(format!("Invalid song type: {}", s))),
+            _ => Err(MusicError::String(format!("Invalid song type: {}", s))),
         }
     }
 }
@@ -119,6 +106,7 @@ where
 }
 
 #[derive(Debug, Deserialize, Serialize, Default, Clone, Encode, Decode)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
     derive(
@@ -202,6 +190,7 @@ impl SearchByTerm for QueryableSong {
 }
 
 #[derive(Debug, Deserialize, Clone, Default, Serialize)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 pub struct SearchableSong {
     pub _id: Option<String>,
     pub path: Option<String>,
@@ -218,6 +207,7 @@ pub struct SearchableSong {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 pub struct GetSongOptions {
     pub song: Option<SearchableSong>,
     pub artist: Option<QueryableArtist>,
@@ -228,6 +218,7 @@ pub struct GetSongOptions {
 }
 
 #[derive(Default, Deserialize, Serialize, Clone, PartialEq, Eq, Encode, Decode)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 pub struct Song {
     #[serde(flatten)]
     pub song: QueryableSong,

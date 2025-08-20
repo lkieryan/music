@@ -10,3 +10,5 @@ pub mod common;
 pub mod cache;
 #[cfg(feature = "db")]
 pub mod cache_schema;
+pub mod ui;
+pub mod mpris;

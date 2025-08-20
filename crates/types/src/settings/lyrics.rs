@@ -32,13 +32,6 @@ pub struct LyricsSettings {
     pub translation_line: Option<bool>,
     pub roman_line: Option<bool>,
     pub swap_trans_roman_line: Option<bool>,
-
-    // Background
-    pub background_renderer: Option<String>,
-    pub css_background_property: Option<String>,
-    pub background_fps: Option<u32>,
-    pub background_render_scale: Option<f32>,
-    pub background_static_mode: Option<bool>,
 }
 
 

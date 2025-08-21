@@ -41,12 +41,6 @@ export const createDefaultLyricsSettings = (): LyricsDefaults => ({
   romanLine: true,
   swapTransRomanLine: false,
 
-  // Background
-  backgroundRenderer: "mesh",
-  cssBackgroundProperty: "#111111",
-  backgroundFps: 60,
-  backgroundRenderScale: 1.0,
-  backgroundStaticMode: false,
 })
 
 const {

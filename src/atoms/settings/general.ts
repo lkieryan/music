@@ -11,16 +11,20 @@ import { createDomainBinding } from '~/services/settings'
 type GeneralDefaults = Strictify<GeneralSettings>
 
 export const createDefaultGeneralSettings = (): GeneralDefaults => ({
-  // Store as string locally for simple input binding; backend uses number
-  gaplessSkip: "0",
   // Active UI language in renderer (BCP-47)
   language: "zh-CN",
-  // App theme mode (light/dark/system)
-  theme: "system" as "light" | "dark" | "system",
   // minimize to tray behavior on window close (desktop only)
   minimizeToTray: false,
   // launch app at OS login (desktop only)
   launchAtLogin: false,
+  // Whether to automatically scan on app start.
+  autoScanEnabled: false,
+  // Folders to scan. Absolute paths.
+  scanFolders: [],
+  // Minimal duration rule when scanning.
+  scanMinDuration: "sec30",
+  // File format rule when scanning.
+  scanFormats: "common",
 })
 
 const {
@@ -105,7 +109,10 @@ export function hookEnhancedSettings<
   defaultSettings: Record<string, any>,
 ): [T1, T2, T3, T4, T5] {
   const useNextSettingKey = (key: string) => {
-    const enableEnhancedSettings = useGeneralSettingKeyInternal("enhancedSettings")
+    // Read enhanced flag via selector to avoid keyof constraint
+    const enableEnhancedSettings = useGeneralSettingSelectorInternal(
+      (s) => (s as { enhancedSettings?: boolean }).enhancedSettings ?? true,
+    )
     const settingValue = useSettingKey(key)
     const shouldBackToDefault = enhancedSettingKeys.has(key) && !enableEnhancedSettings
     if (!shouldBackToDefault) {
@@ -116,7 +123,9 @@ export function hookEnhancedSettings<
   }
 
   const useNextSettingSelector = (selector: (s: any) => any) => {
-    const enableEnhancedSettings = useGeneralSettingKeyInternal("enhancedSettings")
+    const enableEnhancedSettings = useGeneralSettingSelectorInternal(
+      (s) => (s as { enhancedSettings?: boolean }).enhancedSettings ?? true,
+    )
     return useSettingSelector(
       useCallback(
         (settings) => {
@@ -139,7 +148,9 @@ export function hookEnhancedSettings<
   }
 
   const useNextSettingKeys = (keys: string[]) => {
-    const enableEnhancedSettings = useGeneralSettingKeyInternal("enhancedSettings")
+    const enableEnhancedSettings = useGeneralSettingSelectorInternal(
+      (s) => (s as { enhancedSettings?: boolean }).enhancedSettings ?? true,
+    )
     const rawSettingValues: string[] = useSettingKeys(keys)
 
     return useMemo(() => {
@@ -163,7 +174,9 @@ export function hookEnhancedSettings<
 
   const getNextSettings = () => {
     const settings = getSettings()
-    const enableEnhancedSettings = jotaiStore.get(__generalSettingAtom).enhancedSettings
+    const enableEnhancedSettings =
+      (jotaiStore.get(__generalSettingAtom) as { enhancedSettings?: boolean })
+        .enhancedSettings ?? true
 
     if (enableEnhancedSettings) {
       return settings
@@ -181,7 +194,9 @@ export function hookEnhancedSettings<
 
   const useNextSettingValue = () => {
     const settingValues = useSettingValue()
-    const enableEnhancedSettings = useGeneralSettingKeyInternal("enhancedSettings")
+    const enableEnhancedSettings = useGeneralSettingSelectorInternal(
+      (s) => (s as { enhancedSettings?: boolean }).enhancedSettings ?? true,
+    )
 
     return useMemo(() => {
       if (enableEnhancedSettings) {

@@ -17,7 +17,6 @@ export const createDefaultUISettings = (): any => ({
   discoverLanguage:"zh-CN",
 })
 
-const zenModeAtom = atom(false)
 
 const {
   useSettingKey: useUISettingKeyInternal,
@@ -59,29 +58,3 @@ export const uiServerSyncWhiteListKeys: (keyof any)[] = [
   "opaqueSidebar",
   // "customCSS",
 ]
-
-export const useIsZenMode = () => useAtomValue(zenModeAtom)
-export const getIsZenMode = () => jotaiStore.get(zenModeAtom)
-
-export const useSetZenMode = () => {
-  return setZenMode
-}
-export const setZenMode = (checked: boolean) => {
-  jotaiStore.set(zenModeAtom, checked)
-}
-
-export const useToggleZenMode = () => {
-  const setZenMode = useSetZenMode()
-  const isZenMode = useIsZenMode()
-  return useEventCallback(() => {
-    const newIsZenMode = !isZenMode
-    document.documentElement.dataset.zenMode = newIsZenMode.toString()
-    setZenMode(newIsZenMode)
-  })
-}
-
-export const useRealInWideMode = () => {
-  const wideMode = useUISettingKey("wideMode")
-  const isZenMode = useIsZenMode()
-  return wideMode || isZenMode
-}

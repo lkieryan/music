@@ -4,7 +4,7 @@ import { Focusable as FocusableComponent } from "./focusable"
 import { FloatingLayerScope, HotkeyScope } from "~/constants/hotkeys"
 
 interface BizFocusableProps extends Omit<FocusableProps, "scope"> {
-  scope: HotkeyScope
+  scope: string
 }
 export const Focusable = FocusableComponent as Component<
   Prettify<BizFocusableProps> &

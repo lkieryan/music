@@ -7,12 +7,12 @@ import { useReduceMotion } from "~/hooks/biz/use-reduce-motion"
 const cacheMap = new Map<string, any>()
 export const m: typeof M = new Proxy(M, {
   get(target, p: string) {
-    const Component = target[p]
+    const Component = Reflect.get(target as object, p) as any
 
     if (cacheMap.has(p)) {
       return cacheMap.get(p)
     }
-    const MotionComponent = ({ ref, ...props }) => {
+    const MotionComponent = ({ ref, ...props }: any) => {
       const shouldReduceMotion = useReduceMotion()
       const nextProps = { ...props }
       if (shouldReduceMotion) {

@@ -16,9 +16,9 @@ const FeedNotFoundErrorFallback: FC<AppErrorFallbackProps> = ({ resetError, erro
   return (
     <div className="bg-theme-background flex w-full flex-col items-center justify-center rounded-md p-2">
       <div className="center m-auto flex max-w-prose flex-col gap-4 text-center">
-        <div className="center mb-8 flex">
+        {/* <div className="center mb-8 flex">
           <Logo className="size-20" />
-        </div>
+        </div> */}
         <p className="font-semibold">
           There is no feed with the given ID. Please check the URL and retry.
         </p>

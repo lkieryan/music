@@ -8,6 +8,32 @@ interface ColorPresetsProps {
   className?: string
 }
 
+// Preset types
+// Single color preset with inline CSS style
+interface SinglePreset {
+  lightness: number
+  algo: string
+  numDots: 1
+  position: string
+  style: string
+}
+
+// Analogous preset with three explicit colors
+interface AnalogousPreset {
+  lightness: number
+  algo: string
+  numDots: 3
+  position: string
+  colors: string[]
+}
+
+type Preset = SinglePreset | AnalogousPreset
+
+// Type guard to check if a preset is AnalogousPreset
+function isAnalogousPreset(preset: Preset): preset is AnalogousPreset {
+  return preset.numDots === 3 && 'colors' in preset
+}
+
 export default function ColorPresets({ 
   currentPage, 
   onPageChange, 
@@ -16,13 +42,13 @@ export default function ColorPresets({
 }: ColorPresetsProps) {
   const totalPages = PRESET_COLORS.length
 
-  const handlePresetClick = (preset: any) => {
+  const handlePresetClick = (preset: Preset) => {
     onPresetSelect(
       preset.lightness,
       preset.algo,
       preset.numDots,
       preset.position,
-      preset.colors
+      isAnalogousPreset(preset) ? preset.colors : undefined
     )
   }
 
@@ -36,7 +62,8 @@ export default function ColorPresets({
     onPageChange(newPage)
   }
 
-  const currentPresets = PRESET_COLORS[currentPage] || []
+  // Cast the data source into our Preset type for this module's usage
+  const currentPresets = (PRESET_COLORS[currentPage] || []) as Preset[]
 
   return (
     <div className={`gradient-color-pages-wrapper ${className}`} style={{ alignItems: 'center', display: 'flex' }}>
@@ -84,11 +111,9 @@ export default function ColorPresets({
           gap: '8px',
         }}>
           {currentPresets.map((preset, index) => {
-            const isAnalogous = preset.numDots === 3
-            
             let backgroundStyle: React.CSSProperties = {}
-            
-            if (isAnalogous && preset.colors) {
+
+            if (isAnalogousPreset(preset)) {
               // Multi-color analogous preset
               backgroundStyle = {
                 background: [
@@ -97,7 +122,7 @@ export default function ColorPresets({
                   `linear-gradient(to top, ${preset.colors[2]} 0%, transparent 60%)`
                 ].join(', ')
               }
-            } else if (preset.style) {
+            } else if ('style' in preset) {
               // Single color preset
               const colorMatch = preset.style.match(/background:\s*([^;]+);?/)
               if (colorMatch) {

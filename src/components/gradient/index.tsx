@@ -245,7 +245,7 @@ export default function GradientGeneratorDialog({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] animate-in fade-in duration-200"
+      className="fixed inset-0 flex items-center justify-center z-[9999] animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose()
@@ -253,7 +253,7 @@ export default function GradientGeneratorDialog({
       }}
     >
       <div 
-        className="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl w-[360px] max-h-[90vh] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-2 duration-300"
+        className="bg-white/70 dark:bg-zinc-800/80  rounded-xl shadow-2xl w-[360px] max-h-[90vh] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-2 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
 

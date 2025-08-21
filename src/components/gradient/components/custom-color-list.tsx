@@ -77,7 +77,7 @@ export default function CustomColorList({ colors, onRemoveColor, className = '' 
         </div>
       ))}
       
-      <style jsx>{`
+      <style>{`
         .theme-picker-custom-list-item:hover .theme-picker-custom-list-item-remove {
           opacity: 1;
         }

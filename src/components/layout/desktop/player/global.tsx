@@ -1,6 +1,8 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { type FC, useLayoutEffect, useRef } from 'react'
 import { cn } from '~/lib/helper'
+import { resolveImageUrl } from '~/lib/image'
+
 import { 
   musicNameAtom,
   musicArtistsAtom, 
@@ -12,6 +14,7 @@ import {
   playlistCardOpenedAtom,
   isLyricPageOpenedAtom
 } from '~/atoms/player'
+
 import { playerVisibleAtom } from '~/atoms/layout'
 import styles from './global.module.css'
 
@@ -29,8 +32,6 @@ import {
   MediaButton
 } from '@applemusic-like-lyrics/react-full'
 
-
-
 // 播放列表卡片占位组件
 const NowPlaylistCard: FC<{ className?: string }> = ({ className }) => {
   return (
@@ -43,7 +44,7 @@ const NowPlaylistCard: FC<{ className?: string }> = ({ className }) => {
   )
 }
 
-export function GlobalPlayer() {
+export function GlobalPlayer({ height }: { height: number }) {
   const playerVisible = useAtomValue(playerVisibleAtom)
   const musicName = useAtomValue(musicNameAtom)
   const musicArtists = useAtomValue(musicArtistsAtom)
@@ -52,9 +53,10 @@ export function GlobalPlayer() {
   const [playlistOpened, setPlaylistOpened] = useAtom(playlistCardOpenedAtom)
   const setLyricPageOpened = useSetAtom(isLyricPageOpenedAtom)
 
-  const onPlayOrResume = useSetAtom(onPlayOrResumeAtom)
-  const onRequestPrevSong = useSetAtom(onRequestPrevSongAtom)
-  const onRequestNextSong = useSetAtom(onRequestNextSongAtom)
+  // Use callback atoms' value and call onEmit
+  const onPlayOrResume = useAtomValue(onPlayOrResumeAtom)
+  const onRequestPrevSong = useAtomValue(onRequestPrevSongAtom)
+  const onRequestNextSong = useAtomValue(onRequestNextSongAtom)
 
   const playbarRef = useRef<HTMLDivElement>(null)
 
@@ -102,22 +104,24 @@ export function GlobalPlayer() {
           styles.playBar,
           !playerVisible && styles.hide
         )}
+        style={{ height }}
         ref={playbarRef}
       >
         <div className="flex items-center justify-between w-full">
           {/* 左侧：封面和歌曲信息 */}
           <div className="flex items-center flex-1 min-w-0 basis-1/3">
             <button
-              className={styles.coverButton}
+              className={cn(styles.coverButton, 'press-anim-parent')}
               type="button"
               style={{
-                backgroundImage: musicCover ? `url(${musicCover})` : 'none',
-                backgroundColor: musicCover ? 'transparent' : '#0000001a'
+                // Resolve cover URL for local or network paths
+                backgroundImage: resolveImageUrl(musicCover) ? `url(${resolveImageUrl(musicCover)})` : 'none',
+                backgroundColor: resolveImageUrl(musicCover) ? 'transparent' : '#0000001a'
               }}
               onClick={() => setLyricPageOpened(true)}
             >
               <div className={styles.lyricIconButton}>
-                <IconLyrics width={28} height={28} />
+                <IconLyrics width={28} height={28} className="press-anim" />
               </div>
             </button>
             
@@ -133,30 +137,33 @@ export function GlobalPlayer() {
           </div>
 
           {/* 中间：播放控制按钮（桌面端显示） */}
-          <div className="hidden sm:flex items-center justify-center flex-1 basis-1/3 gap-5">
+          <div className="hidden sm:flex items-center justify-center flex-1 basis-1/3 gap-8">
             <MediaButton 
-              onClick={() => onRequestPrevSong()} 
+              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2"
+              onClick={() => onRequestPrevSong.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
-              <IconRewind style={{ scale: "1.25" }} />
+              <IconRewind style={{ scale: "1.25" }} className="press-anim" />
             </MediaButton>
             
             <MediaButton 
-              onClick={() => onPlayOrResume()} 
+              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2"
+              onClick={() => onPlayOrResume.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
               {musicPlaying ? (
-                <IconPause style={{ scale: "0.75" }} />
+                <IconPause style={{ scale: "0.75" }} className="press-anim" />
               ) : (
-                <IconPlay style={{ scale: "0.75" }} />
+                <IconPlay style={{ scale: "0.75" }} className="press-anim" />
               )}
             </MediaButton>
             
             <MediaButton 
-              onClick={() => onRequestNextSong()} 
+              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2"
+              onClick={() => onRequestNextSong.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
-              <IconForward style={{ scale: "1.25" }} />
+              <IconForward style={{ scale: "1.25" }} className="press-anim" />
             </MediaButton>
           </div>
 
@@ -165,31 +172,31 @@ export function GlobalPlayer() {
             {/* 移动端播放控制 */}
             <div className="flex sm:hidden items-center gap-1">
               <button 
-                className={cn(styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
-                onClick={() => onRequestPrevSong()}
+                className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+                onClick={() => onRequestPrevSong.onEmit?.()}
               >
-                <IconRewind className="w-4 h-4" />
+                <IconRewind className="w-4 h-4 press-anim" />
               </button>
               <button 
-                className={cn(styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
-                onClick={() => onPlayOrResume()}
+                className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+                onClick={() => onPlayOrResume.onEmit?.()}
               >
-                {musicPlaying ? <IconPause className="w-4 h-4" /> : <IconPlay className="w-4 h-4" />}
+                {musicPlaying ? <IconPause className="w-4 h-4 press-anim" /> : <IconPlay className="w-4 h-4 press-anim" />}
               </button>
               <button 
-                className={cn(styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
-                onClick={() => onRequestNextSong()}
+                className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+                onClick={() => onRequestNextSong.onEmit?.()}
               >
-                <IconForward className="w-4 h-4" />
+                <IconForward className="w-4 h-4 press-anim" />
               </button>
             </div>
             
             {/* 播放列表按钮 */}
             <button
-              className={cn(styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+              className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
               onClick={() => setPlaylistOpened(v => !v)}
             >
-              <MenuIcon className="w-4 h-4" />
+              <MenuIcon className="w-4 h-4 press-anim" />
             </button>
           </div>
         </div>

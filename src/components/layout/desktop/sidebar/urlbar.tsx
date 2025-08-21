@@ -10,7 +10,6 @@ export const Urlbar: FC = () => {
     <div 
       className={cn(
         "flex items-center w-full",
-        // 单工具栏模式：40px高度，多工具栏模式：32px高度
         singleToolbar ? "h-10" : "h-8"
       )}
       role="search" 

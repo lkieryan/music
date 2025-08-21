@@ -1,4 +1,5 @@
 import React, { useRef, useCallback, useEffect } from 'react'
+import type { CSSProperties } from 'react'
 import type { ColorDot } from '~/types/gradient'
 import { PICKER_SIZE, PICKER_PADDING, DOT_SIZE, PRIMARY_DOT_SIZE } from '../constants'
 
@@ -167,24 +168,27 @@ export default function GradientPicker({
             data-dot-id={dot.ID}
             data-position={JSON.stringify({ x: Math.round(dot.position.x), y: Math.round(dot.position.y) })}
             data-type={dot.type}
-            style={{
-              position: 'absolute',
-              zIndex: isPrimary ? 2 : 2,
-              width: isPrimary ? `${PRIMARY_DOT_SIZE}px` : `${DOT_SIZE}px`,
-              height: isPrimary ? `${PRIMARY_DOT_SIZE}px` : `${DOT_SIZE}px`,
-              borderRadius: '50%',
-              background: `rgb(${r}, ${g}, ${b})`,
-              cursor: 'pointer',
-              border: isPrimary ? '4px solid #ffffff' : '3px solid #ffffff',
-              left: `${dot.position.x}px`,
-              top: `${dot.position.y}px`,
-              transform: 'translate(-50%, -50%)',
-              pointerEvents: isPrimary ? 'all' : 'none',
-              transformOrigin: 'center center',
-              transition: dragging ? 'none' : 'transform 0.2s',
-              boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 0px 2px',
-              '--theme-picker-dot-color': `rgb(${r}, ${g}, ${b})`,
-            }}
+            style={(() => {
+              const dotStyle: CSSProperties & { ['--theme-picker-dot-color']?: string } = {
+                position: 'absolute',
+                zIndex: isPrimary ? 2 : 2,
+                width: isPrimary ? `${PRIMARY_DOT_SIZE}px` : `${DOT_SIZE}px`,
+                height: isPrimary ? `${PRIMARY_DOT_SIZE}px` : `${DOT_SIZE}px`,
+                borderRadius: '50%',
+                background: `rgb(${r}, ${g}, ${b})`,
+                cursor: 'pointer',
+                border: isPrimary ? '4px solid #ffffff' : '3px solid #ffffff',
+                left: `${dot.position.x}px`,
+                top: `${dot.position.y}px`,
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: isPrimary ? 'all' : 'none',
+                transformOrigin: 'center center',
+                transition: dragging ? 'none' : 'transform 0.2s',
+                boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 0px 2px',
+                ['--theme-picker-dot-color']: `rgb(${r}, ${g}, ${b})`,
+              }
+              return dotStyle
+            })()}
           />
         )
       })}

@@ -10,6 +10,12 @@ interface OpacitySliderProps {
   hideThumb?: boolean
 }
 
+// Allow CSS custom properties in inline style
+type SliderStyle = React.CSSProperties & {
+  '--thumb-height'?: string
+  '--thumb-width'?: string
+}
+
 export default function OpacitySlider({ value, onChange, disabled = false, className = '', hideThumb = false }: OpacitySliderProps) {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseFloat(event.target.value)
@@ -88,15 +94,9 @@ export default function OpacitySlider({ value, onChange, disabled = false, class
       
       {
         !hideThumb && (
-          <input
-            type="range"
-            min={MIN_OPACITY}
-            max={MAX_OPACITY}
-            step="0.001"
-            value={value}
-            onChange={handleChange}
-            disabled={disabled}
-            style={{
+          // Build style with typed custom CSS variables
+          (() => {
+            const inputStyle: SliderStyle = {
               margin: '0 !important',
               background: 'transparent',
               zIndex: 2,
@@ -104,9 +104,21 @@ export default function OpacitySlider({ value, onChange, disabled = false, class
               width: '100%',
               '--thumb-height': `${thumbHeight}px`,
               '--thumb-width': `${thumbWidth}px`,
-            }}
-            className="gradient-opacity-slider"
-          />
+            }
+            return (
+              <input
+                type="range"
+                min={MIN_OPACITY}
+                max={MAX_OPACITY}
+                step="0.001"
+                value={value}
+                onChange={handleChange}
+                disabled={disabled}
+                style={inputStyle}
+                className="gradient-opacity-slider"
+              />
+            )
+          })()
         )
       }
       

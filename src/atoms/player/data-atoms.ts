@@ -1,6 +1,7 @@
 import { atom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import type { LyricLine } from "@applemusic-like-lyrics/lyric"
+import type { PlayerMode } from "~/types/bindings"
 
 // ==================================================================
 //                            类型定义
@@ -107,6 +108,11 @@ export const musicPlayingPositionAtom = atom<number>(0);
  * 当前播放的音乐音量大小，范围在 [0.0-1.0] 之间。
  */
 export const musicVolumeAtom = atomWithStorage<number>("player.music-volume", 0.5);
+
+/**
+ * 当前播放模式：Sequential/Single/Shuffle/ListLoop
+ */
+export const playerModeAtom = atom<PlayerMode>("Sequential" as PlayerMode);
 
 /**
  * 当前播放的音乐的歌词行数据。

@@ -1,8 +1,9 @@
-import { useAtomValue } from 'jotai'
-import { type FC, useLayoutEffect } from 'react'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { type FC, useLayoutEffect, useEffect } from 'react'
 import { cn } from '~/lib/helper'
 import { isLyricPageOpenedAtom } from '~/atoms/player'
 import { PrebuiltLyricPlayer } from './lyirc'
+import { Background } from '~/components/layout/desktop/background'
 import styles from './lyric-page.module.css'
 
 export const LyricPage: FC = () => {
@@ -18,12 +19,9 @@ export const LyricPage: FC = () => {
   }, [isLyricPageOpened])
 
   return (
-    <PrebuiltLyricPlayer
-      id="amll-lyric-player"
-      className={cn(
-        styles.lyricPage,
-        isLyricPageOpened && styles.opened
-      )}
-    />
+    <div className={cn(styles.lyricPage, isLyricPageOpened && styles.opened)}>
+      <Background />
+      <PrebuiltLyricPlayer id="amll-lyric-player" />
+    </div>
   )
 }

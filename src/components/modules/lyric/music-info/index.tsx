@@ -41,7 +41,7 @@ export const MusicInfo: React.FC<{
 	  <button
 		className={cn(styles.menuButton, className)}
 		type="button"
-		{...rest}
+		onClick={onMenuButtonClicked}
 	  >
 		<MenuIcon />
 	  </button>

@@ -1,5 +1,4 @@
 import {
-	BackgroundRender,
 	LyricPlayer,
 	type LyricPlayerRef,
 } from "@applemusic-like-lyrics/react";
@@ -66,7 +65,6 @@ import {
 	playerControlsTypeAtom,
 	PlayerControlsType,
 	verticalCoverLayoutAtom,
-	lyricBackgroundRendererAtom,
 	showBottomControlAtom,
 	VerticalCoverLayout,
 } from "~/atoms/player/config-atoms";
@@ -83,7 +81,6 @@ import {
 	hideLyricViewAtom,
 	musicCoverAtom,
 	musicCoverIsVideoAtom,
-	lowFreqVolumeAtom,
 	isLyricPageOpenedAtom,
 } from "~/atoms/player/data-atoms";
 
@@ -299,94 +296,101 @@ const PrebuiltCoreLyricPlayer: FC<{
 	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
 	const musicPlayingPosition = useAtomValue(correctedMusicPlayingPositionAtom);
 
-	const lyrics = useLyricsSettingValue();
-	const lyricFontFamily = lyrics.fontFamily;
-	const lyricFontWeight = lyrics.fontWeight;
-	const lyricLetterSpacing = lyrics.letterSpacing;
+  const lyrics = useLyricsSettingValue();
+  const lyricFontFamily = lyrics.fontFamily;
+  const lyricFontWeight = lyrics.fontWeight;
+  const lyricLetterSpacing = lyrics.letterSpacing;
 
-	const lyrics2 = useLyricsSettingValue();
-	const lyricPlayerImplementation = (lyrics2.playerImplementation) || "dom";
+  const lyrics2 = useLyricsSettingValue();
+  const lyricPlayerImplementation = (lyrics2.playerImplementation) || "dom";
 
-	const enableLyricLineBlurEffect = !!lyrics2.lineBlurEffect;
-	const enableLyricLineScaleEffect = !!lyrics2.lineScaleEffect;
-	const enableLyricLineSpringAnimation = !!lyrics2.lineSpringAnimation;
-	const lyricWordFadeWidth = Number(lyrics2.wordFadeWidth ?? 0.5);
-	const enableLyricTranslationLine = !!lyrics2.translationLine;
-	const enableLyricRomanLine = !!lyrics2.romanLine;
-	const enableLyricSwapTransRomanLine = !!lyrics2.swapTransRomanLine;
-	const onLyricLineClick = useAtomValue(onLyricLineClickAtom).onEmit;
-	const onLyricLineContextMenu = useAtomValue(
-		onLyricLineContextMenuAtom,
-	).onEmit;
+  const enableLyricLineBlurEffect = !!lyrics2.lineBlurEffect;
+  const enableLyricLineScaleEffect = !!lyrics2.lineScaleEffect;
+  const enableLyricLineSpringAnimation = !!lyrics2.lineSpringAnimation;
+  const lyricWordFadeWidth = lyrics2.wordFadeWidth ?? 0.5;
+  const enableLyricTranslationLine = !!lyrics2.translationLine;
+  const enableLyricRomanLine = !!lyrics2.romanLine;
+  const enableLyricSwapTransRomanLine = !!lyrics2.swapTransRomanLine;
+  const onLyricLineClick = useAtomValue(onLyricLineClickAtom).onEmit;
+  const onLyricLineContextMenu = useAtomValue(
+    onLyricLineContextMenuAtom,
+  ).onEmit;
 
-	const processedLyricLines = useMemo(() => {
-		const processed = structuredClone(lyricLines);
-		if (!enableLyricTranslationLine) {
-			for (const line of processed) {
-				line.translatedLyric = "";
-			}
-		}
-		if (!enableLyricRomanLine) {
-			for (const line of processed) {
-				line.romanLyric = "";
-			}
-		}
-		if (enableLyricSwapTransRomanLine) {
-			for (const line of processed) {
-				[line.translatedLyric, line.romanLyric] = [
-					line.romanLyric,
-					line.translatedLyric,
-				];
-			}
-		}
-		return processed.map((line: any) => ({
-			...line,
-			words: Array.isArray(line.words)
-				? line.words.map((word: any) => ({
-						...word,
-						obscene: typeof word.obscene === "boolean" ? word.obscene : false,
-					}))
-				: [],
-		}));
-	}, [
-		lyricLines,
-		enableLyricTranslationLine,
-		enableLyricRomanLine,
-		enableLyricSwapTransRomanLine,
-	]);
+  const processedLyricLines = useMemo(() => {
+    const processed = structuredClone(lyricLines);
+    if (!enableLyricTranslationLine) {
+      for (const line of processed) {
+        line.translatedLyric = "";
+      }
+    }
+    if (!enableLyricRomanLine) {
+      for (const line of processed) {
+        line.romanLyric = "";
+      }
+    }
+    if (enableLyricSwapTransRomanLine) {
+      for (const line of processed) {
+        [line.translatedLyric, line.romanLyric] = [
+          line.romanLyric,
+          line.translatedLyric,
+        ];
+      }
+    }
+    return processed.map((line: any) => ({
+      ...line,
+      words: Array.isArray(line.words)
+        ? line.words.map((word: any) => ({
+            ...word,
+            obscene: typeof word.obscene === "boolean" ? word.obscene : false,
+          }))
+        : [],
+    }));
+  }, [
+    lyricLines,
+    enableLyricTranslationLine,
+    enableLyricRomanLine,
+    enableLyricSwapTransRomanLine,
+  ]);
 
-	return (
-		<LyricPlayer
-			style={{
-				width: "100%",
-				height: "100%",
-				fontFamily: lyricFontFamily || undefined,
-				fontWeight: lyricFontWeight || undefined,
-				letterSpacing: lyricLetterSpacing || undefined,
-			}}
-			ref={amllPlayerRef}
-			playing={musicIsPlaying}
-			disabled={!isLyricPageOpened}
-			alignPosition={alignPosition}
-			alignAnchor={alignAnchor}
-			currentTime={musicPlayingPosition}
-			lyricLines={processedLyricLines}
-			enableBlur={enableLyricLineBlurEffect}
-			enableScale={enableLyricLineScaleEffect}
-			enableSpring={enableLyricLineSpringAnimation}
-			wordFadeWidth={Math.max(0.01, lyricWordFadeWidth)}
-			lyricPlayer={lyricPlayerImplementation}
-			onLyricLineClick={(evt) => onLyricLineClick?.(evt, amllPlayerRef.current)}
-			onLyricLineContextMenu={(evt) =>
-				onLyricLineContextMenu?.(evt, amllPlayerRef.current)
-			}
-		/>
-	);
+  // Adapt lyricPlayer prop: only pass when it's a constructor
+  // If settings provide a string (e.g., "dom" | "dom-slim" | "canvas"), we skip passing this prop
+  const lyricPlayerCtor =
+    typeof lyricPlayerImplementation === "function"
+      ? (lyricPlayerImplementation as unknown as new () => any)
+      : undefined;
+
+  return (
+    <LyricPlayer
+      style={{
+        width: "100%",
+        height: "100%",
+        fontFamily: lyricFontFamily || undefined,
+        fontWeight: lyricFontWeight || undefined,
+        letterSpacing: lyricLetterSpacing || undefined,
+      }}
+      ref={amllPlayerRef}
+      playing={musicIsPlaying}
+      disabled={!isLyricPageOpened}
+      alignPosition={alignPosition}
+      alignAnchor={alignAnchor}
+      currentTime={musicPlayingPosition}
+      lyricLines={processedLyricLines}
+      enableBlur={enableLyricLineBlurEffect}
+      enableScale={enableLyricLineScaleEffect}
+      enableSpring={enableLyricLineSpringAnimation}
+      {...({ wordFadeWidth: Math.max(0.01, lyricWordFadeWidth) } as any)}
+      {...(lyricPlayerCtor ? { lyricPlayer: lyricPlayerCtor } : {})}
+      onLyricLineClick={(evt) => onLyricLineClick?.(evt, amllPlayerRef.current)}
+      onLyricLineContextMenu={(evt) =>
+        onLyricLineContextMenu?.(evt, amllPlayerRef.current)
+      }
+    />
+  );
 };
 
 const PrebuiltVolumeControl: FC<{
-	style?: React.CSSProperties;
-	className?: string;
+  style?: React.CSSProperties;
+  className?: string;
 }> = ({ style, className }) => {
 	const musicVolume = useAtomValue(musicVolumeAtom);
 	const onChangeVolume = useAtomValue(onChangeVolumeAtom).onEmit;
@@ -446,18 +450,12 @@ export const PrebuiltLyricPlayer: FC<HTMLProps<HTMLDivElement>> = ({
 	const musicCover = useAtomValue(musicCoverAtom);
 	const musicCoverIsVideo = useAtomValue(musicCoverIsVideoAtom);
 	const musicIsPlaying = useAtomValue(musicPlayingAtom);
-	const lowFreqVolume = useAtomValue(lowFreqVolumeAtom);
 	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
 	const setLyricPageOpened = useSetAtom(isLyricPageOpenedAtom)
 	useEffect(() => {
 		console.log('isLyricPageOpened changed:', isLyricPageOpened)
 	  }, [isLyricPageOpened])
-	const lyricsBg1 = useLyricsSettingValue();
-	const lyricBackgroundFPS = lyricsBg1.backgroundFps ?? 60;
 	const verticalCoverLayout = useAtomValue(verticalCoverLayoutAtom);
-	const lyricsBg2 = useLyricsSettingValue();
-	const lyricBackgroundStaticMode = !!lyricsBg2.backgroundStaticMode;
-	const lyricBackgroundRenderScale = lyricsBg2.backgroundRenderScale ?? 1;
 	const [isVertical, setIsVertical] = useState(false);
 	const [alignPosition, setAlignPosition] = useState(0.25);
 	const [alignAnchor, setAlignAnchor] = useState<"center" | "bottom" | "top">(
@@ -465,13 +463,6 @@ export const PrebuiltLyricPlayer: FC<HTMLProps<HTMLDivElement>> = ({
 	);
 	const coverElRef = useRef<HTMLDivElement>(null);
 	const layoutRef = useRef<HTMLDivElement>(null);
-	const lyricsBg3 = useLyricsSettingValue();
-	const cssBg = lyricsBg3.backgroundRenderer === "css-bg";
-	const cssBgValue = lyricsBg3.cssBackgroundProperty || "#111111";
-	const legacyBackgroundRenderer = useAtomValue(lyricBackgroundRendererAtom);
-	const backgroundRenderer = cssBg
-		? { renderer: cssBgValue }
-		: legacyBackgroundRenderer;
 	const showBottomControl = useAtomValue(showBottomControlAtom);
 
 	const [isHoveringTitlebar, setIsHoveringTitlebar] = useState(false);
@@ -577,34 +568,6 @@ export const PrebuiltLyricPlayer: FC<HTMLProps<HTMLDivElement>> = ({
 							hideLyricView && styles.hideLyric,
 						)}
 					/>
-				}
-				backgroundSlot={
-					typeof backgroundRenderer.renderer === "string" ? (
-						<div
-							style={{
-								zIndex: -1,
-								width: "100%",
-								height: "100%",
-								minWidth: "0",
-								minHeight: "0",
-								overflow: "hidden",
-								background: backgroundRenderer.renderer,
-							}}
-						/>
-					) : (
-						<BackgroundRender
-							album={musicCover}
-							albumIsVideo={musicCoverIsVideo}
-							lowFreqVolume={lowFreqVolume}
-							renderScale={lyricBackgroundRenderScale}
-							fps={lyricBackgroundFPS}
-							renderer={backgroundRenderer.renderer}
-							staticMode={lyricBackgroundStaticMode || !isLyricPageOpened}
-							style={{
-								zIndex: -1,
-							}}
-						/>
-					)
 				}
 				bigControlsSlot={
 					<>

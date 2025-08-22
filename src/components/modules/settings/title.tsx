@@ -34,7 +34,7 @@ export const SettingsTitle = ({
   loader,
 }: {
   className?: string
-  loader?: () => SettingPageConfig
+  loader?: SettingPageConfig
 }) => {
   const { t } = useTranslation("settings")
   const {

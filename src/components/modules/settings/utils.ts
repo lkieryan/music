@@ -10,7 +10,8 @@ export interface SettingPageConfig {
   name: I18nKeysForSettings
   priority: number
   headerIcon?: string | React.ReactNode
-  viewportClassName?: string
+  viewportClassName?: string,
+  
 }
 export const defineSettingPageData = (config: SettingPageConfig) => ({
   ...config,

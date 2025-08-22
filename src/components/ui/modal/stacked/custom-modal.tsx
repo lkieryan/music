@@ -88,8 +88,8 @@ export const DrawerModalLayout: FC<PropsWithChildren> = ({ children }) => {
         transition={{
           type: "spring",
           mass: 0.4,
-          tension: 100,
-          friction: 1,
+          stiffness: 100,
+          damping: 1,
         }}
         onAnimationComplete={(definition) => {
           if (definition === "exit") {
@@ -120,8 +120,8 @@ export const ScaleModal: ModalTemplateType = (props) => {
         transition={{
           type: "spring",
           mass: 0.4,
-          tension: 100,
-          friction: 1,
+          stiffness: 100,
+          damping: 1,
         }}
         initial={{ transform: "scale(0)", opacity: 0 }}
         animate={{ transform: "scale(1)", opacity: 1 }}

@@ -36,9 +36,8 @@ const TooltipContent = ({
       animate={{ opacity: 1, scale: 1 }}
       transition={{
         type: "spring",
-        tension: 280,
-        friction: 60,
-
+        stiffness: 280,
+        damping: 60,
         duration: 0.1,
       }}
     >

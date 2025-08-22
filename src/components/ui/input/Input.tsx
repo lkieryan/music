@@ -19,7 +19,7 @@ export const Input = ({
       ref={ref}
       className={cn(
         "min-w-0 flex-auto appearance-none rounded-lg text-sm",
-        "bg-theme-background px-3 py-[calc(theme(spacing.2)-1px)]",
+        "bg-transparent px-3 py-[calc(theme(spacing.2)-1px)]",
         "ring-accent/20 focus:border-accent/80 duration-200 focus:outline-none focus:ring-2",
         "focus:!bg-accent/5",
         "border-border border",

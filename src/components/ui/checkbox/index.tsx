@@ -29,7 +29,7 @@ function Checkbox({ className, onCheckedChange, indeterminate, ...props }: Check
       <m.button
         data-slot="checkbox"
         className={cn(
-          "bg-fill cursor-checkbox focus-visible:ring-border data-[state=checked]:bg-accent peer flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:text-white",
+          "bg-fill cursor-checkbox  focus-visible:ring-border data-[state=checked]:bg-accent peer flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:text-white",
           indeterminate && "bg-accent text-white",
           className,
         )}

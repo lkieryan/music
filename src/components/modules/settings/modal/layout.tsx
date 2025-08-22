@@ -5,7 +5,7 @@ import { cn } from "~/lib/helper"
 import type { BoundingBox } from "motion/react"
 import { Resizable } from "re-resizable"
 import type { PropsWithChildren } from "react"
-import { memo, Suspense, useCallback, useEffect, useRef } from "react"
+import { memo, Suspense, useCallback, useEffect, useMemo, useRef } from "react"
 
 import { useUISettingSelector } from "~/atoms/settings/ui"
 import { m } from "~/components/common/motion"
@@ -14,12 +14,19 @@ import { useModalResizeAndDrag } from "~/components/ui/modal/stacked/internal/us
 
 import { SETTING_MODAL_ID } from "../constants"
 import { EnhancedSettingsIndicator } from "../helper/EnhancedIndicator"
-import { useAvailableSettings, useSettingPageContext } from "../hooks/use-setting-ctx"
 import { SettingsSidebarTitle } from "../title"
 import type { SettingPageConfig } from "../utils"
 import { DisableWhy } from "../utils"
 import { useSetSettingTab, useSettingTab } from "./context"
 import { defaultCtx, SettingContext } from "./hooks"
+import { getMemoizedSettings } from "../settings-glob"
+
+const useAvailableSettings = () => {
+  return useMemo(
+    () => getMemoizedSettings(),
+    [],
+  )
+}
 
 export function SettingModalLayout(
   props: PropsWithChildren<{
@@ -124,7 +131,7 @@ export function SettingModalLayout(
                   <EnhancedSettingsIndicator />
                 </div>
               </div>
-              <div className="bg-background/60 relative flex h-full min-w-0 flex-1 flex-col pt-1">
+              <div className="backdrop-blur-sm bg-background/60 relative flex h-full min-w-0 flex-1 flex-col pt-1">
                 <Suspense>{children}</Suspense>
               </div>
             </div>
@@ -144,36 +151,19 @@ const SettingItemButtonImpl = (props: {
   isActive: boolean
   onChange?: (tab: string) => void
 }) => {
-  const { setTab, item, path, onChange, isActive } = props
-  const { disableIf } = item
-
-  const ctx = useSettingPageContext()
-
-  const [disabled, why] = disableIf?.(ctx) || [false, DisableWhy.Noop]
-
+  const { setTab, path, onChange, isActive } = props
   return (
     <button
       className={cn(
         "text-text my-0.5 flex w-full items-center rounded-lg px-2.5 py-0.5 leading-loose",
         isActive && "!bg-theme-item-active !text-text",
         "hover:bg-theme-item-hover duration-200",
-        disabled && "cursor-not-allowed opacity-50",
       )}
       type="button"
       onClick={useCallback(() => {
-        if (disabled) {
-          switch (why) {
-            case DisableWhy.NotActivation: {
-              return
-            }
-            case DisableWhy.Noop: {
-              break
-            }
-          }
-        }
         setTab(path)
         onChange?.(path)
-      }, [disabled, why, setTab, path, onChange])}
+      }, [setTab, path, onChange])}
     >
       <SettingsSidebarTitle path={path} className="text-[0.94rem] font-medium" />
     </button>

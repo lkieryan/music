@@ -48,7 +48,7 @@ function getSettings() {
 export const getMemoizedSettings = memoize(getSettings)
 
 export const getSettingPages = memoize(() => {
-  const pages = {}
+  const pages: Record<string, { Component: () => JSX.Element; loader: SettingPageConfig }> = {}
   const settings = getMemoizedSettings()
   for (const setting of settings) {
     const filename = setting.path

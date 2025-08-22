@@ -2,11 +2,13 @@ import { RootPortal } from "~/components/ui/portal"
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
 import { useTranslation } from "react-i18next"
 
-import { useGeneralSettingKey } from "~/atoms/settings/general"
+import { useGeneralSettingSelector } from "~/atoms/settings/general"
 import { IconTransition } from "~/components/ux/transition/icon"
 
 export const EnhancedSettingsIndicator = () => {
-  const enhancedSettings = useGeneralSettingKey("enhancedSettings")
+  const enhancedSettings = useGeneralSettingSelector(
+    (s) => (s as { enhancedSettings?: boolean }).enhancedSettings ?? true,
+  )
   const { t } = useTranslation("settings")
 
   if (!enhancedSettings) return null

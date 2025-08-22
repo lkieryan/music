@@ -7,12 +7,11 @@ import {
   useLyricsSettingValue,
 } from "~/atoms/settings/lyrics"
 import { SettingItemGroup } from "../section"
-import { SettingDescription, SettingInput, SettingSwitch } from "../control"
+import { SettingDescription, SettingInput } from "../control"
 import { ResponsiveSelect } from "~/components/ui/select/responsive"
 import { 
   buildLyricPlayerImplementationOptions,
   buildLyricSizePresetOptions,
-  buildLyricBackgroundRendererOptions,
 } from "~/constants/lyrics"
 import { Input } from "~/components/ui/input"
 
@@ -85,9 +84,7 @@ export const SettingLyrics = () => {
           }),
           WordFadeWidthItem,
 
-          { type: "title", value: t("lyrics.background") },
-          BackgroundRendererItem,
-          BackgroundConditionalItem,
+          // Lyrics background settings moved to themes tab (dynamic cover mode)
         ]}
       />
     </div>
@@ -121,7 +118,7 @@ const FontWeightItem = () => {
 const PlayerImplementationItem = () => {
   const { t } = useTranslation("settings")
   const settings = useLyricsSettingValue()
-  const items = buildLyricPlayerImplementationOptions(t)
+  const items = buildLyricPlayerImplementationOptions(t as any)
   const value = (settings.playerImplementation as string) || "dom"
   return (
     <SettingItemGroup>
@@ -147,7 +144,7 @@ const PlayerImplementationItem = () => {
 const SizePresetItem = () => {
   const { t } = useTranslation("settings")
   const settings = useLyricsSettingValue()
-  const items = buildLyricSizePresetOptions(t)
+  const items = buildLyricSizePresetOptions(t as any)
   const value = (settings.sizePreset as string) || "medium"
   return (
     <SettingItemGroup>
@@ -190,7 +187,7 @@ const FontPreviewItem = () => {
           <Input
             value={preview}
             onChange={(e) => setPreview(e.currentTarget.value)}
-            className="h-8 px-2 text-xs border border-border rounded-md bg-background text-text"
+            className="h-8 px-2 text-xs border border-border rounded-md text-text"
           />
         </div>
       </div>
@@ -233,94 +230,6 @@ const WordFadeWidthItem = () => {
 }
 
 
-const BackgroundConditionalItem = () => {
-  const { t } = useTranslation("settings")
-  const settings = useLyricsSettingValue()
-  const isCss = settings.backgroundRenderer === "css-bg"
-
-  if (isCss) {
-    return (
-      <SettingItemGroup>
-        <SettingInput
-          type="text"
-          label={t("lyrics.background.css_background_property")}
-          value={settings.cssBackgroundProperty || ""}
-          onChange={(e) => setLyricsSetting("cssBackgroundProperty", e.target.value)}
-          inputClassName="w-48"
-        />
-        <SettingDescription>
-          {t("lyrics.background.css_background_property.description")}
-        </SettingDescription>
-      </SettingItemGroup>
-    )
-  }
-
-  return (
-    <>
-      <SettingItemGroup>
-        <SettingInput
-          type="number"
-          label={t("lyrics.background.fps")}
-          value={String(settings.backgroundFps ?? 60)}
-          onChange={(e) => setLyricsSetting("backgroundFps", Number(e.target.value))}
-          inputClassName="w-48"
-        />
-        <SettingDescription>
-          {t("lyrics.background.fps.description")}
-        </SettingDescription>
-      </SettingItemGroup>
-
-      <SettingItemGroup>
-        <SettingInput
-          type="number"
-          label={t("lyrics.background.render_scale")}
-          value={String(settings.backgroundRenderScale ?? 1)}
-          onChange={(e) => setLyricsSetting("backgroundRenderScale", Number(e.target.value))}
-          inputClassName="w-48"
-        />
-        <SettingDescription>
-          {t("lyrics.background.render_scale.description")}
-        </SettingDescription>
-      </SettingItemGroup>
-
-      <SettingItemGroup>
-        <SettingSwitch
-          label={t("lyrics.background.static_mode")}
-          checked={Boolean(settings.backgroundStaticMode)}
-          onCheckedChange={(v) => setLyricsSetting("backgroundStaticMode", Boolean(v))}
-        />
-        <SettingDescription>
-          {t("lyrics.background.static_mode.description")}
-        </SettingDescription>
-      </SettingItemGroup>
-    </>
-  )
-}
-
-const BackgroundRendererItem = () => {
-  const { t } = useTranslation("settings")
-  const settings = useLyricsSettingValue()
-  const items = buildLyricBackgroundRendererOptions(t)
-  const value = (settings.backgroundRenderer as string) || "mesh"
-  return (
-    <SettingItemGroup>
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <label className="text-sm font-medium leading-none">
-          {t("lyrics.background.renderer")}
-        </label>
-        <ResponsiveSelect
-          size="sm"
-          triggerClassName="w-48"
-          value={value}
-          onValueChange={(v) => setLyrics("backgroundRenderer", v as any)}
-          items={items}
-        />
-      </div>
-      <SettingDescription>
-        {t("lyrics.background.renderer.description")}
-      </SettingDescription>
-    </SettingItemGroup>
-  )
-}
+// Lyrics background settings moved to themes tab (dynamic cover mode)
 
 

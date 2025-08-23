@@ -1,319 +1,402 @@
 import { useStore } from "jotai";
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import {
-	musicAlbumNameAtom,
-	musicArtistsAtom,
-	musicCoverAtom,
-	musicCoverIsVideoAtom,
-	musicDurationAtom,
-	musicIdAtom,
-	musicNameAtom,
-	musicPlayingAtom,
-	musicPlayingPositionAtom,
-	musicQualityAtom,
-	musicVolumeAtom,
-	currentPlaylistAtom,
-	currentPlaylistMusicIndexAtom,
-	onRequestNextSongAtom,
-	onRequestPrevSongAtom,
-	onPlayOrResumeAtom,
-	isLyricPageOpenedAtom,
-	onSeekPositionAtom,
-	onLyricLineClickAtom,
-	onChangeVolumeAtom,
-	onRequestOpenMenuAtom,
+    musicAlbumNameAtom,
+    musicArtistsAtom,
+    musicCoverAtom,
+    musicCoverIsVideoAtom,
+    musicDurationAtom,
+    musicIdAtom,
+    musicNameAtom,
+    musicPlayingAtom,
+    musicPlayingPositionAtom,
+    musicVolumeAtom,
+    playerModeAtom,
+    currentPlaylistAtom,
+    currentPlaylistMusicIndexAtom,
+    onRequestNextSongAtom,
+    onRequestPrevSongAtom,
+    onPlayOrResumeAtom,
+    isLyricPageOpenedAtom,
+    onSeekPositionAtom,
+    onLyricLineClickAtom,
+    onChangeVolumeAtom,
+    onRequestOpenMenuAtom,
 } from "~/atoms/player/index";
 
 import { audioService } from "~/services/audio-service";
-import type { Song, PlayerEvent, QueueItem } from "~/services/audio-service";
+import type { QueueItem } from "~/services/audio-service";
+import type { Song } from "~/types/bindings";
+import { resolveSongCoverUrl } from "~/lib/image";
 
 /**
- * 处理音频质量并生成对应的音质状态
- */
-function processAudioQuality(quality: any): any {
-	// TODO: 实现音质处理逻辑，根据后端 AudioQuality 结构调整
-	return { type: "None" };
-}
-
-/**
- * 音乐播放器核心提供者
- * 负责播放器状态管理、后端事件监听和回调注入
+ * music player core provider
+ * responsible for player state management, backend event listening and callback injection
  */
 export const MusicPlayerProvider: FC = () => {
-	const store = useStore();
-	const { t } = useTranslation();
+    const store = useStore();
+    const { t } = useTranslation();
 
-	/**
-	 * 同步音乐信息到播放器状态
-	 */
-	const syncMusicInfo = async (song: Song) => {
-		if (!song) {
-			console.error("[syncMusicInfo] Invalid song data, aborting.");
-			return;
-		}
+    // Track switching flag and timeout to avoid UI flicker when changing tracks
+    // switchingRef: true means we are in a manual/auto track switching phase
+    const switchingRef = useRef(false);
+    const switchingTimerRef = useRef<number | null>(null);
 
-		try {
-			// 设置歌曲基本信息
-			store.set(musicIdAtom, song._id || "");
-			store.set(musicNameAtom, song.title || "未知歌曲");
-			store.set(musicAlbumNameAtom, song.album || "未知专辑");
-			
-			// 处理艺术家信息
-			if (song.artist) {
-				store.set(
-					musicArtistsAtom,
-					song.artist.split("/").map((v: string) => ({
-						id: v.trim(),
-						name: v.trim(),
-					})),
-				);
-			} else {
-				store.set(musicArtistsAtom, [{ id: "unknown", name: "未知创作者" }]);
-			}
+    // Start switching phase with a timeout fallback
+    const startSwitching = (reason: 'manual' | 'auto' = 'manual') => {
+        // If already switching, refresh timeout
+        switchingRef.current = true;
+        if (switchingTimerRef.current !== null) {
+            clearTimeout(switchingTimerRef.current);
+        }
+        const timeoutMs = reason === 'manual' ? 3000 : 3000; // Fallback timeout
+        switchingTimerRef.current = window.setTimeout(() => {
+            switchingRef.current = false;
+            switchingTimerRef.current = null;
+            console.warn('[Player] switching timeout elapsed, resetting flag');
+        }, timeoutMs);
+    };
 
-			// 清理旧的封面URL
-			const oldUrl = store.get(musicCoverAtom);
-			if (oldUrl?.startsWith("blob:")) {
-				URL.revokeObjectURL(oldUrl);
-			}
+    // Clear switching phase and its timer
+    const clearSwitching = () => {
+        if (switchingTimerRef.current !== null) {
+            clearTimeout(switchingTimerRef.current);
+            switchingTimerRef.current = null;
+        }
+        switchingRef.current = false;
+    };
 
-			// TODO: 从后端获取封面数据
-			// 目前先设置默认封面
-			store.set(
-				musicCoverAtom,
-				"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-			);
-			store.set(musicCoverIsVideoAtom, false);
+    /**
+     * Sync music info to player state
+     */
+    const syncMusicInfo = async (song: Song) => {
+        if (!song) {
+            console.error("[syncMusicInfo] Invalid song data, aborting.");
+            return;
+        }
 
-			// 设置时长
-			if (song.duration) {
-				store.set(musicDurationAtom, (song.duration * 1000) | 0);
-			}
-		} catch (error) {
-			console.error("[syncMusicInfo] An error occurred during state update:", error);
-		}
-	};
+        try {
+            // Set basic song info
+            store.set(musicIdAtom, song._id || "");
+            store.set(musicNameAtom, song.title || "未知歌曲");
+            // Album in bindings is an object; prefer album_name when present
+            store.set(musicAlbumNameAtom, song.album?.album_name || "未知专辑");
 
-	/**
-	 * 处理并设置播放列表
-	 */
-	const processAndSetPlaylist = async (queueItems: QueueItem[]) => {
-		try {
-			// 将后端的 QueueItem 转换为前端需要的格式
-			const playlist = queueItems.map((item, index) => ({
-				type: "custom" as const,
-				id: item.song._id || "",
-				songJsonData: JSON.stringify(item.song),
-				origOrder: index,
-			}));
+            // Map artists array to {id,name}
+            if (song.artists && song.artists.length > 0) {
+                store.set(
+                    musicArtistsAtom,
+                    song.artists.map((a) => ({
+                        id: a.artist_id ?? a.sanitized_artist_name ?? a.artist_name ?? "unknown",
+                        name: a.artist_name ?? a.sanitized_artist_name ?? "未知创作者",
+                    }))
+                );
+            } else {
+                store.set(musicArtistsAtom, [{ id: "unknown", name: "未知创作者" }]);
+            }
 
-			store.set(currentPlaylistAtom, playlist);
-		} catch (error) {
-			console.error("[processAndSetPlaylist] 处理播放列表失败:", error);
-		}
-	};
+            // Clear old blob URL if any
+            const oldUrl = store.get(musicCoverAtom);
+            if (oldUrl?.startsWith("blob:")) {
+                URL.revokeObjectURL(oldUrl);
+            }
 
-	useEffect(() => {
-		console.log("[MusicPlayerProvider] 初始化音频服务连接");
+            // Resolve cover from song/album fields (supports local path or network url)
+            const cover = resolveSongCoverUrl(song);
+            store.set(
+                musicCoverAtom,
+                cover ?? "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+            );
+            store.set(musicCoverIsVideoAtom, false);
 
-		// 设置播放器回调函数
-		const toEmitCommand = (command: () => Promise<void>) => ({
-			onEmit: async () => {
-				try {
-					await command();
-				} catch (error) {
-					console.error("播放器命令执行失败:", error);
-					toast.error("操作失败: " + (error as Error).message);
-				}
-			},
-		});
+            // Set duration
+            if (song.duration) {
+                store.set(musicDurationAtom, (song.duration * 1000) | 0);
+            }
+        } catch (error) {
+            console.error("[syncMusicInfo] An error occurred during state update:", error);
+        }
+    };
 
-		const toEmit = <T,>(onEmit: T) => ({ onEmit });
+    /**
+     * Process and set playlist
+     */
+    const processAndSetPlaylist = async (queueItems: QueueItem[]) => {
+        try {
+            // Convert backend QueueItem to frontend format
+            const playlist = queueItems.map((item, index) => ({
+                type: "custom" as const,
+                id: item.song._id || "",
+                songJsonData: JSON.stringify(item.song),
+                origOrder: index,
+            }));
 
-		// 绑定播放控制回调
-		store.set(onRequestNextSongAtom, toEmitCommand(() => audioService.nextTrack()));
-		store.set(onRequestPrevSongAtom, toEmitCommand(() => audioService.previousTrack()));
-		store.set(onPlayOrResumeAtom, toEmitCommand(() => audioService.togglePlayback()));
-		
-		store.set(
-			isLyricPageOpenedAtom, false
-		);
+            store.set(currentPlaylistAtom, playlist);
+        } catch (error) {
+            console.error("[processAndSetPlaylist] 处理播放列表失败:", error);
+        }
+    };
 
-		store.set(
-			onSeekPositionAtom,
-			toEmit(async (time: number) => {
-				try {
-					await audioService.seek(time / 1000); // 转换为秒
-				} catch (error) {
-					console.error("跳转失败:", error);
-				}
-			}),
-		);
+    useEffect(() => {
+        // Setup player callback functions
+        const toEmitCommand = (command: () => Promise<void>) => ({
+            onEmit: async () => {
+                try {
+                    await command();
+                } catch (error) {
+                    toast.error("layer command failed:" + (error as Error).message);
+                }
+            },
+        });
 
-		store.set(
-			onLyricLineClickAtom,
-			toEmit(async (evt: any) => {
-				try {
-					// 从歌词行数据中获取时间并跳转
-					if (evt.line && evt.line.getLine && evt.line.getLine().startTime) {
-						await audioService.seek(evt.line.getLine().startTime / 1000);
-					}
-				} catch (error) {
-					console.error("歌词行跳转失败:", error);
-				}
-			}),
-		);
+        const toEmit = <T,>(onEmit: T) => ({ onEmit });
 
-		store.set(
-			onChangeVolumeAtom,
-			toEmit(async (volume: number) => {
-				try {
-					await audioService.setVolume(volume);
-				} catch (error) {
-					console.error("设置音量失败:", error);
-				}
-			}),
-		);
+        // Bind playback control callbacks
+        // Intercept next/prev to start local switching phase and debounce rapid clicks
+        store.set(onRequestNextSongAtom, {
+            onEmit: async () => {
+                if (switchingRef.current) return; // Debounce rapid user clicks
+                startSwitching('manual');
+                try {
+                    await audioService.nextTrack();
+                } catch (error) {
+                    clearSwitching(); // Clear flag on failure
+                    console.error("上一首/下一首操作失败:", error);
+                    toast.error("操作失败: " + (error as Error).message);
+                }
+            },
+        });
+        store.set(onRequestPrevSongAtom, {
+            onEmit: async () => {
+                if (switchingRef.current) return;
+                startSwitching('manual');
+                try {
+                    await audioService.previousTrack();
+                } catch (error) {
+                    clearSwitching();
+                    toast.error("prev song failed: " + (error as Error).message);
+                }
+            },
+        });
+        store.set(onPlayOrResumeAtom, toEmitCommand(async () => { await audioService.togglePlayback(); }));
+        
+        store.set(isLyricPageOpenedAtom, false);
 
-		store.set(
-			onRequestOpenMenuAtom,
-			toEmit(() => {
-				toast.info(
-					t("amll.openMenuViaRightClick", "请右键歌词页任意位置来打开菜单哦！"),
-				);
-			}),
-		);
+        store.set(
+            onSeekPositionAtom,
+            toEmit(async (time: number) => {
+                try {
+                    await audioService.seek(time / 1000); // Convert to seconds
+                } catch (error) {
+                    console.error("seek failed:", error);
+                }
+            }),
+        );
 
+        store.set(
+            onLyricLineClickAtom,
+            toEmit(async (evt: any) => {
+                try {
+                    // Get time from lyric line data and seek
+                    if (evt.line && evt.line.getLine && evt.line.getLine().startTime) {
+                        await audioService.seek(evt.line.getLine().startTime / 1000);
+                    }
+                } catch (error) {
+                    console.error("lyric line click failed:", error);
+                }
+            }),
+        );
 
-		// 监听后端播放器事件
-		const unsubscribeEvents: (() => void)[] = [];
+        store.set(
+            onChangeVolumeAtom,
+            toEmit(async (volume: number) => {
+                try {
+                    await audioService.setVolume(volume);
+                } catch (error) {
+                    console.error("change volume failed:", error);
+                }
+            }),
+        );
 
-		// 歌曲改变事件
-		unsubscribeEvents.push(
-			audioService.on("SongChanged", async (data: { song: Song | null }) => {
-				console.log("[PlayerEvent] 歌曲改变:", data.song);
-				if (data.song) {
-					await syncMusicInfo(data.song);
-				}
-			})
-		);
+        store.set(
+            onRequestOpenMenuAtom,
+            toEmit(() => {
+                toast.info(
+                    t("amll.openMenuViaRightClick", "请右键歌词页任意位置来打开菜单哦！"),
+                );
+            }),
+        );
 
-		// 播放状态改变事件
-		unsubscribeEvents.push(
-			audioService.on("PlaybackStateChanged", (data: { is_playing: boolean; is_paused: boolean }) => {
-				console.log("[PlayerEvent] 播放状态改变:", data);
-				store.set(musicPlayingAtom, data.is_playing);
-			})
-		);
+        // Listen to backend player events
+        const unsubscribeEvents: (() => void)[] = [];
 
-		// 播放位置更新事件
-		unsubscribeEvents.push(
-			audioService.on("PositionChanged", (data: { position: { secs: number; nanos: number } }) => {
-				// 将 Rust Duration 转换为毫秒
-				const positionMs = data.position.secs * 1000 + Math.floor(data.position.nanos / 1_000_000);
-				store.set(musicPlayingPositionAtom, positionMs);
-			})
-		);
+        // Song changed event
+        unsubscribeEvents.push(
+            audioService.on("SongChanged", async (data: { song: Song | null }) => {
+                console.log("[PlayerEvent] 歌曲改变:", data.song);
+                if (data.song) {
+                    await syncMusicInfo(data.song);
+                    // Clear switching on song metadata arrival
+                    clearSwitching();
+                    // Also sync current queue index to keep UI highlighting accurate
+                    try {
+                        const status = await audioService.getPlayerStatus();
+                        if (status.queue_index !== null) {
+                            store.set(currentPlaylistMusicIndexAtom, status.queue_index);
+                        }
+                    } catch (err) {
+                        console.warn("[SongChanged] Failed to sync queue index:", err);
+                    }
+                }
+            })
+        );
 
-		// 音量改变事件
-		unsubscribeEvents.push(
-			audioService.on("VolumeChanged", (data: { volume: number }) => {
-				console.log("[PlayerEvent] 音量改变:", data.volume);
-				store.set(musicVolumeAtom, data.volume);
-			})
-		);
+        // Playback state changed event
+        unsubscribeEvents.push(
+            audioService.on("PlaybackStateChanged", (data: { is_playing: boolean; is_paused: boolean }) => {
+                // If switching, only land on definitive states and then clear switching
+                if (switchingRef.current) {
+                    const definitive = data.is_playing || data.is_paused;
+                    if (!definitive) return; // ignore non-definitive updates
+                    store.set(musicPlayingAtom, Boolean(data.is_playing && !data.is_paused));
+                    clearSwitching();
+                    return;
+                }
+                // Normal path
+                store.set(musicPlayingAtom, Boolean(data.is_playing && !data.is_paused));
+            })
+        );
 
-		// 播放模式改变事件
-		unsubscribeEvents.push(
-			audioService.on("PlayModeChanged", (data: { mode: string }) => {
-				console.log("[PlayerEvent] 播放模式改变:", data.mode);
-				// TODO: 根据需要更新播放模式状态
-			})
-		);
+        // Position update event
+        unsubscribeEvents.push(
+            audioService.on("PositionChanged", (data: { position: { secs: number; nanos: number } }) => {
+                // Convert Rust Duration to milliseconds
+                const positionMs = data.position.secs * 1000 + Math.floor(data.position.nanos / 1_000_000);
+                store.set(musicPlayingPositionAtom, positionMs);
+            })
+        );
 
-		// 队列改变事件
-		unsubscribeEvents.push(
-			audioService.on("QueueChanged", async () => {
-				console.log("[PlayerEvent] 队列改变");
-				try {
-					const queue = await audioService.getQueue();
-					await processAndSetPlaylist(queue);
-				} catch (error) {
-					console.error("获取队列失败:", error);
-				}
-			})
-		);
+        // Volume changed event
+        unsubscribeEvents.push(
+            audioService.on("VolumeChanged", (data: { volume: number }) => {
+                store.set(musicVolumeAtom, data.volume);
+            })
+        );
 
-		// 错误事件
-		unsubscribeEvents.push(
-			audioService.on("Error", (data: { message: string }) => {
-				console.error("[PlayerEvent] 播放器错误:", data.message);
-				toast.error("播放器错误: " + data.message);
-			})
-		);
+        // Play mode changed event
+        unsubscribeEvents.push(
+            audioService.on("PlayerModeChanged", (data: { mode: string }) => {
+                store.set(playerModeAtom, data.mode as any);
+            })
+        );
 
-		// 缓冲进度事件
-		unsubscribeEvents.push(
-			audioService.on("BufferProgress", (data: { progress: number }) => {
-				console.log("[PlayerEvent] 缓冲进度:", data.progress);
-				// TODO: 根据需要处理缓冲进度
-			})
-		);
+        // Queue changed event
+        unsubscribeEvents.push(
+            audioService.on("QueueChanged", async () => {
+                try {
+                    // Sync ordered playlist for UI
+                    const queue = await audioService.getQueue();
+                    await processAndSetPlaylist(queue);
+                    // Sync current index from raw queue
+                    try {
+                        const raw = await audioService.getQueueRaw();
+                        if (Number.isInteger(raw.current_index)) {
+                            store.set(currentPlaylistMusicIndexAtom, raw.current_index);
+                        }
+                    } catch (e) {
+                        console.warn("[QueueChanged] Failed to sync queue index:", e);
+                    }
+                } catch (error) {
+                    console.error("get queue failed:", error);
+                }
+            })
+        );
 
-		// 初始化时获取当前状态
-		const initializeState = async () => {
-			try {
-				const status = await audioService.getPlayerStatus();
-				console.log("[MusicPlayerProvider] 初始状态:", status);
+        // Error event
+        unsubscribeEvents.push(
+            audioService.on("Error", (data: { message: string }) => {
+                toast.error("player error: " + data.message);
+                clearSwitching();
+            })
+        );
 
-				// 同步播放状态
-				store.set(musicPlayingAtom, status.is_playing);
-				store.set(musicVolumeAtom, status.volume);
-				store.set(musicPlayingPositionAtom, status.position);
+        // Buffer progress event
+        unsubscribeEvents.push(
+            audioService.on("BufferProgress", (data: { progress: number }) => {
+                // TODO: Handle buffer progress as needed
+            })
+        );
 
-				// 同步当前歌曲
-				if (status.current_song) {
-					await syncMusicInfo(status.current_song);
-				}
+        // Optional: backend Buffering event to reflect auto switching (no user click)
+        unsubscribeEvents.push(
+            audioService.on("Buffering", () => {
+                // Start switching if not already; helps for auto next-track transitions
+                if (!switchingRef.current) startSwitching('auto');
+            })
+        );
 
-				// 同步播放队列
-				const queue = await audioService.getQueue();
-				await processAndSetPlaylist(queue);
+        // Track finished event
+        unsubscribeEvents.push(
+            audioService.on("TrackFinished", () => {
+                clearSwitching();
+            })
+        );
 
-				if (status.queue_index !== null) {
-					store.set(currentPlaylistMusicIndexAtom, status.queue_index);
-				}
-			} catch (error) {
-				console.error("[MusicPlayerProvider] 初始化状态失败:", error);
-			}
-		};
+        // Initialize state on mount
+        const initializeState = async () => {
+            try {
+                const [status, playerMode] = await Promise.all([
+                    audioService.getPlayerStatus(),
+                    audioService.getPlayerMode(),
+                ]);
+                // Sync playback state and volume (AggregatedPlayerStatus has: state, current_song, volume, queue_index)
+                store.set(musicPlayingAtom, status.state === 'PLAYING');
+                store.set(musicVolumeAtom, status.volume);
+                store.set(playerModeAtom, playerMode);
 
-		initializeState();
+                // Sync current song
+                if (status.current_song) {
+                    await syncMusicInfo(status.current_song);
+                }
 
-		console.log("[MusicPlayerProvider] 音频服务连接完成");
+                // Sync playback queue
+                const queue = await audioService.getQueue();
+                await processAndSetPlaylist(queue);
 
-		return () => {
-			console.log("[MusicPlayerProvider] 清理事件监听");
-			
-			// 取消所有事件监听
-			unsubscribeEvents.forEach(unsubscribe => unsubscribe());
+                if (status.queue_index !== null) {
+                    store.set(currentPlaylistMusicIndexAtom, status.queue_index);
+                }
+            } catch (error) {
+                console.error("[MusicPlayerProvider] init state failed:", error);
+            }
+        };
 
-			// 重置回调函数
-			const doNothing = toEmit(() => { });
-			store.set(onRequestNextSongAtom, doNothing);
-			store.set(onRequestPrevSongAtom, doNothing);
-			store.set(onPlayOrResumeAtom, doNothing);
-			store.set(onSeekPositionAtom, doNothing);
-			store.set(onLyricLineClickAtom, doNothing);
-			store.set(onChangeVolumeAtom, doNothing);
-			store.set(onRequestOpenMenuAtom, doNothing);
+        initializeState();
 
-			console.log("[MusicPlayerProvider] 清理完成");
-		};
-	}, [store, t]);
+        return () => {
+            // Cancel all event listeners
+            unsubscribeEvents.forEach(unsubscribe => unsubscribe());
 
-	return null;
+            // Clear switching timer if any
+            if (switchingTimerRef.current !== null) {
+                clearTimeout(switchingTimerRef.current);
+                switchingTimerRef.current = null;
+            }
+
+            // Reset callback functions
+            const doNothing = toEmit(() => { });
+            store.set(onRequestNextSongAtom, doNothing);
+            store.set(onRequestPrevSongAtom, doNothing);
+            store.set(onPlayOrResumeAtom, doNothing);
+            store.set(onSeekPositionAtom, doNothing);
+            store.set(onLyricLineClickAtom, doNothing);
+            store.set(onChangeVolumeAtom, doNothing);
+            store.set(onRequestOpenMenuAtom, doNothing);
+        };
+    }, [store, t]);
+
+    return null;
 };

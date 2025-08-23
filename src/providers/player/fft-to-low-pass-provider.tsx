@@ -6,7 +6,7 @@ import {
 	fftDataRangeAtom,
 	lowFreqVolumeAtom,
 } from "~/atoms/player/data-atoms";
-import { emitAudioThread } from "~/services/audio-backend/local-backend";
+// import { emitAudioThread } from "~/services/audio-backend/local-backend";
 
 /**
  * FFT 数据处理和低频体感效果提供者
@@ -17,10 +17,10 @@ export const FFTToLowPassProvider: FC = () => {
 	const fftDataRange = useAtomValue(fftDataRangeAtom);
 
 	useEffect(() => {
-		emitAudioThread("setFFTRange", {
-			fromFreq: fftDataRange[0],
-			toFreq: fftDataRange[1],
-		});
+		// emitAudioThread("setFFTRange", {
+		// 	fromFreq: fftDataRange[0],
+		// 	toFreq: fftDataRange[1],
+		// });
 	}, [fftDataRange]);
 
 	useEffect(() => {

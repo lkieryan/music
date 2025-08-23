@@ -2,11 +2,11 @@ import type { LyricLine as CoreLyricLine } from "@applemusic-like-lyrics/core";
 import {
 	type LyricLine,
 	parseEslrc,
-	parseLrc,
+	/*parseLrc,
 	parseLys,
 	parseQrc,
 	parseTTML,
-	parseYrc,
+	parseYrc, */
 } from "@applemusic-like-lyrics/lyric";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type FC, useEffect } from "react";

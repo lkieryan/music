@@ -2,17 +2,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { type FC, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 
-import { musicQualityAtom, musicQualityTagAtom } from "~/atoms/player/data-atoms";
-
-// TODO: Import audio quality types when ready
-// import { AudioQualityType, type MusicQualityState } from "~/types/audio-quality";
-
-enum AudioQualityType {
-	None = "None",
-	Lossless = "Lossless",
-	HiResLossless = "HiResLossless",
-	DolbyAtmos = "DolbyAtmos",
-}
+import { musicQualityAtom, musicQualityTagAtom, AudioQualityType } from "~/atoms/player/data-atoms";
 
 /**
  * 处理音频质量并生成对应的标签

@@ -1,0 +1,22 @@
+/* Global press animation utility classes */
+
+@keyframes ui-press-animation {
+  0% { transform: scale(1); }
+  20% { transform: scale(0.85); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Apply this on the clickable container (e.g., button) */
+.press-anim-parent:active .press-anim {
+  /* When actively pressed, cancel nested animations to avoid jitter */
+  animation-name: none !important;
+}
+
+/* Apply this on the icon/content inside the clickable element */
+.press-anim {
+  transition: transform 0.5s;
+  transform-origin: center;
+  animation: ui-press-animation 0.7s;
+  animation-composition: accumulate;
+}

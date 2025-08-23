@@ -30,8 +30,8 @@ export function RootProvider({ children }: PropsWithChildren) {
                 <I18nProvider>
                   <AppThemeProvider>
                     <ThemeProvider>
-                      {children}
                       <MusicPlayerProvider />
+                      {children}
                       <LyricProvider />
                       <FFTToLowPassProvider />
                       <MusicQualityTagProvider />

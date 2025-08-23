@@ -9,6 +9,13 @@ export const initializeApp = async () => {
     return settingsHydrate()
   })
 
+  // 初始化扫描器服务
+  await apm("scanner-service", async () => {
+    const { scannerService } = await import('~/services/scanner-service')
+    // 扫描器服务在导入时自动初始化
+    return Promise.resolve()
+  })
+
   // keep reference if you need to unlisten on teardown
   void unlistenSettings
 }

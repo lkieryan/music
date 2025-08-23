@@ -266,7 +266,7 @@ export function useGradientState(initialState?: GradientInternalState) {
     algo: string,
     numDots: number,
     position: string,
-    // colors?: string[] // 目前未使用
+    colors?: string[]
   ) => {
     const [x, y] = position.split(',').map(pos => parseInt(pos))
     setCurrentLightness(lightness)

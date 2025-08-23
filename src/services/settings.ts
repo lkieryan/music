@@ -3,7 +3,7 @@ import { listen as tauriListen } from '@tauri-apps/api/event'
 import { debounce } from 'es-toolkit/compat'
 
 export async function loadSettings<T = any>(key: string): Promise<T | undefined> {
-  return invoke('load_selective', { key }).catch(() => undefined)
+  return invoke<T | undefined>('load_selective', { key }).catch<T | undefined>(() => undefined)
 }
 
 export async function saveSettings<T = any>(key: string, value: T): Promise<void> {
@@ -11,7 +11,7 @@ export async function saveSettings<T = any>(key: string, value: T): Promise<void
 }
 
 export async function getSecure<T = any>(key: string): Promise<T | undefined> {
-  return invoke('get_secure', { key }).catch(() => undefined)
+  return invoke<T | undefined>('get_secure', { key }).catch<T | undefined>(() => undefined)
 }
 
 export async function setSecure<T = any>(key: string, value: T | null): Promise<void> {
@@ -19,7 +19,7 @@ export async function setSecure<T = any>(key: string, value: T | null): Promise<
 }
 
 export async function loadDomain<T = any>(domain: string = ''): Promise<T> {
-  return invoke('load_domain', { domain })
+  return invoke<T>('load_domain', { domain })
 }
   
 export async function saveDomainPartial(domain: string = '', patch: Record<string, any>): Promise<void> {

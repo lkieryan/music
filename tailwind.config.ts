@@ -224,11 +224,6 @@ const twConfig: Config = {
       addVariant("f-motion-reduce", '[data-motion-reduce="true"] &')
       addVariant("group-motion-reduce", ':merge(.group)[data-motion-reduce="true"] &')
       addVariant("peer-motion-reduce", ':merge(.peer)[data-motion-reduce="true"] ~ &')
-
-      addVariant("zen-mode-macos", ":where(html[data-zen-mode='true'][data-os='macOS']) &")
-      addVariant("zen-mode-windows", ":where(html[data-zen-mode='true'][data-os='Windows']) &")
-
-      addVariant("zen-mode", ":where(html[data-zen-mode='true']) &")
       addVariant("macos", ":where(html[data-os='macOS']) &")
       addVariant("windows", ":where(html[data-os='Windows']) &")
     }),

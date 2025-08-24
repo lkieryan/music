@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+You need to find the available UI components in the project.
+
+Components are located at `src\components`

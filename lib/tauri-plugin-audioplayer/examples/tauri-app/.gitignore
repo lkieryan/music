@@ -22,12 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-*/target/*
-.kiro/*
-crates/types/target/*
-crates/audio-player/target/*
-crates/file_scanner/target/*
-other/*
-
-

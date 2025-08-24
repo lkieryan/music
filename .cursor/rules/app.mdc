@@ -1,0 +1,240 @@
+---
+description: Advanced Music Player Application Development Rules
+globs: 
+alwaysApply: true
+---
+
+# Music Player Application Development Rules
+
+You are developing a sophisticated, cross-platform music player application with advanced theming, layout customization, and multi-provider support.
+
+## Project Architecture
+
+This is a **Tauri-based desktop application** with a React frontend, featuring:
+- **Desktop Application**: Tauri 2.7 + React 19 + TypeScript
+- **Rust Backend**: High-performance audio processing and file scanning
+- **Multi-Provider System**: Support for Spotify, YouTube, Bilibili
+- **Advanced Theming**: Gradient backgrounds with custom CSS variables
+- **Flexible Layout System**: Multi-toolbar, sidebar positioning, compact modes
+
+## Core Technology Stack
+
+### Frontend (React)
+- **React 19** - Latest with concurrent features and Suspense
+- **TypeScript 5.8** - Strict typing with generated Rust bindings
+- **Vite 7** - Fast development with HMR and WASM support
+- **React Router 7** - File-based routing with glob patterns
+- **Framer Motion** - Lazy-loaded animations (use `m` component from `motion/react`)
+
+### State Management
+- **Jotai** - Atomic state with custom store (`~/lib/jotai`)
+- **Zustand** - Complex state management
+- **Immer** - Immutable updates
+- **Custom Setting Atoms** - Type-safe settings with enhanced/fallback support
+
+### UI Framework
+- **Radix UI Themes** - Base design system
+- **Radix UI Primitives** - Accessible components (Dialog, Select, etc.)
+- **Headless UI** - Additional accessible components
+- **Custom UI Components** - Modal stack, focusable system, responsive components
+
+### Styling System
+- **TailwindCSS 3.4** - Utility-first with extensive customization
+- **CSS Custom Properties** - Dynamic theming with CSS variables
+- **Tailwind Variants** - Type-safe component variants
+- **Class Variance Authority** - Component variant management
+- **Multiple CSS Layers** - Organized layer system (base, components, utilities, layout, menu-desktop)
+
+### Backend Integration
+- **Tauri 2.7** - Rust desktop app framework
+- **Custom Rust Crates** - Database, file scanning, providers, themes
+- **TypeScript Bindings** - Auto-generated from Rust types (`ts-rs`)
+- **Diesel ORM** - Database management with migrations
+
+## Project Structure Patterns
+
+### File Organization
+```
+src/
+├── components/           # React components
+│   ├── ui/              # Reusable UI primitives
+│   ├── layout/          # Layout components (desktop/mobile)
+│   ├── modules/         # Feature-specific modules
+│   └── common/          # Shared components
+├── atoms/               # Jotai state atoms
+├── lib/                 # Utility libraries
+├── hooks/               # Custom React hooks
+├── providers/           # Context providers
+├── services/            # API services
+├── types/               # TypeScript definitions
+└── styles/              # CSS files
+```
+
+### Rust Crates Structure
+```
+crates/
+├── database/            # Diesel ORM + migrations
+├── file_scanner/        # Local music file scanning
+├── providers/           # Music provider integrations
+├── types/               # Shared type definitions
+├── themes/              # Theme system
+└── settings/         # Settings management
+```
+
+## Development Guidelines
+
+### Component Patterns
+```tsx
+// Use functional components with proper hooks order
+export const ComponentName = () => {
+  // 1. State hooks (useState, useAtom, etc.)
+  const [state, setState] = useState()
+  const value = useAtomValue(someAtom)
+  
+  // 2. Effect hooks
+  useEffect(() => {}, [])
+  
+  // 3. Custom hooks
+  const isMobile = useMobile()
+  const { t } = useTranslation()
+  
+  // 4. Memoized values and callbacks
+  const memoizedValue = useMemo(() => computation, [deps])
+  const handleClick = useCallback(() => {}, [])
+  
+  // 5. Render
+  return (
+    <div className="tailwind-classes">
+      {/* Content */}
+    </div>
+  )
+}
+```
+
+### State Management Patterns
+```tsx
+// Jotai atoms for simple state
+export const layoutAtom = atom({
+  sidebarPosition: 'left' as 'left' | 'right',
+  toolbarMode: 'multi' as 'single' | 'multi' | 'compact'
+})
+
+// Settings atoms with enhanced support
+const { useSettingKey, setSetting } = createSettingAtom(
+  'general', 
+  createDefaultGeneralSettings
+)
+
+// Zustand for complex state
+export const usePlayerStore = create<PlayerState>((set, get) => ({
+  currentTrack: null,
+  isPlaying: false,
+  play: (track) => set({ currentTrack: track, isPlaying: true }),
+}))
+```
+
+### Styling Guidelines
+```tsx
+// Use semantic CSS custom properties
+<div className="bg-background text-text border-border">
+  {/* Prefer semantic over arbitrary values */}
+</div>
+
+// Theme-aware styling with CSS variables
+<div 
+  style={{
+    background: 'var(--app-background-gradient)',
+    opacity: 'var(--background-opacity, 1)'
+  }}
+>
+  {/* Dynamic theming */}
+</div>
+
+// Responsive design with custom utilities
+<div className="w-feed-col safe-inset-top-4 left-macos-traffic-light-2">
+  {/* Custom spacing utilities */}
+</div>
+```
+
+### Layout System
+- **Desktop Layout**: Flexible sidebar + content + player areas
+- **Toolbar Modes**: Single (integrated), Multi (separate), Compact
+- **Sidebar Position**: Left/Right with proper data attributes
+- **Player Placement**: Global bottom, embedded, floating
+- **Responsive**: Mobile-first with container queries
+
+### Theming System
+- **CSS Custom Properties** - Dynamic theme variables
+- **Gradient Backgrounds** - Complex gradient generation with opacity
+- **Dark/Light Mode** - Automatic and manual switching
+- **Theme Tokens** - Consistent design tokens across components
+- **Custom Themes** - User-defined theme support
+
+### Internationalization
+- **i18next** - Multi-language support (zh-CN, en-US)
+- **Namespace Organization** - `app`, `common`, `settings`
+- **Fallback Strategy** - zh-CN as fallback, zh-TW → zh-CN
+- **Dynamic Loading** - Lazy-loaded translations
+
+### Performance Optimization
+- **Lazy Loading** - Route-based code splitting
+- **Motion Optimization** - Lazy-loaded Framer Motion features
+- **Bundle Optimization** - Tree shaking, dynamic imports
+- **Memory Management** - Proper cleanup in useEffect
+- **Rust Performance** - Heavy operations in Rust backend
+
+## Tauri Integration
+```
+
+### Type Generation
+- **Rust → TypeScript** - Auto-generated bindings with `ts-rs`
+- **Type Safety** - Full type safety across Rust/TS boundary
+- **Schema Validation** - Runtime validation of data structures
+
+## Advanced Features
+
+### Provider System
+- **Multi-Provider** - Spotify, YouTube, Bilibili support
+- **Provider Registry** - Dynamic provider loading
+- **Authentication** - Secure credential management
+- **API Abstraction** - Unified interface across providers
+
+### File Scanning
+- **Cross-Platform** - Desktop file system scanning
+- **Android Support** - Separate scanner implementation
+- **Metadata Extraction** - Audio file metadata parsing
+- **Database Storage** - Efficient storage with Diesel ORM
+
+### Theme Engine
+- **Dynamic Backgrounds** - Gradient generation with multiple layers
+- **Color Management** - Advanced color blending and contrast
+- **CSS Generation** - Runtime CSS custom property updates
+- **User Customization** - Theme editor with live preview
+
+## Code Quality Standards
+
+### TypeScript
+- **Strict Mode** - Enable all strict TypeScript options
+- **Type Imports** - Use `import type` for type-only imports
+- **Generic Constraints** - Proper generic type constraints
+- **Utility Types** - Leverage TypeScript utility types
+
+### React Best Practices
+- **Error Boundaries** - Proper error handling with boundaries
+- **Suspense** - Use Suspense for loading states
+- **Concurrent Features** - Leverage React 19 concurrent features
+- **Hook Dependencies** - Proper dependency arrays
+
+### Accessibility
+- **WCAG Compliance** - Follow WCAG 2.1 AA guidelines
+- **Keyboard Navigation** - Full keyboard accessibility
+- **Screen Readers** - Proper ARIA labels and descriptions
+- **Focus Management** - Logical focus order and trapping
+
+### Testing
+- **Unit Tests** - Test utilities and pure functions
+- **Component Tests** - Test component behavior and rendering
+- **Integration Tests** - Test feature workflows
+- **E2E Tests** - Critical user journey testing
+
+Remember: This is a sophisticated desktop music application with complex theming, layout flexibility, and multi-provider support. Always consider performance, accessibility, and user experience in your implementations.

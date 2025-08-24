@@ -11,7 +11,7 @@ export interface GradientState {
 
 export interface ColorHarmony {
   type: 'complementary' | 'splitComplementary' | 'analogous' | 'triadic' | 'floating'
-  angles: number[]
+  angles: readonly number[]
 }
 
 export interface ColorDot {

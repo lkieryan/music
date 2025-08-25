@@ -59,21 +59,24 @@ const DynamicCoverBackground: FC = () => {
   }
 
   return (
-    <BackgroundRender
-      className="fixed inset-0 pointer-events-none z-0"
-      album={album}
-      albumIsVideo={albumIsVideo}
-      lowFreqVolume={lowFreqVolume}
-      renderScale={bg.backgroundRenderScale ?? 1}
-      fps={bg.backgroundFps ?? 60}
-      renderer={legacyRenderer.renderer}
-      staticMode={!!bg.backgroundStaticMode}
-      style={{
-        minWidth: 0,
-        minHeight: 0,
-        overflow: "hidden",
-      }}
-    />
+    <div className="fixed inset-0 pointer-events-none z-0" style={{ isolation: 'isolate' }}>
+      <BackgroundRender
+        className="absolute inset-0 pointer-events-none"
+        album={album}
+        albumIsVideo={albumIsVideo}
+        lowFreqVolume={lowFreqVolume}
+        renderScale={bg.backgroundRenderScale ?? 1}
+        fps={bg.backgroundFps ?? 60}
+        renderer={legacyRenderer.renderer}
+        staticMode={!!bg.backgroundStaticMode}
+        style={{
+          minWidth: 0,
+          minHeight: 0,
+          overflow: "hidden",
+          zIndex: -1,
+        }}
+      />
+    </div>
   )
 }
 

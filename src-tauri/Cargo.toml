@@ -19,7 +19,6 @@ version = "2.2.0"
 features = []
 
 [dependencies]
-aws-lc-sys = { version = "0.30.0", features = ["bindgen"] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"

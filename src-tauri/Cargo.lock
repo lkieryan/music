@@ -150,7 +150,6 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "audio-player",
- "aws-lc-sys",
  "crossbeam-channel",
  "database",
  "file_scanner",

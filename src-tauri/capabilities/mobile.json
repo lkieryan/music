@@ -1,7 +1,7 @@
 {
   "identifier": "mobile",
   "description": "Mobile-only capabilities",
-  "platforms": ["android", "ios"],
+  "platforms": ["android", "iOS"],
   "permissions": [
     "dialog:default"
   ]

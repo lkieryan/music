@@ -1,5 +1,4 @@
 [env]
-# 给 ts-rs 的导出目录（按你现有配置保留）
 TS_RS_EXPORT_DIR = { value = "src/types", relative = true }
 
 [net]
@@ -10,7 +9,3 @@ replace-with = "ustc"
 
 [source.ustc]
 registry = "git://mirrors.ustc.edu.cn/crates.io-index"
-
-# ===== 你原来 wasm 的设置，保留 =====
-[target.wasm32-unknown-unknown]
-rustflags = ['--cfg', 'getrandom_backend="wasm_js"', '--cfg', 'erase_components', '-C', 'debuginfo=0']

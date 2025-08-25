@@ -162,15 +162,15 @@ jobs:
         with:
           name: music-build-${{ matrix.platform }}
           path: |
-            target/**/latest.json
-            target/**/*.rpm
-            target/**/*.AppImage
-            target/**/*.AppImage.sig
-            target/**/*.dmg
-            target/**/*.deb
-            target/**/*-setup.exe
-            target/**/*-setup.exe.sig
-            target/**/*_en-US.msi
-            target/**/*_en-US.msi.sig
-            target/**/*.app.tar.gz
-            target/**/*.app.tar.gz.sig
+            src-tauri/target/**/latest.json
+            src-tauri/target/**/*.rpm
+            src-tauri/target/**/*.AppImage
+            src-tauri/target/**/*.AppImage.sig
+            src-tauri/target/**/*.dmg
+            src-tauri/target/**/*.deb
+            src-tauri/target/**/*-setup.exe
+            src-tauri/target/**/*-setup.exe.sig
+            src-tauri/target/**/*_en-US.msi
+            src-tauri/target/**/*_en-US.msi.sig
+            src-tauri/target/**/*.app.tar.gz
+            src-tauri/target/**/*.app.tar.gz.sig

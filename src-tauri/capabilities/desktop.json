@@ -1,6 +1,8 @@
 {
   "identifier": "desktop",
   "description": "Desktop-only window controls and UI",
+  "context": "local",
+  "windows": ["main"],
   "platforms": ["macOS", "windows", "linux"],
   "permissions": [
     "self-update:default",

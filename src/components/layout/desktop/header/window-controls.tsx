@@ -174,7 +174,7 @@ export const WindowControls: FC<WindowControlsProps> = ({
     // Mac风格：红黄绿，从左到右，严格按照Apple HIG规范
     // 按钮直径：12px，按钮间距（中心到中心）：20px，所以gap应该是8px (20px - 12px = 8px)
     return (
-      <div className={cn("flex items-center gap-2", className)}>
+      <div className={cn("flex items-center gap-2 z-[10000] relative", className)}>
         <button
           className="w-4 h-4 rounded-full bg-[#ff5f57] hover:bg-[#ff4136] flex items-center justify-center group transition-colors"
           onClick={handleClose}
@@ -205,7 +205,7 @@ export const WindowControls: FC<WindowControlsProps> = ({
 
   // Windows/Linux风格：最小化、最大化/还原、关闭，从左到右
   return (
-    <div className={cn("flex items-center", className)}>
+    <div className={cn("flex items-center z-[10000] relative", className)}>
       <button
         className="w-[46px] h-8 flex items-center justify-center hover:bg-[rgba(0,0,0,0.06)] dark:hover:bg-[rgba(255,255,255,0.08)] transition-colors"
         onClick={handleMinimize}

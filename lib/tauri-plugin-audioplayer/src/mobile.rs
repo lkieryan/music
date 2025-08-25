@@ -25,7 +25,7 @@ use tauri::{
     AppHandle, Emitter, Runtime,
 };
 use types::{
-    errors::{MoosyncError, Result},
+    errors::{MusicError, Result},
     mpris::MprisPlayerDetails,
     songs::Song,
 };
@@ -43,11 +43,11 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     #[cfg(target_os = "android")]
     let handle = api
         .register_android_plugin("app.moosync.audioplayer", "AudioPlayerPlugin")
-        .map_err(|e| MoosyncError::PluginError(Box::new(e)))?;
+        .map_err(|e| MusicError::PluginError(Box::new(e)))?;
     #[cfg(target_os = "ios")]
     let handle = api
         .register_ios_plugin(init_plugin_audioplayer)
-        .map_err(|e| MoosyncError::PluginError(Box::new(e)))?;
+        .map_err(|e| MusicError::PluginError(Box::new(e)))?;
 
     let ret = Audioplayer(handle);
     ret.register_media_callback(app.clone());
@@ -203,12 +203,12 @@ impl<R: Runtime> Audioplayer<R> {
                 RequestPermission { read_media: true },
             )
             .map(|r| r.read_media)
-            .map_err(|e| MoosyncError::PluginError(Box::new(e)))
+            .map_err(|e| MusicError::PluginError(Box::new(e)))
     }
 
     pub fn check_permissions(&self) -> Result<PermissionResponse> {
         self.0
             .run_mobile_plugin::<PermissionResponse>("checkPermissions", ())
-            .map_err(|e| MoosyncError::PluginError(Box::new(e)))
+            .map_err(|e| MusicError::PluginError(Box::new(e)))
     }
 }

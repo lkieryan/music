@@ -26,7 +26,7 @@ use tauri::{
 };
 
 use types::{
-    errors::{MoosyncError, Result},
+    errors::{MusicError, Result},
     songs::Song,
 };
 use types::errors::error_helpers;
@@ -45,11 +45,11 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     #[cfg(target_os = "android")]
     let handle = api
         .register_android_plugin(PLUGIN_IDENTIFIER, "FileScannerPlugin")
-        .map_err(|e| MoosyncError::String(e.to_string()))?;
+        .map_err(|e| MusicError::String(e.to_string()))?;
     #[cfg(target_os = "ios")]
     let handle = api
         .register_ios_plugin(init_plugin_file_scanner)
-        .map_err(|e| MoosyncError::String(e.to_string()))?;
+        .map_err(|e| MusicError::String(e.to_string()))?;
     Ok(FileScanner(handle))
 }
 

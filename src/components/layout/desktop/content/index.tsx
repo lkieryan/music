@@ -1,7 +1,6 @@
 import type { FC, PropsWithChildren } from 'react'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { SidebarBox } from '../sidebar/sidebar-box'
-// splitter removed; resizing is handled by dragging sidebar edges
 import { Header } from '../header'
 import { useDesktopLayout } from '~/providers/layout-provider'
 import { useAtomValue } from 'jotai'
@@ -13,7 +12,6 @@ import { Outlet } from 'react-router'
 import { ContentPlayer } from '../player/content'
 import { WindowControlsToolbar } from '../header/toolbar'
 
-// 检测操作系统
 const getOS = (): 'windows' | 'mac' | 'linux' => {
   if (typeof window === 'undefined') return 'windows'
 
@@ -130,13 +128,13 @@ const AppContentPanel: FC<PropsWithChildren<{
   )
 }
 
-// 单工具栏模式下的隐藏窗口控制条
+
 const SingleToolbarWindowControls: FC = () => {
   const [showControls, setShowControls] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // 清理定时器
+
   const clearHideTimeout = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -144,26 +142,26 @@ const SingleToolbarWindowControls: FC = () => {
     }
   }, [])
 
-  // 显示窗口控制
+
   const showWindowControls = useCallback(() => {
     clearHideTimeout()
     setShowControls(true)
   }, [clearHideTimeout])
 
-  // 隐藏窗口控制（延迟）
+
   const hideWindowControls = useCallback(() => {
     if (!isHovering) {
       clearHideTimeout()
       timeoutRef.current = setTimeout(() => {
         setShowControls(false)
-      }, 100) // 快速消失
+      }, 100) 
     }
   }, [isHovering, clearHideTimeout])
 
-  // 监听鼠标位置 - 精确的顶部触发
+ 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      const triggerZone = 8 // 缩小到8px，更接近真正的顶部
+      const triggerZone = 8 
       const isInTriggerZone = e.clientY <= triggerZone
 
       if (isInTriggerZone) {
@@ -221,9 +219,7 @@ export const AppContent: FC<{ rightSide?: boolean }> = ({ rightSide }) => {
   return (
     <div className="flex-1 min-w-0 min-h-0 max-h-full overflow-hidden" data-tabcontainer>
       <div className="flex flex-col h-full min-h-0">
-        {/* 多工具栏模式：Windows/Linux显示操作栏，Mac不显示（Mac的控制按钮在侧边栏） */}
         {!singleToolbar && <Header />}
-        {/* 单工具栏模式：所有系统都显示隐藏的窗口控制栏 */}
         {singleToolbar && <SingleToolbarWindowControls />}
         <AppContentPanel tabId="t1" rightSide={rightSide} />
         {playerVisible && playerPlacement === 'content-bottom' && (

@@ -5,7 +5,7 @@ use tauri::{
 };
 
 use crate::PlatformInfo;
-use types::errors::{MoosyncError, Result};
+use types::errors::{MusicError, Result};
 
 #[cfg(target_os = "ios")]
 tauri::ios_plugin_binding!(init_plugin_self_update);
@@ -27,12 +27,12 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     #[cfg(target_os = "android")]
     let handle = api
         .register_android_plugin(PLUGIN_IDENTIFIER, "SelfUpdatePlugin")
-        .map_err(|e| MoosyncError::String(e.to_string()))?;
+        .map_err(|e| MusicError::String(e.to_string()))?;
 
     #[cfg(target_os = "ios")]
     let handle = api
         .register_ios_plugin(init_plugin_self_update)
-        .map_err(|e| MoosyncError::String(e.to_string()))?;
+        .map_err(|e| MusicError::String(e.to_string()))?;
 
     Ok(SelfUpdate(handle))
 }
@@ -44,6 +44,6 @@ impl<R: Runtime> SelfUpdate<R> {
     pub fn download_and_install(&self, payload: PlatformInfo) -> Result<()> {
         self.0
             .run_mobile_plugin("download_and_install", UpdateArgs { payload })
-            .map_err(|e| MoosyncError::String(e.to_string()))
+            .map_err(|e| MusicError::String(e.to_string()))
     }
 }

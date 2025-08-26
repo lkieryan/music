@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "in.kieran.audioplayer"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 26

@@ -20,9 +20,9 @@ android {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "in.kieran.music"
         minSdk = 26
-        targetSdk = 34
-        versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
-        versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+        targetSdk = 33
+        versionCode = 1
+        versionName = "1.0"
     }
     buildTypes {
         getByName("debug") {

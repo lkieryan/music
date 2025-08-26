@@ -25,7 +25,14 @@ log = "0.4"
 rustls = { version = "0.23.27", features = ["ring"] }
 ring = { version = "0.17", features = ["std"] }
 futures = { default-features = false, version = "0.3.31" }
-tauri = { version = "2.7.0", features = ["protocol-asset"] }
+tauri = { version = "2.7.0", features = [
+  "common-controls-v6",
+  "wry",
+  "protocol-asset",
+  "tray-icon", 
+  "devtools",
+  "test"
+], default-features = false }
 tauri-plugin-dialog = { version = "2" }
 tauri-plugin-fs = { version = "2" }
 tauri-plugin-opener = { version = "2" }

@@ -1,14 +1,13 @@
-
-package in.kieran.audioplayer
+package app.kieran.audioplayer
 
 import android.Manifest
 import android.app.Activity
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import android.webkit.WebView
-import in.kieran.audioplayer.models.MetadataArgs
-import in.kieran.audioplayer.models.Song
-import in.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
+import app.kieran.audioplayer.models.MetadataArgs
+import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.Permission

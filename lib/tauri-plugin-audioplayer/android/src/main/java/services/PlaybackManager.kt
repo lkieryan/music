@@ -1,12 +1,12 @@
 
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 import android.content.Context
 import android.util.Log
-import in.kieran.audioplayer.models.Song
-import in.kieran.audioplayer.services.players.GenericPlayer
-import in.kieran.audioplayer.services.players.LocalPlayer
-import in.kieran.audioplayer.services.players.PlayerListeners
+import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.services.players.GenericPlayer
+import app.kieran.audioplayer.services.players.LocalPlayer
+import app.kieran.audioplayer.services.players.PlayerListeners
 
 class PlaybackManager(mContext: Context, private val playerListeners: PlayerListeners) {
     private val players: HashMap<String, GenericPlayer> = hashMapOf(Pair("LOCAL", LocalPlayer()))

@@ -1,5 +1,5 @@
 
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 import android.app.Activity
 import android.app.Notification
@@ -13,10 +13,10 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.media.session.MediaButtonReceiver
-import in.kieran.audioplayer.AudioPlayerPlugin
-import in.kieran.audioplayer.R
-import in.kieran.audioplayer.services.Constants.NOTIFICATION_CHANNEL_ID
-import in.kieran.audioplayer.services.Constants.NOTIFICATION_ID
+import app.kieran.audioplayer.AudioPlayerPlugin
+import app.kieran.audioplayer.R
+import app.kieran.audioplayer.services.Constants.NOTIFICATION_CHANNEL_ID
+import app.kieran.audioplayer.services.Constants.NOTIFICATION_ID
 
 class NotificationHandler (
     private val mContext: Context,

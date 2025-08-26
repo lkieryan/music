@@ -1,9 +1,8 @@
+package app.kieran.audioplayer.services.interfaces
 
-package in.kieran.audioplayer.services.interfaces
-
-import in.kieran.audioplayer.models.MetadataArgs
-import in.kieran.audioplayer.models.PlaybackState
-import in.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.MetadataArgs
+import app.kieran.audioplayer.models.PlaybackState
+import app.kieran.audioplayer.models.Song
 
 interface MediaControls {
     fun play(key: String)

@@ -1,5 +1,5 @@
 
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 import android.content.Context
 import android.content.Intent
@@ -19,11 +19,11 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import androidx.media.MediaBrowserServiceCompat
-import in.kieran.audioplayer.services.Constants.ACTION_FROM_MAIN_ACTIVITY
-import in.kieran.audioplayer.services.Constants.NOTIFICATION_ID
-import in.kieran.audioplayer.services.interfaces.MediaControls
-import in.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
-import in.kieran.audioplayer.services.interfaces.MediaServiceWrapper
+import app.kieran.audioplayer.services.Constants.ACTION_FROM_MAIN_ACTIVITY
+import app.kieran.audioplayer.services.Constants.NOTIFICATION_ID
+import app.kieran.audioplayer.services.interfaces.MediaControls
+import app.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
+import app.kieran.audioplayer.services.interfaces.MediaServiceWrapper
 
 
 class MediaPlayerService : MediaBrowserServiceCompat() {

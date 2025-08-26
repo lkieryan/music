@@ -1,5 +1,4 @@
-
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 import android.support.v4.media.session.PlaybackStateCompat
 

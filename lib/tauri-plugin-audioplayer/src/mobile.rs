@@ -26,7 +26,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 ) -> Result<Audioplayer<R>> {
     #[cfg(target_os = "android")]
     let handle = api
-        .register_android_plugin("in.kieran.audioplayer", "AudioPlayerPlugin")
+        .register_android_plugin("app.kieran.audioplayer", "AudioPlayerPlugin")
         .map_err(|e| MusicError::PluginError(Box::new(e)))?;
     #[cfg(target_os = "ios")]
     let handle = api

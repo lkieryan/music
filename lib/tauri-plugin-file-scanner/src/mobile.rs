@@ -20,7 +20,7 @@ use types::errors::error_helpers;
 tauri::ios_plugin_binding!(init_plugin_file_scanner);
 
 #[cfg(target_os = "android")]
-const PLUGIN_IDENTIFIER: &str = "in.kieran.filescanner";
+const PLUGIN_IDENTIFIER: &str = "app.kieran.filescanner";
 
 // initializes the Kotlin or Swift plugin classes
 pub fn init<R: Runtime, C: DeserializeOwned>(

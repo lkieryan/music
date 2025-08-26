@@ -1,12 +1,11 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.24-1.0.20"
 }
 
 android {
-    namespace = "in.kieran.audioplayer"
-    compileSdk = 34
+    namespace = "app.kieran.audioplayer"
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26
@@ -41,11 +40,17 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    
+    // Media dependencies
+    implementation("androidx.media:media:1.7.0")
+    implementation("com.google.android.exoplayer:exoplayer:2.19.1")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     implementation(project(":tauri-android"))
 }
 

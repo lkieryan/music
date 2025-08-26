@@ -1,4 +1,4 @@
-package in.kieran.audioplayer.models
+package app.kieran.audioplayer.models
 
 enum class PlaybackState {
     PLAYING,

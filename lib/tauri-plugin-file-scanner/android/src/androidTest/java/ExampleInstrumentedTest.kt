@@ -1,5 +1,5 @@
 
-package in.kieran.filescanner
+package app.kieran.filescanner
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -20,6 +20,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("in.kieran.filescanner", appContext.packageName)
+        assertEquals("app.kieran.filescanner", appContext.packageName)
     }
 }

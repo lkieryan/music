@@ -1,5 +1,5 @@
 
-package in.kieran.audioplayer
+package app.kieran.audioplayer
 
 import org.junit.Test
 

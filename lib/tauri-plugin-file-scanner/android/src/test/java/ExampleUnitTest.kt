@@ -1,5 +1,5 @@
 
-package in.kieran.filescanner
+package app.kieran.filescanner
 
 import org.junit.Test
 

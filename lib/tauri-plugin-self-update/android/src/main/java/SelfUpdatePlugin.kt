@@ -1,4 +1,4 @@
-package in.kieran.selfupdate
+package app.kieran.selfupdate
 
 import android.annotation.SuppressLint
 import android.app.Activity

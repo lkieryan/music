@@ -21,12 +21,12 @@
 #-renamesourcefileattribute SourceFile
 
 # Keep the MediaPlayerService class and its methods, fields, and inner classes
--keep class in.kieran.audioplayer.services.interfaces.** {
+-keep class app.kieran.audioplayer.services.interfaces.** {
     *;
 }
 
 # Keep the Binder inner class (MediaPlayerBinder) and its methods/fields
--keep class in.kieran.audioplayer.services.MediaPlayerService$MediaPlayerBinder {
+-keep class app.kieran.audioplayer.services.MediaPlayerService$MediaPlayerBinder {
     *;
 }
 
@@ -35,6 +35,6 @@
     *;
 }
 
--keep class in.kieran.audioplayer.models.** {
+-keep class app.kieran.audioplayer.models.** {
     *;
 }

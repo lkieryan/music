@@ -1,5 +1,4 @@
-
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 object Constants {
     const val ACTION_FROM_MAIN_ACTIVITY = "from_main_activity"

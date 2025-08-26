@@ -1,4 +1,4 @@
-package in.kieran.audioplayer
+package app.kieran.audioplayer
 
 import android.app.Activity
 import android.content.ComponentName
@@ -9,13 +9,13 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat.Callback
 import android.util.Log
-import in.kieran.audioplayer.models.Song
-import in.kieran.audioplayer.services.Constants.ACTION_FROM_MAIN_ACTIVITY
-import in.kieran.audioplayer.services.MediaPlayerService
-import in.kieran.audioplayer.services.NotificationHandler
-import in.kieran.audioplayer.services.interfaces.MediaControls
-import in.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
-import in.kieran.audioplayer.services.interfaces.MediaServiceWrapper
+import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.services.Constants.ACTION_FROM_MAIN_ACTIVITY
+import app.kieran.audioplayer.services.MediaPlayerService
+import app.kieran.audioplayer.services.NotificationHandler
+import app.kieran.audioplayer.services.interfaces.MediaControls
+import app.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
+import app.kieran.audioplayer.services.interfaces.MediaServiceWrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers

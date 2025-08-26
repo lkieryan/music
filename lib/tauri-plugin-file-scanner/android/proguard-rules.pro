@@ -20,18 +20,18 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class in.kieran.filescanner.utils.Song {
+-keep class app.kieran.filescanner.utils.Song {
     *;
 }
 
--keep class in.kieran.filescanner.utils.Album {
+-keep class app.kieran.filescanner.utils.Album {
     *;
 }
 
--keep class in.kieran.filescanner.utils.Artist {
+-keep class app.kieran.filescanner.utils.Artist {
     *;
 }
 
--keep class in.kieran.filescanner.utils.Genre {
+-keep class app.kieran.filescanner.utils.Genre {
     *;
 }

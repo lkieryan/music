@@ -1,5 +1,4 @@
-
-package in.kieran.audioplayer.services.players
+package app.kieran.audioplayer.services.players
 
 import android.content.ContentUris
 import android.content.Context
@@ -11,14 +10,13 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
-import in.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.Song
 import java.util.Timer
-
 
 class LocalPlayer : GenericPlayer() {
     private val playerInstance = MediaPlayer()
 
-    private val key = "LOCAL"
+    override var key: String = "LOCAL"
 
     override var progress: Int
         get() = playerInstance.currentPosition
@@ -38,7 +36,6 @@ class LocalPlayer : GenericPlayer() {
 
     private var isPlayerPrepared = false
     private val afterPreparedMethodCalls: MutableList<() -> Unit> = mutableListOf()
-
 
     override fun canPlay(song: Song): Boolean {
         return !song.path.isNullOrEmpty()

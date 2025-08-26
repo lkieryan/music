@@ -1,4 +1,4 @@
-package in.kieran.selfupdate
+package app.kieran.selfupdate
 
 import java.io.Serializable
 

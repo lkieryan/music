@@ -1,5 +1,4 @@
-
-package in.kieran.filescanner
+package app.kieran.filescanner
 
 import android.content.Context
 import android.media.MediaScannerConnection
@@ -7,10 +6,10 @@ import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
-import in.kieran.filescanner.utils.Album
-import in.kieran.filescanner.utils.Artist
-import in.kieran.filescanner.utils.Genre
-import in.kieran.filescanner.utils.Song
+import app.kieran.filescanner.utils.Album
+import app.kieran.filescanner.utils.Artist
+import app.kieran.filescanner.utils.Genre
+import app.kieran.filescanner.utils.Song
 import getUriFromID
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume

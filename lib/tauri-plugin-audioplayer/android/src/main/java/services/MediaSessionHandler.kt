@@ -1,5 +1,5 @@
 
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 import android.R.attr.bitmap
 import android.app.PendingIntent
@@ -14,11 +14,11 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import androidx.core.net.UriCompat
+
 import androidx.core.net.toUri
-import in.kieran.audioplayer.models.MetadataArgs
-import in.kieran.audioplayer.models.Song
-import in.kieran.audioplayer.models.toArtistString
+import app.kieran.audioplayer.models.MetadataArgs
+import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.toArtistString
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target
@@ -58,7 +58,7 @@ class MediaSessionHandler(private val mContext: Context) {
 
         val mediaSession = MediaSessionCompat(
             mContext,
-            "in.kieran",
+            "app.kieran",
             mediaButtonReceiverComponentName,
             mediaButtonReceiverPendingIntent
         )

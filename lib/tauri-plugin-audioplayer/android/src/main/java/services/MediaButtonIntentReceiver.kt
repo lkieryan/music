@@ -1,5 +1,4 @@
-
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 import android.content.Context
 import android.content.Intent

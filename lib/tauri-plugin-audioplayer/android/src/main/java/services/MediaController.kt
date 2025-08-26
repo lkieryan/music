@@ -1,5 +1,4 @@
-
-package in.kieran.audioplayer.services
+package app.kieran.audioplayer.services
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -7,11 +6,11 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
-import in.kieran.audioplayer.R
-import in.kieran.audioplayer.models.MetadataArgs
-import in.kieran.audioplayer.services.interfaces.MediaControls
-import in.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
-import in.kieran.audioplayer.services.players.PlayerListeners
+import app.kieran.audioplayer.R
+import app.kieran.audioplayer.models.MetadataArgs
+import app.kieran.audioplayer.services.interfaces.MediaControls
+import app.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
+import app.kieran.audioplayer.services.players.PlayerListeners
 
 
 class MediaController(private val mContext: Context) {

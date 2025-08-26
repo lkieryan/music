@@ -1,5 +1,4 @@
-
-package in.kieran.filescanner.utils
+package app.kieran.filescanner.utils
 
 import java.io.Serializable
 

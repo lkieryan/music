@@ -1,12 +1,12 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "2.1.0-1.0.29"
+    id("com.google.devtools.ksp") version "1.9.24-1.0.20"
 }
 
 android {
-    namespace = "app.moosync.audioplayer"
-    compileSdk = 34
+    namespace = "in.kieran.audioplayer"
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -41,14 +41,8 @@ android {
 }
 
 dependencies {
-    implementation("com.github.bumptech.glide:glide:4.14.2")
-    ksp("com.github.bumptech.glide:ksp:4.14.2")
-    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.2")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.appcompat:appcompat:1.6.0")
-    implementation("com.google.android.material:material:1.7.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

@@ -20,18 +20,18 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class app.moosync.filescanner.utils.Song {
+-keep class in.kieran.filescanner.utils.Song {
     *;
 }
 
--keep class app.moosync.filescanner.utils.Album {
+-keep class in.kieran.filescanner.utils.Album {
     *;
 }
 
--keep class app.moosync.filescanner.utils.Artist {
+-keep class in.kieran.filescanner.utils.Artist {
     *;
 }
 
--keep class app.moosync.filescanner.utils.Genre {
+-keep class in.kieran.filescanner.utils.Genre {
     *;
 }

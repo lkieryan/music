@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 // Helper function to create a unique test DB path
 fn get_test_db_path() -> PathBuf {
-    let file_name = format!("moosync_test_{}.db", Uuid::new_v4());
+    let file_name = format!("music_test_{}.db", Uuid::new_v4());
     temp_dir().join(file_name)
 }
 

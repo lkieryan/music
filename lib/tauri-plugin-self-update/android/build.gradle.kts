@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "app.moosync.selfupdate"
+    namespace = "in.kieran.selfupdate"
     compileSdk = 34
 
     defaultConfig {

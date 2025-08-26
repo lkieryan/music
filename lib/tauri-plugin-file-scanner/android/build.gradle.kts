@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "app.moosync.filescanner"
+    namespace = "in.kieran.filescanner"
     compileSdk = 34
 
     defaultConfig {

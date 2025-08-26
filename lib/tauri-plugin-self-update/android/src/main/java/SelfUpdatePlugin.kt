@@ -1,4 +1,4 @@
-package app.moosync.selfupdate
+package in.kieran.selfupdate
 
 import android.annotation.SuppressLint
 import android.app.Activity

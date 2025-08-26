@@ -23,8 +23,8 @@ https://radio.stereoanime.net/listen/stereoanime/320
 #EXTVLCOPT:network-caching=1000
 https://chiru.no/stream.flac"#;
 
-    let test_out_dir = env::temp_dir().join("moosync-test-out");
-    let test_in_dir = env::temp_dir().join("moosync-test-in");
+    let test_out_dir = env::temp_dir().join("music-test-out");
+    let test_in_dir = env::temp_dir().join("music-test-in");
 
     fs::create_dir_all(test_out_dir.clone()).unwrap();
     fs::create_dir_all(test_in_dir.clone()).unwrap();
@@ -78,8 +78,8 @@ https://example.com/track1
 #EXTINF:0,track2
 https://example.com/track2"#;
 
-    let test_out_dir = env::temp_dir().join("moosync-test-out-comments");
-    let test_in_dir = env::temp_dir().join("moosync-test-in-comments");
+    let test_out_dir = env::temp_dir().join("music-test-out-comments");
+    let test_in_dir = env::temp_dir().join("music-test-in-comments");
 
     fs::create_dir_all(test_out_dir.clone()).unwrap();
     fs::create_dir_all(test_in_dir.clone()).unwrap();
@@ -123,8 +123,8 @@ fn test_playlist_scan_single_entry() {
 #EXTINF:0,lonely_track
 https://example.com/lonely_track"#;
 
-    let test_out_dir = env::temp_dir().join("moosync-test-out-single");
-    let test_in_dir = env::temp_dir().join("moosync-test-in-single");
+    let test_out_dir = env::temp_dir().join("music-test-out-single");
+    let test_in_dir = env::temp_dir().join("music-test-in-single");
 
     fs::create_dir_all(test_out_dir.clone()).unwrap();
     fs::create_dir_all(test_in_dir.clone()).unwrap();

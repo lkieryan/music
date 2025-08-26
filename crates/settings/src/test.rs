@@ -8,7 +8,7 @@ use crate::settings::SettingsConfig;
 
 // Helper for creating test directories
 fn setup_test_dir() -> PathBuf {
-    let test_dir = temp_dir().join(format!("moosync_test_{}", uuid::Uuid::new_v4()));
+    let test_dir = temp_dir().join(format!("music_test_{}", uuid::Uuid::new_v4()));
     fs::create_dir_all(&test_dir).expect("Failed to create test directory");
     test_dir
 }

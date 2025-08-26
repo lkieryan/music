@@ -49,7 +49,7 @@ impl SettingsConfig {
             file.write_all(b"{\"prefs\": {}}")?;
         }
 
-        let entry = Entry::new("moosync", whoami::username().as_str())
+        let entry = Entry::new("music", whoami::username().as_str())
             .map_err(error_helpers::to_config_error)?;
 
         #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -67,7 +67,7 @@ impl SettingsConfig {
                     .set_secret(key.as_slice())
                     .map_err(error_helpers::to_config_error)?;
 
-                let entry = Entry::new("moosync", whoami::username().as_str())
+                let entry = Entry::new("music", whoami::username().as_str())
                     .map_err(error_helpers::to_config_error)?;
                 match entry.get_secret() {
                     Ok(_) => {}

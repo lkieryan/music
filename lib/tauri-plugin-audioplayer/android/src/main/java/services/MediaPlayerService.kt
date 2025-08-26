@@ -1,20 +1,5 @@
-// Moosync
-// Copyright (C) 2024, 2025  Moosync <support@moosync.app>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package app.moosync.audioplayer.services
+package in.kieran.audioplayer.services
 
 import android.content.Context
 import android.content.Intent
@@ -34,11 +19,11 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import androidx.media.MediaBrowserServiceCompat
-import app.moosync.audioplayer.services.Constants.ACTION_FROM_MAIN_ACTIVITY
-import app.moosync.audioplayer.services.Constants.NOTIFICATION_ID
-import app.moosync.audioplayer.services.interfaces.MediaControls
-import app.moosync.audioplayer.services.interfaces.MediaPlayerCallbacks
-import app.moosync.audioplayer.services.interfaces.MediaServiceWrapper
+import in.kieran.audioplayer.services.Constants.ACTION_FROM_MAIN_ACTIVITY
+import in.kieran.audioplayer.services.Constants.NOTIFICATION_ID
+import in.kieran.audioplayer.services.interfaces.MediaControls
+import in.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
+import in.kieran.audioplayer.services.interfaces.MediaServiceWrapper
 
 
 class MediaPlayerService : MediaBrowserServiceCompat() {
@@ -105,7 +90,7 @@ class MediaPlayerService : MediaBrowserServiceCompat() {
         clientUid: Int,
         rootHints: Bundle?
     ): BrowserRoot {
-        return BrowserRoot("Moosync", null)
+        return BrowserRoot("Music", null)
     }
 
     override fun onLoadChildren(

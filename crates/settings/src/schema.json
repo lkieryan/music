@@ -30,7 +30,7 @@
     "prefs": {
       "type": "object",
       "properties": {
-        "MoosyncSpotifyRefreshToken": {
+        "MusicSpotifyRefreshToken": {
           "type": "string"
         },
         "music_paths": {

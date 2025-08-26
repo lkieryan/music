@@ -25,8 +25,8 @@ pub enum PlayerEvents {
     TimeUpdate(f64),
 
     #[serde(
-        deserialize_with = "deserialize_moosync_error",
-        serialize_with = "serialize_moosync_error"
+        deserialize_with = "deserialize_music_error",
+        serialize_with = "serialize_music_error"
     )]
     Error(MusicError),
 }
@@ -44,14 +44,14 @@ impl Clone for PlayerEvents {
     }
 }
 
-fn serialize_moosync_error<S>(error: &MusicError, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_music_error<S>(error: &MusicError, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
     serializer.serialize_str(&error.to_string())
 }
 
-fn deserialize_moosync_error<'de, D>(deserializer: D) -> Result<MusicError, D::Error>
+fn deserialize_music_error<'de, D>(deserializer: D) -> Result<MusicError, D::Error>
 where
     D: Deserializer<'de>,
 {

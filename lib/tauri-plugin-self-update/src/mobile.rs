@@ -11,7 +11,7 @@ use types::errors::{MusicError, Result};
 tauri::ios_plugin_binding!(init_plugin_self_update);
 
 #[cfg(target_os = "android")]
-const PLUGIN_IDENTIFIER: &str = "app.moosync.selfupdate";
+const PLUGIN_IDENTIFIER: &str = "in.kieran.selfupdate";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

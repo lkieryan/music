@@ -233,7 +233,7 @@ pub mod error_helpers {
 }
 
 #[macro_export]
-macro_rules! moosync_err {
+macro_rules! music_err {
     ($variant:ident, $err:expr) => {
         Err($crate::errors::MusicError::$variant(Box::new($err)))
     };

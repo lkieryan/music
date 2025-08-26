@@ -1,4 +1,4 @@
-package app.moosync.selfupdate
+package in.kieran.selfupdate
 
 import java.io.Serializable
 

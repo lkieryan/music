@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:android": "tauri android build",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
-    "build": "tsc -b && vite build",
+    "web:dev": "vite",
+    "web:build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "gen:types": "cargo test --manifest-path crates/types/Cargo.toml --no-default-features --features ts-rs --quiet export_bindings"

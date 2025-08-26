@@ -14,7 +14,7 @@ val tauriProperties = Properties().apply {
 }
 
 android {
-    compileSdk = 34
+    compileSdk = 35
     namespace = "in.kieran.music"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"

@@ -1,5 +1,5 @@
 import React from 'react'
-import { MAX_OPACITY, MIN_OPACITY } from '../constants'
+import { MAX_OPACITY, MIN_OPACITY } from '~/constants/gradient'
 import { interpolateWavePath } from '~/lib/svg'
 
 interface OpacitySliderProps {

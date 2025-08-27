@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect } from 'react'
 import type { ColorDot } from '~/types/gradient'
-import { PICKER_SIZE, PICKER_PADDING, DOT_SIZE, PRIMARY_DOT_SIZE } from '../constants'
+import { PICKER_SIZE, PICKER_PADDING, DOT_SIZE, PRIMARY_DOT_SIZE } from '~/constants/gradient'
 
 interface GradientPickerProps {
   dots: ColorDot[]

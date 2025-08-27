@@ -130,7 +130,7 @@
         }
       ],
       "name": "get_local_songs",
-      "ret": "types::errors::Result<Vec<types::songs::Song>>"
+      "ret": "types::errors::Result<Vec<providers::provider::base::Song>>"
     },
     {
       "args": [

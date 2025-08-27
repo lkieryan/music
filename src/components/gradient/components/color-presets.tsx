@@ -1,5 +1,5 @@
 import React from 'react'
-import { PRESET_COLORS } from '../constants'
+import { PRESET_COLORS } from '~/constants/gradient'
 
 interface ColorPresetsProps {
   currentPage: number

@@ -9,7 +9,7 @@ import ColorPresets from './components/color-presets'
 import ActionButtons from './components/action-buttons'
 import SchemeButtons from './components/scheme-buttons'
 import { useIsDarkMode, useThemeAtomValue, useSetTheme } from '~/atoms/settings/themes'
-import { MAX_DOTS } from './constants'
+import { MAX_DOTS } from '~/constants/gradient'
 import './gradient-custom.css'
 
 // 应用渐变到DOM的函数（回退方案）

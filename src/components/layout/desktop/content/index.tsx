@@ -116,7 +116,7 @@ const AppContentPanel: FC<PropsWithChildren<{
       {/* Backdrop container wrapping the content section */}
       <div className={cn(
         "h-full bg-transparent backdrop-blur-sm backdrop-saturate-[120%] pb-2 flex flex-col",
-        singleToolbar && "pt-2",
+        singleToolbar ? "pt-2" : "pt-0.5",
         rightSide ? "pl-2" : "pr-2"
       )}>
         <section
@@ -191,7 +191,7 @@ const SingleToolbarWindowControls: FC = () => {
     <div
       ref={dragRef}
       className={cn(
-        "backdrop-blur-sm backdrop-saturate-[120%] border-b border-black/5 dark:border-white/10",
+        "backdrop-blur-sm backdrop-saturate-[120%]",
         "transform-gpu",
         showControls
           ? "h-[32px] opacity-100 translate-y-0 scale-100 transition-all duration-200 ease-out"

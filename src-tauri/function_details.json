@@ -129,8 +129,8 @@
           "name": "app"
         }
       ],
-      "name": "get_local_songs",
-      "ret": "types::errors::Result<Vec<providers::provider::base::Song>>"
+      "name": "get_local_tracks",
+      "ret": "types::errors::Result<Vec<types::tracks::MediaContent>>"
     },
     {
       "args": [

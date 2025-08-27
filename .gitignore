@@ -23,12 +23,13 @@ dist-ssr
 *.sln
 *.sw?
 
-*/target/*
+
 .kiro/*
-crates/types/target/*
-crates/audio-player/target/*
-crates/file_scanner/target/*
+target/
+**/target/
 other/*
 .qoder/*
 
+# Implementation plans (temporary working documents)
+implementation-plans/
 

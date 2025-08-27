@@ -1,9 +1,9 @@
 -- Player store KV table for local persistence (SQLite)
 -- Keys mirror previous IndexedDB keys:
 --  - player_state: PlayerDetails (JSON)
---  - song_queue:   Vec<String> (JSON)
+--  - track_queue:   Vec<String> (JSON)
 --  - current_index: usize (JSON or stringified number)
---  - queue_data:   HashMap<String, Song> (JSON)
+--  - queue_data:   HashMap<String, Track> (JSON)
 
 CREATE TABLE IF NOT EXISTS player_store_kv (
   key   TEXT PRIMARY KEY,
@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS player_store_kv (
 
 -- Seed defaults if not present (optional, safe no-ops on conflict)
 INSERT OR IGNORE INTO player_store_kv (key, value) VALUES
-  ("player_state", '{"current_time":0.0,"last_song":null,"last_song_played_duration":0.0,"force_seek":0.0,"state":"STOPPED","has_repeated":false,"repeat":"NONE","old_volume":0.0,"volume":100.0,"volume_mode":"NORMAL","volume_map":{},"clamp_map":{}}'),
-  ("song_queue", '[]'),
+  ("player_state", '{"current_time":0.0,"last_track":null,"last_track_played_duration":0.0,"force_seek":0.0,"state":"STOPPED","has_repeated":false,"repeat":"NONE","old_volume":0.0,"volume":100.0,"volume_mode":"NORMAL","volume_map":{},"clamp_map":{}}'),
+  ("track_queue", '[]'),
   ("current_index", '0'),
   ("queue_data", '{}');
 

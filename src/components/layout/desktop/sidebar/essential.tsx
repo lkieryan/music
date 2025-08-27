@@ -29,7 +29,7 @@ import YouTubePng from '~/assets/icons/youtube.png'
 import BilibiliPng from '~/assets/icons/bilibili.png'
 import QQMusicPng from '~/assets/icons/qq_music.png'
 import KugouPng from '~/assets/icons/kugou.png'
-import HomePng from '~/assets/icons/home.svg'
+import KieranMusicPng from '~/assets/icons/kieran_music.png'
 import Netease from '~/assets/icons/netease.png'
 
 type EssentialStub = {
@@ -43,7 +43,7 @@ const mockEssentials: EssentialStub[] = [
   { 
     id: 'home', 
     title: 'Home', 
-    iconUrl: HomePng,
+    iconUrl: KieranMusicPng,
   },
   { 
     id: 'spotify', 

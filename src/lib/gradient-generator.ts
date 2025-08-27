@@ -131,9 +131,9 @@ export class GradientGenerator {
    * Used when there is no custom gradient; matches getGradient() behavior for zero dots
    */
   static generateThemeBasedGradient(isDarkMode: boolean): GradientState {
-    // Same logic as getGradient() for zero dots: return simple background color
-    const radialBackground = isDarkMode ? '#2a2a2a' : 'transparent'
-    const linearBackground = isDarkMode ? '#2a2a2a' : 'transparent'
+    // Same logic as getGradient() for zero dots: return simple background color with transparency
+    const radialBackground = isDarkMode ? 'rgba(42, 42, 42, 0.6)' : 'rgba(248, 250, 252, 0.8)'
+    const linearBackground = isDarkMode ? 'rgba(42, 42, 42, 0.6)' : 'rgba(248, 250, 252, 0.8)'
     
     return {
       radial: radialBackground,

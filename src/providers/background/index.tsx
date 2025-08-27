@@ -8,12 +8,24 @@ import { BackgroundContext, type BackgroundContextValue } from './context'
 // Context moved to ./context to keep component-only exports for fast-refresh
 
 // Apply gradient values to the DOM (CSS variables and attributes)
-const applyGradientToDOM = (data: GradientState) => {
+const applyGradientToDOM = (data: GradientState, internalState?: GradientInternalState | null) => {
   // Apply the gradient to CSS variables
   // Crossfade: move previous background to *-old and reset opacity for fade
   const previousBg = getComputedStyle(document.documentElement).getPropertyValue('--main-browser-background')
   if (previousBg) {
     document.documentElement.style.setProperty('--main-browser-background-old', previousBg.trim())
+  }
+
+  // Check if we have color dots to determine transparency
+  const hasColorDots = internalState?.dots && internalState.dots.length > 0
+  
+  // Simple transparency control: transparent when no color dots
+  if (hasColorDots) {
+    // Has color dots: disable transparency (show solid background)
+    document.documentElement.setAttribute('data-window-transparent', 'false')
+  } else {
+    // No color dots: enable transparency (hide solid background)
+    document.documentElement.setAttribute('data-window-transparent', 'true')
   }
 
   // Set new gradients
@@ -55,6 +67,7 @@ const clearGradientFromDOM = () => {
   document.documentElement.style.removeProperty('--grainy-background-opacity')
   document.documentElement.removeAttribute('show-grainy-background')
   document.documentElement.removeAttribute('should-be-dark-mode')
+  document.documentElement.removeAttribute('data-window-transparent')
   document.documentElement.style.removeProperty('--toolbox-textcolor')
   document.documentElement.style.removeProperty('--base-surface')
 }
@@ -84,7 +97,8 @@ export function BackgroundProvider({ children }: PropsWithChildren) {
         const gradientData = JSON.parse(savedGradientState)
         setGradientState(gradientData)
         // Apply to DOM immediately
-        applyGradientToDOM(gradientData)
+        const internalData = savedInternalState ? JSON.parse(savedInternalState) : { dots: [], opacity: 1, texture: 0 }
+        applyGradientToDOM(gradientData, internalData)
       }
       
       if (savedInternalState) {
@@ -122,7 +136,9 @@ export function BackgroundProvider({ children }: PropsWithChildren) {
       console.log('Applying theme-based gradient state:', themeBasedGradientState)
       setGradientState(themeBasedGradientState)
       localStorage.setItem('gradient-state', JSON.stringify(themeBasedGradientState))
-      applyGradientToDOM(themeBasedGradientState)
+      // For theme-based gradient (no color dots), create empty internal state
+      const emptyInternalState = { dots: [], opacity: 1, texture: 0 }
+      applyGradientToDOM(themeBasedGradientState, emptyInternalState)
       return
     }
     
@@ -164,7 +180,7 @@ export function BackgroundProvider({ children }: PropsWithChildren) {
           console.log('Applying updated gradient state:', updatedGradientState)
           setGradientState(updatedGradientState)
           localStorage.setItem('gradient-state', JSON.stringify(updatedGradientState))
-          applyGradientToDOM(updatedGradientState)
+          applyGradientToDOM(updatedGradientState, currentInternalState)
           clearTransitionFlag()
         } else {
           const themeBasedGradientState = GradientGenerator.generateThemeBasedGradient(isDarkMode)
@@ -174,7 +190,9 @@ export function BackgroundProvider({ children }: PropsWithChildren) {
           console.log('Applying theme-based fallback gradient:', themeBasedGradientState)
           setGradientState(themeBasedGradientState)
           localStorage.setItem('gradient-state', JSON.stringify(themeBasedGradientState))
-          applyGradientToDOM(themeBasedGradientState)
+          // For fallback gradient (no color dots), create empty internal state
+          const fallbackInternalState = { ...currentInternalState, dots: [] }
+          applyGradientToDOM(themeBasedGradientState, fallbackInternalState)
           clearTransitionFlag()
         }
       } catch (error) {
@@ -198,7 +216,7 @@ export function BackgroundProvider({ children }: PropsWithChildren) {
     }
     
     // Apply to DOM
-    applyGradientToDOM(newGradientState)
+    applyGradientToDOM(newGradientState, newInternalState)
   }, [])
 
   const clearGradient = useCallback(() => {

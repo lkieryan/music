@@ -284,7 +284,7 @@
   
   /* Dark mode support */
   [data-theme="dark"] .gradient-generator-dialog {
-    background: #2a2a2a;
+    background: 'rgba(42, 42, 42, 0.6)';
     color: white;
   }
   

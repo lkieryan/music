@@ -29,5 +29,6 @@ crates/types/target/*
 crates/audio-player/target/*
 crates/file_scanner/target/*
 other/*
+.qoder/*
 
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAtomValue } from 'jotai'
+import { useTranslation } from 'react-i18next'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
@@ -12,18 +13,11 @@ import IconPlay from '~/assets/icons/icon_play.svg?react'
 import IconPause from '~/assets/icons/icon_pause.svg?react'
 import { musicIdAtom, musicPlayingAtom } from '~/atoms/player/index'
 
-// ==================================================================
-//                            类型定义
-// ==================================================================
-
 interface ScannerStatus {
   state: 'Idle' | 'Scanning' | 'Watching' | 'Stopped' | 'Not initialized'
   message?: string
 }
 
-// ==================================================================
-//                            工具函数
-// ==================================================================
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return '--:--'
@@ -46,6 +40,7 @@ function formatBitrate(bitrate?: number): string {
 // removed unused getCoverImageUrl
 
 export function Component() {
+  const { t } = useTranslation('app')
   const [songs, setSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set())
@@ -63,7 +58,7 @@ export function Component() {
       setSongs(localSongs)
       setLoading(false)
     } catch (error) {
-      console.error('加载本地歌曲失败:', error)
+      console.error('Failed to load local songs:', error)
       setLoading(false)
     }
   }, [])
@@ -73,8 +68,8 @@ export function Component() {
       const status = await scannerService.getStatus()
       setScannerStatus({ state: status as any })
     } catch (error) {
-      console.error('获取扫描器状态失败:', error)
-      setScannerStatus({ state: 'Not initialized', message: '扫描器未初始化' })
+      console.error('Failed to get scanner status:', error)
+      setScannerStatus({ state: 'Not initialized', message: t('pages.local.scanner.not_initialized') })
     }
   }, [])
 
@@ -83,7 +78,7 @@ export function Component() {
       await scannerService.startAutoScanner()
       await checkScannerStatus()
     } catch (error) {
-      console.error('启动自动扫描器失败:', error)
+      console.error('Failed to start auto scanner:', error)
     }
   }, [checkScannerStatus])
 
@@ -92,7 +87,7 @@ export function Component() {
       await scannerService.triggerManualScan()
       // setTimeout(loadSongs, 2000)
     } catch (error) {
-      console.error('手动扫描失败:', error)
+      console.error('Manual scan failed:', error)
     }
   }, [loadSongs])
 
@@ -117,16 +112,16 @@ export function Component() {
     })
 
     const unsubscribeError = scannerService.on('scanner-error', (error: any) => {
-      console.error('扫描器错误:', error)
-      setScannerStatus({ state: 'Stopped', message: '扫描器出错' })
+      console.error('Scanner error:', error)
+      setScannerStatus({ state: 'Stopped', message: 'Scanner error' })
     })
 
     const unsubscribeScanProgress = scannerService.on('scan-progress', (result: any) => {
-      console.log('扫描进度:', result)
+      console.log('Scan progress:', result)
     })
 
     const unsubscribeSongsAdded = scannerService.on('songs-added', (count: number) => {
-      console.log(`新增 ${count} 首歌曲`)
+      console.log(`Added ${count} songs`)
       loadSongs()
     })
 
@@ -208,7 +203,7 @@ export function Component() {
     try {
       await audioService.playSong(song)
     } catch (error) {
-      console.error('播放歌曲失败:', error)
+      console.error('Failed to play song:', error)
     }
   }, [filteredAndSortedSongs])
 
@@ -222,7 +217,7 @@ export function Component() {
         await audioService.playPlaylist(filteredAndSortedSongs, 0)
       }
     } catch (error) {
-      console.error('播放全部失败:', error)
+      console.error('Failed to play all:', error)
     }
   }, [filteredAndSortedSongs])
 
@@ -234,7 +229,7 @@ export function Component() {
         setSelectedTracks(new Set())
       }
     } catch (error) {
-      console.error('添加到队列失败:', error)
+      console.error('Failed to add to queue:', error)
     }
   }, [filteredAndSortedSongs, selectedTracks])
 
@@ -243,7 +238,7 @@ export function Component() {
       {/* Header */}
       <div className="border-b border-border p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-text-primary">本地媒体</h1>
+          <h1 className="text-2xl font-bold text-text-primary">{t('pages.local.title')}</h1>
           
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-text-secondary">
@@ -254,11 +249,11 @@ export function Component() {
                 'bg-gray-400'
               }`} />
               <span>{
-                scannerStatus.state === 'Watching' ? '监控中' :
-                scannerStatus.state === 'Scanning' ? '扫描中' :
-                scannerStatus.state === 'Stopped' ? '已停止' :
-                scannerStatus.state === 'Idle' ? '空闲' :
-                '未初始化'
+                scannerStatus.state === 'Watching' ? t('pages.local.scanner.watching') :
+                scannerStatus.state === 'Scanning' ? t('pages.local.scanner.scanning') :
+                scannerStatus.state === 'Stopped' ? t('pages.local.scanner.stopped') :
+                scannerStatus.state === 'Idle' ? t('pages.local.scanner.idle') :
+                t('pages.local.scanner.not_initialized')
               }</span>
             </div>
             
@@ -268,7 +263,7 @@ export function Component() {
                 size="sm"
                 onClick={startAutoScanner}
               >
-                启动扫描器
+                {t('pages.local.scanner.start')}
               </Button>
             )}
             
@@ -281,7 +276,7 @@ export function Component() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              {scannerStatus.state === 'Scanning' ? '扫描中...' : '刷新'}
+              {scannerStatus.state === 'Scanning' ? t('pages.local.status.scanning') : t('pages.local.refresh')}
             </Button>
           </div>
         </div>
@@ -298,7 +293,7 @@ export function Component() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M8 5v14l11-7z" fill="currentColor"/>
               </svg>
-              播放全部
+              {t('pages.local.play_all')}
             </Button>
             
             <Button 
@@ -310,14 +305,14 @@ export function Component() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
               </svg>
-              添加到队列 ({selectedTracks.size})
+              {t('pages.local.add_to_queue')} ({selectedTracks.size})
             </Button>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="relative">
               <Input
-                placeholder="搜索歌曲、艺术家或专辑"
+                placeholder={t('pages.local.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-64 pl-9"
@@ -342,7 +337,7 @@ export function Component() {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-lg font-medium">加载中...</p>
+            <p className="text-lg font-medium">{t('pages.local.status.loading')}</p>
           </div>
         ) : filteredAndSortedSongs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
@@ -350,12 +345,12 @@ export function Component() {
               <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/>
             </svg>
             <p className="text-lg font-medium mb-2">
-              {songs.length === 0 ? '暂无本地歌曲' : '没有找到匹配的歌曲'}
+              {songs.length === 0 ? t('pages.local.empty.no_songs') : t('pages.local.empty.no_match')}
             </p>
             <p className="text-sm">
               {songs.length === 0 
-                ? '请先在设置中配置音乐文件夹并启动自动扫描' 
-                : '尝试调整搜索条件'
+                ? t('pages.local.empty.suggestion_setup')
+                : t('pages.local.empty.suggestion_adjust')
               }
             </p>
           </div>
@@ -372,10 +367,10 @@ export function Component() {
                   />
                 </TableHead>
                 <TableHead className="w-12"></TableHead>
-                <TableHead>歌曲</TableHead>
-                <TableHead className="w-24 text-right">时长</TableHead>
-                <TableHead className="w-20 text-right">大小</TableHead>
-                <TableHead className="w-20 text-center">格式</TableHead>
+                <TableHead>{t('pages.local.column.title')}</TableHead>
+                <TableHead className="w-24 text-right">{t('pages.local.column.duration')}</TableHead>
+                <TableHead className="w-20 text-right">{t('pages.local.column.size')}</TableHead>
+                <TableHead className="w-20 text-center">{t('pages.local.column.format')}</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -467,14 +462,14 @@ export function Component() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-medium text-text-primary truncate">
-                          {song.title || '未知歌曲'}
+                          {song.title || t('pages.local.unknown.song')}
                         </h3>
                         {song.codec === 'FLAC' && (
-                          <span className="px-1.5 py-0.5 text-xs bg-accent/20 text-accent rounded">无损</span>
+                          <span className="px-1.5 py-0.5 text-xs bg-accent/20 text-accent rounded">{t('pages.local.lossless')}</span>
                         )}
                       </div>
                       <p className="text-xs text-text-tertiary truncate">
-                        {song.artists?.[0]?.artist_name || '未知艺术家'} • {song.album?.album_name || '未知专辑'}
+                        {song.artists?.[0]?.artist_name || t('pages.local.unknown.artist')} • {song.album?.album_name || t('pages.local.unknown.album')}
                       </p>
                     </div>
                   </TableCell>
@@ -517,9 +512,9 @@ export function Component() {
       </div>
       {filteredAndSortedSongs.length > 0 && (
         <div className="border-t border-border px-6 py-3 text-sm text-text-secondary bg-background-secondary">
-          共 {filteredAndSortedSongs.length} 首歌曲
-          {songs.length !== filteredAndSortedSongs.length && ` (已过滤 ${songs.length - filteredAndSortedSongs.length} 首)`}
-          {selectedTracks.size > 0 && ` • 已选择 ${selectedTracks.size} 首`}
+          {t('pages.local.status.total')} {filteredAndSortedSongs.length} {t('pages.local.status.songs_count')}
+          {songs.length !== filteredAndSortedSongs.length && ` (${t('pages.local.status.filtered')} ${songs.length - filteredAndSortedSongs.length} 首)`}
+          {selectedTracks.size > 0 && ` • ${t('pages.local.status.selected')} ${selectedTracks.size} 首`}
         </div>
       )}
     </div>

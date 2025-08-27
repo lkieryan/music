@@ -16,8 +16,14 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-[data-build-type]:not([data-build-type="electron"]) #root {
+/* Global solid background - always present */
+#root {
   background-color: hsl(var(--background));
+}
+
+/* Transparent mode - hide the solid background when enabled */
+html[data-window-transparent="true"] #root {
+  background-color: transparent !important;
 }
 
 html[data-viewport="desktop"],

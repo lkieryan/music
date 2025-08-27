@@ -100,16 +100,7 @@ export const MenuItem: FC<{
             : "bg-transparent group-hover:bg-[rgba(0,0,0,0.06)] dark:group-hover:bg-[rgba(255,255,255,0.08)] shadow-none"
         )}
       />
-      {active && (
-        <div 
-          className={cn(
-            "absolute w-0.5 rounded-full bg-current opacity-100 transition-opacity duration-150 z-10",
-            "inset-y-0.5",
-            sidebar === 'left' ? "left-0.5" : "right-0.5"
-          )}
-          style={{ color: item.accent || 'currentColor' }}
-        />
-      )}
+
       {IconComp ? (
         <IconComp className={cn(
           'relative z-10 w-4 h-4 flex-shrink-0',

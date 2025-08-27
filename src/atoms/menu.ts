@@ -20,7 +20,6 @@ export type MenuItem = {
   closable?: boolean
   badge?: number
   order?: number
-  accent?: string // container/accent color for side indicator
 }
 
 // UI atoms
@@ -31,8 +30,8 @@ export const menuSortAtom = atom<MenuSortMode>('label-asc')
 // Data atoms
 export const menusAtom = atom<MenuItem[]>([
   // labels use i18n keys under namespace "app"; icons as React components
-  { id: 'home', label: 'menu.home', icon: HomeIcon, fixed: true, path: '/', accent: '#667eea', order: 1 },
-  { id: 'local', label: 'menu.local_media', icon: LibraryIcon, fixed: true, path: '/local', accent: '#22c55e', order: 2 },
+  { id: 'home', label: 'menu.home', icon: HomeIcon, fixed: true, path: '/', order: 1 },
+  { id: 'local', label: 'menu.local_media', icon: LibraryIcon, fixed: true, path: '/local', order: 2 },
 ])
 
 export const activeMenuIdAtom = atom<string>('home')

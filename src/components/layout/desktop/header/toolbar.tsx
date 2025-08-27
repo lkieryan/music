@@ -1,6 +1,6 @@
 import type { FC, ReactElement } from 'react'
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useLocation } from 'react-router'
 import BackIcon from '~/assets/icons/back.svg?react'
 import ForwardIcon from '~/assets/icons/forward.svg?react'
 import ReloadIcon from '~/assets/icons/reload.svg?react'
@@ -35,15 +35,14 @@ const ToolbarButton: FC<{
 
 export const LeftToolbar: FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const goBack = useCallback(() => navigate(-1), [navigate])
   const goForward = useCallback(() => navigate(1), [navigate])
   const onReload = useCallback(() => {
-    try {
-      navigate(0) // react-router: full document reload
-    } catch {
-      window.location.reload()
-    }
-  }, [navigate])
+    // Refresh current route instead of full page reload
+    const currentPath = location.pathname + location.search + location.hash
+    navigate(currentPath, { replace: true })
+  }, [navigate, location])
   
   return (
     <div className="inline-flex items-center gap-1.5" aria-label="Left toolbar">

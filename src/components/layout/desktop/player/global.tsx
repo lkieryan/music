@@ -2,6 +2,7 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { type FC, useLayoutEffect, useRef } from 'react'
 import { cn } from '~/lib/helper'
 import { resolveImageUrl } from '~/lib/image'
+import { useWindowDrag } from '~/hooks/common/use-window-drag'
 
 import { 
   musicNameAtom,
@@ -17,8 +18,6 @@ import {
 
 import { playerVisibleAtom } from '~/atoms/layout'
 import styles from './global.module.css'
-
-// 导入你现有的 SVG 图标
 import IconPlay from '~/assets/icons/icon_play.svg?react'
 import IconPause from '~/assets/icons/icon_pause.svg?react'
 import IconForward from '~/assets/icons/icon_forward.svg?react'
@@ -26,13 +25,12 @@ import IconRewind from '~/assets/icons/icon_rewind.svg?react'
 import IconLyrics from '~/assets/icons/icon_lyrics.svg?react'
 import MenuIcon from '~/assets/icons/menu.svg?react'
 
-// 导入 AMLL 组件，如果不可用则使用本地实现
 import { 
   TextMarquee,
   MediaButton
 } from '@applemusic-like-lyrics/react-full'
 
-// 播放列表卡片占位组件
+// playlist card
 const NowPlaylistCard: FC<{ className?: string }> = ({ className }) => {
   return (
     <div className={cn(styles.playlistCard, className)}>
@@ -59,6 +57,7 @@ export function GlobalPlayer({ height }: { height: number }) {
   const onRequestNextSong = useAtomValue(onRequestNextSongAtom)
 
   const playbarRef = useRef<HTMLDivElement>(null)
+  const dragRef = useWindowDrag()
 
   useLayoutEffect(() => {
     const playbarEl = playbarRef.current
@@ -89,7 +88,6 @@ export function GlobalPlayer({ height }: { height: number }) {
 
   return (
     <>
-      {/* 播放列表卡片 */}
       {playlistOpened && (
         <div className="absolute right-3 z-10" 
              style={{ bottom: 'calc(var(--amll-player-playbar-bottom, 80px) + 12px)' }}>
@@ -97,21 +95,19 @@ export function GlobalPlayer({ height }: { height: number }) {
         </div>
       )}
       
-      {/* 主播放栏 */}
       <div 
+        ref={dragRef}
         className={cn(
           "w-full bg-transparent backdrop-blur-md backdrop-saturate-[120%] border-black/8 flex-shrink-0 overflow-hidden",
           styles.playBar,
           !playerVisible && styles.hide
         )}
         style={{ height }}
-        ref={playbarRef}
       >
-        <div className="flex items-center justify-between w-full">
-          {/* 左侧：封面和歌曲信息 */}
+        <div ref={playbarRef} className="flex items-center justify-between w-full" >
           <div className="flex items-center flex-1 min-w-0 basis-1/3">
             <button
-              className={cn(styles.coverButton, 'press-anim-parent')}
+              className={cn(styles.coverButton, 'press-anim-parent no-drag')}
               type="button"
               style={{
                 // Resolve cover URL for local or network paths
@@ -136,10 +132,10 @@ export function GlobalPlayer({ height }: { height: number }) {
             </div>
           </div>
 
-          {/* 中间：播放控制按钮（桌面端显示） */}
+
           <div className="hidden sm:flex items-center justify-center flex-1 basis-1/3 gap-8">
             <MediaButton 
-              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2"
+              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2 no-drag"
               onClick={() => onRequestPrevSong.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
@@ -147,7 +143,7 @@ export function GlobalPlayer({ height }: { height: number }) {
             </MediaButton>
             
             <MediaButton 
-              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2"
+              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2 no-drag"
               onClick={() => onPlayOrResume.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
@@ -159,7 +155,7 @@ export function GlobalPlayer({ height }: { height: number }) {
             </MediaButton>
             
             <MediaButton 
-              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2"
+              className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2 no-drag"
               onClick={() => onRequestNextSong.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
@@ -167,33 +163,31 @@ export function GlobalPlayer({ height }: { height: number }) {
             </MediaButton>
           </div>
 
-          {/* 右侧：控制按钮 */}
+
           <div className="flex items-center justify-end flex-1 basis-1/3 gap-1">
-            {/* 移动端播放控制 */}
             <div className="flex sm:hidden items-center gap-1">
               <button 
-                className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+                className={cn('press-anim-parent no-drag', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
                 onClick={() => onRequestPrevSong.onEmit?.()}
               >
                 <IconRewind className="w-4 h-4 press-anim" />
               </button>
               <button 
-                className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+                className={cn('press-anim-parent no-drag', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
                 onClick={() => onPlayOrResume.onEmit?.()}
               >
                 {musicPlaying ? <IconPause className="w-4 h-4 press-anim" /> : <IconPlay className="w-4 h-4 press-anim" />}
               </button>
               <button 
-                className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+                className={cn('press-anim-parent no-drag', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
                 onClick={() => onRequestNextSong.onEmit?.()}
               >
                 <IconForward className="w-4 h-4 press-anim" />
               </button>
             </div>
             
-            {/* 播放列表按钮 */}
             <button
-              className={cn('press-anim-parent', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
+              className={cn('press-anim-parent no-drag', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
               onClick={() => setPlaylistOpened(v => !v)}
             >
               <MenuIcon className="w-4 h-4 press-anim" />

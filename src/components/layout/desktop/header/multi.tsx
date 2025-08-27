@@ -4,8 +4,9 @@ import { sidebarPositionAtom } from '~/atoms/layout'
 import { Urlbar } from '../sidebar/urlbar'
 import { LeftToolbar, RightToolbar, WindowControlsToolbar } from './toolbar'
 import { cn } from '~/lib/helper'
+import { useWindowDrag } from '~/hooks/common/use-window-drag'
 
-// 检测操作系统
+// Detect operating system
 const getOS = (): 'windows' | 'mac' | 'linux' => {
   if (typeof window === 'undefined') return 'windows'
   
@@ -18,8 +19,10 @@ const getOS = (): 'windows' | 'mac' | 'linux' => {
 // Header for multi-toolbar mode: rendered in content navbar area
 export const HeaderMulti: FC = () => {
   const rightSide = useAtomValue(sidebarPositionAtom) === 'right'
+  const dragRef = useWindowDrag()
   return (
     <div 
+      ref={dragRef}
       className="backdrop-blur-sm backdrop-saturate-[120%]" 
       data-variant="multi"
     >

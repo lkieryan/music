@@ -4,12 +4,16 @@ import { sidebarPositionAtom } from '~/atoms/layout'
 import { Urlbar } from '../sidebar/urlbar'
 import { LeftToolbar, RightToolbar } from './toolbar'
 import { cn } from '~/lib/helper'
+import { useWindowDrag } from '~/hooks/common/use-window-drag'
 
 // Header for single-toolbar mode: rendered inside SidebarBox header
 export const HeaderSingle: FC = () => {
   const rightSide = useAtomValue(sidebarPositionAtom) === 'right'
+  const dragRef = useWindowDrag()
+  
   return (
     <div 
+      ref={dragRef}
       className="bg-transparent h-auto" 
       data-variant="single"
       style={{ '--urlbar-height': '40px' } as React.CSSProperties}

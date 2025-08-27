@@ -11,6 +11,7 @@ import { MenuShell } from '../sidebar/menu'
 import { Outlet } from 'react-router'
 import { ContentPlayer } from '../player/content'
 import { WindowControlsToolbar } from '../header/toolbar'
+import { useWindowDrag } from '~/hooks/common/use-window-drag'
 
 const getOS = (): 'windows' | 'mac' | 'linux' => {
   if (typeof window === 'undefined') return 'windows'
@@ -27,6 +28,7 @@ const AppContentWrapper: FC<{ rightSide: boolean }> = ({ rightSide }) => {
   const playerPlacement = useAtomValue(playerPlacementAtom)
   const playerVisible = useAtomValue(playerVisibleAtom)
   const playerHeight = useAtomValue(playerHeightAtom)
+  const dragRef = useWindowDrag()
   return (
     <div className="flex flex-row flex-1 min-h-0 max-h-screen overflow-hidden">
       {rightSide ? (
@@ -35,7 +37,10 @@ const AppContentWrapper: FC<{ rightSide: boolean }> = ({ rightSide }) => {
           <SidebarBox positionEnd>
             <div className="flex flex-col h-full">
               <div className="flex-1 min-h-0 overflow-y-auto">
-                <div className="sticky top-0 z-[2] bg-transparent min-h-[38px] items-stretch">
+                <div 
+                  ref={dragRef}
+                  className="sticky top-0 z-[2] bg-transparent min-h-[38px] items-stretch"
+                >
                   {singleToolbar && (
                     <Header />
                   )}
@@ -61,7 +66,10 @@ const AppContentWrapper: FC<{ rightSide: boolean }> = ({ rightSide }) => {
           <SidebarBox>
             <div className="flex flex-col h-full">
               <div className="flex-1 min-h-0 overflow-y-auto">
-                <div className="sticky top-0 z-[2] bg-transparent min-h-[38px] flex items-center">
+                <div 
+                  ref={dragRef}
+                  className="sticky top-0 z-[2] bg-transparent min-h-[38px] flex items-center"
+                >
                   {singleToolbar ? (
                     <Header />
                   ) : (
@@ -133,6 +141,7 @@ const SingleToolbarWindowControls: FC = () => {
   const [showControls, setShowControls] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dragRef = useWindowDrag()
 
 
   const clearHideTimeout = useCallback(() => {
@@ -180,6 +189,7 @@ const SingleToolbarWindowControls: FC = () => {
 
   return (
     <div
+      ref={dragRef}
       className={cn(
         "backdrop-blur-sm backdrop-saturate-[120%] border-b border-black/5 dark:border-white/10",
         "transform-gpu",

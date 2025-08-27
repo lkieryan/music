@@ -11,10 +11,8 @@ import MenuIcon from '~/assets/icons/menu.svg?react'
 import { useSettingModal } from "~/components/modules/settings/modal/use-setting-modal"
 import { WindowControls } from './window-controls'
 
-// 图标通用样式类名
 const iconClassName = "[&_svg_.nc-icon-wrapper]:stroke-current [&_svg_.nc-icon-wrapper]:fill-none [&_svg_.nc-icon-wrapper]:stroke-opacity-100 [&_*[stroke='context-fill']]:stroke-current [&_*[fill='context-fill']]:fill-current [&_*[stroke-opacity='context-fill-opacity']]:stroke-opacity-100"
 
-// 可复用的工具栏按钮组件
 const ToolbarButton: FC<{
   title: string
   ariaLabel: string
@@ -23,7 +21,7 @@ const ToolbarButton: FC<{
 }> = ({ title, ariaLabel, onClick, icon }) => {
   return (
     <button 
-      className="inline-flex items-center justify-center w-7 h-7 rounded-[6px] border-none bg-transparent text-current cursor-pointer hover:bg-[rgba(0,0,0,0.06)] dark:hover:bg-[rgba(255,255,255,0.08)] active:bg-[rgba(0,0,0,0.12)] dark:active:bg-[rgba(255,255,255,0.12)]" 
+      className="no-drag inline-flex items-center justify-center w-7 h-7 rounded-[6px] border-none bg-transparent text-current cursor-pointer hover:bg-[rgba(0,0,0,0.06)] dark:hover:bg-[rgba(255,255,255,0.08)] active:bg-[rgba(0,0,0,0.12)] dark:active:bg-[rgba(255,255,255,0.12)]" 
       title={title}
       aria-label={ariaLabel}
       onClick={onClick}
@@ -95,7 +93,6 @@ export const RightToolbar: FC = () => {
   )
 }
 
-// 窗口控制工具栏
 export const WindowControlsToolbar: FC = () => {
   return <WindowControls />
 }

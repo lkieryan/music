@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useAtomValue } from 'jotai'
 import { compactModeAtom, sidebarPositionAtom } from '~/atoms/layout'
 import { cn } from '~/lib/helper'
@@ -199,11 +199,33 @@ export const EssentialsSection: FC = () => {
   const sidebar = useAtomValue(sidebarPositionAtom)
   const [selectedId, setSelectedId] = useState<string>('spotify')
   const [essentials, setEssentials] = useState(mockEssentials)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
   
   // Separate home item from draggable items
   const homeItem = essentials.find(item => item.id === 'home')
   const draggableItems = essentials.filter(item => item.id !== 'home')
+  
+  // Effect to observe container width changes
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width)
+      }
+    })
+    
+    resizeObserver.observe(container)
+    
+    // Initial measurement
+    setContainerWidth(container.getBoundingClientRect().width)
+    
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -221,7 +243,7 @@ export const EssentialsSection: FC = () => {
   }, [])
   
   const handleDragStart = useCallback((event: { active: { id: any } }) => {
-    setActiveId(event.active.id)
+    // Future: Could be used for drag preview or state tracking
   }, [])
   
   const handleDragOver = useCallback((event: DragOverEvent) => {
@@ -241,7 +263,7 @@ export const EssentialsSection: FC = () => {
   }, [draggableItems, homeItem])
   
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    setActiveId(null)
+    // Future: Could be used for cleanup or final state updates
   }, [])
 
   return (
@@ -265,13 +287,17 @@ export const EssentialsSection: FC = () => {
           strategy={rectSortingStrategy}
         >
           <div 
+            ref={containerRef}
             className={cn(
               "grid transition-all duration-300 ease-out",
               !isCompact && "gap-1.5",
               isCompact && "gap-1"
             )}
             style={{
-              gridTemplateColumns: "repeat(4, 1fr)",
+              gridTemplateColumns: containerWidth < 120 ? '1fr' :
+                                 containerWidth < 160 ? 'repeat(2, 1fr)' :
+                                 containerWidth < 200 ? 'repeat(3, 1fr)' : 
+                                 'repeat(4, 1fr)',
               ...(sidebar === 'right' && {
                 direction: 'rtl'
               })

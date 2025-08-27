@@ -5,15 +5,15 @@
 use std::sync::Arc;
 
 use crate::store::PlayerStore;
-use types::songs::Song;
+use types::tracks::MediaContent;
 use types::ui::player_details::{PlayerEvents, PlayerState, PlayerMode};
 
 /// Hooks used when UI/MPRIS callbacks are needed during event application.
 pub struct EventHooks {
     /// Called when playback state changes
     pub on_state: Option<Arc<dyn Fn(PlayerState) + Send + Sync>>,
-    /// Called when current song metadata should be announced
-    pub on_metadata: Option<Arc<dyn Fn(&Song) + Send + Sync>>,
+    /// Called when current track metadata should be announced
+    pub on_metadata: Option<Arc<dyn Fn(&MediaContent) + Send + Sync>>,
     /// Called when position/time updates
     pub on_position: Option<Arc<dyn Fn(f64) + Send + Sync>>,
 }
@@ -70,22 +70,22 @@ pub fn apply_event_with_hooks(store: &mut PlayerStore, ev: &PlayerEvents, hooks:
         PlayerEvents::Ended => {
             match store.get_repeat() {
                 PlayerMode::Sequential => {
-                    // Normal sequential playback: go to next song, stop if at end
-                    if store.data.queue.current_index + 1 >= store.data.queue.song_queue.len() {
+                    // Normal sequential playback: go to next track, stop if at end
+                    if store.data.queue.current_index + 1 >= store.data.queue.track_queue.len() {
                         // Reached end of queue, stop playback
                         store.set_state(PlayerState::Stopped);
                         if let Some(cb) = &hooks.on_state { cb(PlayerState::Stopped); }
                     } else {
-                        store.next_song();
+                        store.next_track();
                         store.set_state(PlayerState::Playing);
-                        if let Some(song) = store.get_current_song() {
-                            if let Some(cb) = &hooks.on_metadata { cb(&song); }
+                        if let Some(track) = store.get_current_track() {
+                            if let Some(cb) = &hooks.on_metadata { cb(&track); }
                         }
                         if let Some(cb) = &hooks.on_state { cb(PlayerState::Playing); }
                     }
                 }
                 PlayerMode::Single => {
-                    // Single song repeat: always repeat current song
+                    // Single track repeat: always repeat current track
                     let idx = store.data.queue.current_index;
                     store.change_index(idx, true);
                     store.set_state(PlayerState::Playing);
@@ -96,12 +96,12 @@ pub fn apply_event_with_hooks(store: &mut PlayerStore, ev: &PlayerEvents, hooks:
                     if let Some(next_idx) = store.get_next_shuffle_index() {
                         store.change_index(next_idx, true);
                         store.set_state(PlayerState::Playing);
-                        if let Some(song) = store.get_current_song() {
-                            if let Some(cb) = &hooks.on_metadata { cb(&song); }
+                        if let Some(track) = store.get_current_track() {
+                            if let Some(cb) = &hooks.on_metadata { cb(&track); }
                         }
                         if let Some(cb) = &hooks.on_state { cb(PlayerState::Playing); }
                     } else {
-                        // Empty queue or single song, treat as single repeat
+                        // Empty queue or single track, treat as single repeat
                         let idx = store.data.queue.current_index;
                         store.change_index(idx, true);
                         store.set_state(PlayerState::Playing);
@@ -109,16 +109,16 @@ pub fn apply_event_with_hooks(store: &mut PlayerStore, ev: &PlayerEvents, hooks:
                     }
                 }
                 PlayerMode::ListLoop => {
-                    // List loop: go to next song, wrap to beginning if at end
-                    if store.data.queue.current_index + 1 >= store.data.queue.song_queue.len() {
+                    // List loop: go to next track, wrap to beginning if at end
+                    if store.data.queue.current_index + 1 >= store.data.queue.track_queue.len() {
                         // Wrap to beginning
                         store.change_index(0, true);
                     } else {
-                        store.next_song();
+                        store.next_track();
                     }
                     store.set_state(PlayerState::Playing);
-                    if let Some(song) = store.get_current_song() {
-                        if let Some(cb) = &hooks.on_metadata { cb(&song); }
+                    if let Some(track) = store.get_current_track() {
+                        if let Some(cb) = &hooks.on_metadata { cb(&track); }
                     }
                     if let Some(cb) = &hooks.on_state { cb(PlayerState::Playing); }
                 }
@@ -140,10 +140,10 @@ pub fn apply_event_with_hooks(store: &mut PlayerStore, ev: &PlayerEvents, hooks:
 fn handle_playback_ended_basic(store: &mut PlayerStore) {
     match store.get_repeat() {
         PlayerMode::Sequential => {
-            if store.data.queue.current_index + 1 >= store.data.queue.song_queue.len() {
+            if store.data.queue.current_index + 1 >= store.data.queue.track_queue.len() {
                 store.set_state(PlayerState::Stopped);
             } else {
-                store.next_song();
+                store.next_track();
                 store.set_state(PlayerState::Playing);
             }
         }
@@ -161,10 +161,10 @@ fn handle_playback_ended_basic(store: &mut PlayerStore) {
             }
         }
         PlayerMode::ListLoop => {
-            if store.data.queue.current_index + 1 >= store.data.queue.song_queue.len() {
+            if store.data.queue.current_index + 1 >= store.data.queue.track_queue.len() {
                 store.change_index(0, true);
             } else {
-                store.next_song();
+                store.next_track();
             }
             store.set_state(PlayerState::Playing);
         }

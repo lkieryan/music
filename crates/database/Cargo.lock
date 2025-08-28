@@ -235,6 +235,7 @@ name = "database"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "diesel",
  "diesel_logger",
  "diesel_migrations",
@@ -1787,6 +1788,7 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "bitcode",
+ "chrono",
  "diesel",
  "oauth2",
  "serde",
@@ -1831,6 +1833,9 @@ name = "uuid"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f33196643e165781c20a5ead5582283a7dacbb87855d867fbc2df3f81eddc1be"
+dependencies = [
+ "getrandom 0.3.3",
+]
 
 [[package]]
 name = "valuable"

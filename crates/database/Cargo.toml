@@ -13,6 +13,7 @@ macros = { path = "../macros", features = [] }
 serde = { version = "1.0", default-features = false }
 types = { path = "../types", features = [] }
 uuid = { version = "1.17.0", default-features = false, features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 # [target.'cfg(any(windows))'.dependencies]
 libsqlite3-sys = { version = "0.33.0", features = ["bundled"] }

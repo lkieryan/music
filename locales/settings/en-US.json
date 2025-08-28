@@ -56,7 +56,7 @@
     "lyrics.background.renderer.pixi": "PixiJS Renderer",
     "lyrics.background.renderer.css_bg": "CSS Background",
     "lyrics.background.static_mode": "Background Static Mode",
-    "lyrics.background.static_mode.description": "Keep background static except when switching songs (cover change). Note: Enabling this will disable background bounce effects.",
+    "lyrics.background.static_mode.description": "Keep background static except when switching tracks (cover change). Note: Enabling this will disable background bounce effects.",
     "lyrics.content": "Lyrics Content",
     "lyrics.content.roman_line": "Show Roman Line",
     "lyrics.content.swap_trans_roman_line": "Enable Swap Trans Roman Line",

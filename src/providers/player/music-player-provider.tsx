@@ -2,6 +2,8 @@ import { useStore } from "jotai";
 import { type FC, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { resolveTrackCoverUrl } from "~/lib/image";
+import { stripHtml } from "~/lib/text";
 
 import {
     musicAlbumNameAtom,
@@ -17,8 +19,8 @@ import {
     playerModeAtom,
     currentPlaylistAtom,
     currentPlaylistMusicIndexAtom,
-    onRequestNextSongAtom,
-    onRequestPrevSongAtom,
+    onRequestNextTrackAtom,
+    onRequestPrevTrackAtom,
     onPlayOrResumeAtom,
     isLyricPageOpenedAtom,
     onSeekPositionAtom,
@@ -29,8 +31,7 @@ import {
 
 import { audioService } from "~/services/audio-service";
 import type { QueueItem } from "~/services/audio-service";
-import type { Song } from "~/types/bindings";
-import { resolveSongCoverUrl } from "~/lib/image";
+import type { MediaContent, Tracks } from "~/types/bindings";
 
 /**
  * music player core provider
@@ -72,26 +73,39 @@ export const MusicPlayerProvider: FC = () => {
     /**
      * Sync music info to player state
      */
-    const syncMusicInfo = async (song: Song) => {
-        if (!song) {
-            console.error("[syncMusicInfo] Invalid song data, aborting.");
+    const syncMusicInfo = async (track: MediaContent) => {
+        if (!track) {
+            console.error("[syncMusicInfo] Invalid track data, aborting.");
             return;
         }
 
         try {
-            // Set basic song info
-            store.set(musicIdAtom, song._id || "");
-            store.set(musicNameAtom, song.title || "未知歌曲");
-            // Album in bindings is an object; prefer album_name when present
-            store.set(musicAlbumNameAtom, song.album?.album_name || "未知专辑");
+            // Set basic track info
+            store.set(musicIdAtom, track._id || "");
+            // Strip any markup from provider-returned titles (e.g., <em class="keyword">)</n+            store.set(musicNameAtom, track.title ? stripHtml(track.title) : "未知歌曲");
+            // Album in bindings is an object; prefer album_name when present; also strip HTML just in case
+            store.set(
+                musicAlbumNameAtom,
+                track.album?.album_name ? stripHtml(track.album.album_name) : "未知专辑",
+            );
+            // Ensure non-empty after sanitization (fallback to raw or default)
+            {
+                const rawTitle = track.title ?? "";
+                const cleanedTitle = rawTitle ? stripHtml(rawTitle) : "";
+                store.set(musicNameAtom, cleanedTitle || rawTitle || "未知歌曲");
+
+                const rawAlbum = track.album?.album_name ?? "";
+                const cleanedAlbum = rawAlbum ? stripHtml(rawAlbum) : "";
+                store.set(musicAlbumNameAtom, cleanedAlbum || rawAlbum || "未知专辑");
+            }
 
             // Map artists array to {id,name}
-            if (song.artists && song.artists.length > 0) {
+            if (track.artists && track.artists.length > 0) {
                 store.set(
                     musicArtistsAtom,
-                    song.artists.map((a) => ({
+                    track.artists.map((a) => ({
                         id: a.artist_id ?? a.sanitized_artist_name ?? a.artist_name ?? "unknown",
-                        name: a.artist_name ?? a.sanitized_artist_name ?? "未知创作者",
+                        name: stripHtml(a.artist_name ?? a.sanitized_artist_name ?? "未知创作者"),
                     }))
                 );
             } else {
@@ -99,22 +113,22 @@ export const MusicPlayerProvider: FC = () => {
             }
 
             // Clear old blob URL if any
-            const oldUrl = store.get(musicCoverAtom);
-            if (oldUrl?.startsWith("blob:")) {
-                URL.revokeObjectURL(oldUrl);
-            }
+            // const oldUrl = store.get(musicCoverAtom);
+            // if (oldUrl?.startsWith("blob:")) {
+            //     URL.revokeObjectURL(oldUrl);
+            // }
 
-            // Resolve cover from song/album fields (supports local path or network url)
-            const cover = resolveSongCoverUrl(song);
+            // Resolve cover from track/album fields (supports local path or network url)
+            const cover = resolveTrackCoverUrl(track);
             store.set(
                 musicCoverAtom,
                 cover ?? "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
             );
             store.set(musicCoverIsVideoAtom, false);
 
-            // Set duration
-            if (song.duration) {
-                store.set(musicDurationAtom, (song.duration * 1000) | 0);
+            // // Set duration
+            if (track.duration) {
+                store.set(musicDurationAtom, (track.duration * 1000) | 0);
             }
         } catch (error) {
             console.error("[syncMusicInfo] An error occurred during state update:", error);
@@ -129,8 +143,8 @@ export const MusicPlayerProvider: FC = () => {
             // Convert backend QueueItem to frontend format
             const playlist = queueItems.map((item, index) => ({
                 type: "custom" as const,
-                id: item.song._id || "",
-                songJsonData: JSON.stringify(item.song),
+                id: item.track._id || "",
+                trackJsonData: JSON.stringify(item.track),
                 origOrder: index,
             }));
 
@@ -156,7 +170,7 @@ export const MusicPlayerProvider: FC = () => {
 
         // Bind playback control callbacks
         // Intercept next/prev to start local switching phase and debounce rapid clicks
-        store.set(onRequestNextSongAtom, {
+        store.set(onRequestNextTrackAtom, {
             onEmit: async () => {
                 if (switchingRef.current) return; // Debounce rapid user clicks
                 startSwitching('manual');
@@ -169,7 +183,7 @@ export const MusicPlayerProvider: FC = () => {
                 }
             },
         });
-        store.set(onRequestPrevSongAtom, {
+        store.set(onRequestPrevTrackAtom, {
             onEmit: async () => {
                 if (switchingRef.current) return;
                 startSwitching('manual');
@@ -177,7 +191,7 @@ export const MusicPlayerProvider: FC = () => {
                     await audioService.previousTrack();
                 } catch (error) {
                     clearSwitching();
-                    toast.error("prev song failed: " + (error as Error).message);
+                    toast.error("prev track failed: " + (error as Error).message);
                 }
             },
         });
@@ -233,23 +247,23 @@ export const MusicPlayerProvider: FC = () => {
         // Listen to backend player events
         const unsubscribeEvents: (() => void)[] = [];
 
-        // Song changed event
+        // Track changed event
         unsubscribeEvents.push(
-            audioService.on("SongChanged", async (data: { song: Song | null }) => {
-                console.log("[PlayerEvent] 歌曲改变:", data.song);
-                if (data.song) {
-                    await syncMusicInfo(data.song);
-                    // Clear switching on song metadata arrival
-                    clearSwitching();
-                    // Also sync current queue index to keep UI highlighting accurate
-                    try {
-                        const status = await audioService.getPlayerStatus();
-                        if (status.queue_index !== null) {
-                            store.set(currentPlaylistMusicIndexAtom, status.queue_index);
-                        }
-                    } catch (err) {
-                        console.warn("[SongChanged] Failed to sync queue index:", err);
-                    }
+            audioService.on("TrackChanged", async (data: { track: MediaContent | null }) => {
+                console.log("[PlayerEvent] 曲目改变:", data.track);
+                if (data.track) {
+                    await syncMusicInfo(data.track);
+                //     // Clear switching on track metadata arrival
+                //     clearSwitching();
+                //     // Also sync current queue index to keep UI highlighting accurate
+                //     try {
+                //         const status = await audioService.getPlayerStatus();
+                //         if (status.queue_index !== null) {
+                //             store.set(currentPlaylistMusicIndexAtom, status.queue_index);
+                //         }
+                //     } catch (err) {
+                //         console.warn("[TrackChanged] Failed to sync queue index:", err);
+                //     }
                 }
             })
         );
@@ -352,14 +366,14 @@ export const MusicPlayerProvider: FC = () => {
                     audioService.getPlayerStatus(),
                     audioService.getPlayerMode(),
                 ]);
-                // Sync playback state and volume (AggregatedPlayerStatus has: state, current_song, volume, queue_index)
+                // Sync playback state and volume (AggregatedPlayerStatus has: state, current_track, volume, queue_index)
                 store.set(musicPlayingAtom, status.state === 'PLAYING');
                 store.set(musicVolumeAtom, status.volume);
                 store.set(playerModeAtom, playerMode);
 
-                // Sync current song
-                if (status.current_song) {
-                    await syncMusicInfo(status.current_song);
+                // Sync current track
+                if (status.current_track) {
+                    await syncMusicInfo(status.current_track);
                 }
 
                 // Sync playback queue
@@ -388,8 +402,8 @@ export const MusicPlayerProvider: FC = () => {
 
             // Reset callback functions
             const doNothing = toEmit(() => { });
-            store.set(onRequestNextSongAtom, doNothing);
-            store.set(onRequestPrevSongAtom, doNothing);
+            store.set(onRequestNextTrackAtom, doNothing);
+            store.set(onRequestPrevTrackAtom, doNothing);
             store.set(onPlayOrResumeAtom, doNothing);
             store.set(onSeekPositionAtom, doNothing);
             store.set(onLyricLineClickAtom, doNothing);

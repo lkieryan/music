@@ -85,7 +85,7 @@ export const LyricProvider: FC = () => {
 	const setHideLyricView = useSetAtom(hideLyricViewAtom);
 
 	// TODO: 从后端获取歌曲和歌词数据
-	// const song = useLiveQuery(() => db.songs.get(musicId), [musicId]);
+	// const track = useLiveQuery(() => db.tracks.get(musicId), [musicId]);
 
 	useEffect(() => {
 		// TODO: 暂时禁用 TTML DB 歌词库同步，后续迁移到后端
@@ -116,37 +116,37 @@ export const LyricProvider: FC = () => {
 		
 		// 原来的歌词处理逻辑，等后端实现后恢复
 		/*
-		if (song) {
+		if (track) {
 			try {
 				let parsedLyricLines: LyricLine[] = [];
-				switch (song.lyricFormat) {
+				switch (track.lyricFormat) {
 					case "lrc": {
-						parsedLyricLines = parseLrc(song.lyric);
+						parsedLyricLines = parseLrc(track.lyric);
 						console.log("解析出 LyRiC 歌词", parsedLyricLines);
 						break;
 					}
 					case "eslrc": {
-						parsedLyricLines = parseEslrc(song.lyric);
+						parsedLyricLines = parseEslrc(track.lyric);
 						console.log("解析出 ESLyRiC 歌词", parsedLyricLines);
 						break;
 					}
 					case "yrc": {
-						parsedLyricLines = parseYrc(song.lyric);
+						parsedLyricLines = parseYrc(track.lyric);
 						console.log("解析出 YRC 歌词", parsedLyricLines);
 						break;
 					}
 					case "qrc": {
-						parsedLyricLines = parseQrc(song.lyric);
+						parsedLyricLines = parseQrc(track.lyric);
 						console.log("解析出 QRC 歌词", parsedLyricLines);
 						break;
 					}
 					case "lys": {
-						parsedLyricLines = parseLys(song.lyric);
+						parsedLyricLines = parseLys(track.lyric);
 						console.log("解析出 Lyricify Syllable 歌词", parsedLyricLines);
 						break;
 					}
 					case "ttml": {
-						parsedLyricLines = parseTTML(song.lyric).lines;
+						parsedLyricLines = parseTTML(track.lyric).lines;
 						console.log("解析出 TTML 歌词", parsedLyricLines);
 						break;
 					}
@@ -167,9 +167,9 @@ export const LyricProvider: FC = () => {
 					}),
 				);
 
-				if (song.translatedLrc) {
+				if (track.translatedLrc) {
 					try {
-						const translatedLyricLines = parseLrc(song.translatedLrc);
+						const translatedLyricLines = parseLrc(track.translatedLrc);
 						for (const line of translatedLyricLines) {
 							pairLyric(
 								{
@@ -189,9 +189,9 @@ export const LyricProvider: FC = () => {
 					}
 				}
 
-				if (song.romanLrc) {
+				if (track.romanLrc) {
 					try {
-						const romanLyricLines = parseLrc(song.romanLrc);
+						const romanLyricLines = parseLrc(track.romanLrc);
 						for (const line of romanLyricLines) {
 							pairLyric(
 								{

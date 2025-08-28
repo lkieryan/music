@@ -6,7 +6,7 @@ import {
 	fftDataRangeAtom,
 	lowFreqVolumeAtom,
 } from "~/atoms/player/data-atoms";
-// import { emitAudioThread } from "~/services/audio-backend/local-backend";
+
 
 /**
  * FFT 数据处理和低频体感效果提供者
@@ -28,6 +28,8 @@ export const FFTToLowPassProvider: FC = () => {
 		let curValue = 1;
 		let lt = 0;
 		const gradient: number[] = [];
+		let lastSet = 0; // 节流写入 Jotai 的时间戳
+		const minUpdateInterval = 50; // 最多每 50ms 写一次（~20fps）
 
 		function amplitudeToLevel(amplitude: number): number {
 			const normalizedAmplitude = amplitude / 255;
@@ -76,7 +78,11 @@ export const FFTToLowPassProvider: FC = () => {
 
 			if (Number.isNaN(curValue)) curValue = 1;
 
-			store.set(lowFreqVolumeAtom, curValue);
+			// 节流写入，降低渲染压力
+			if (dt - lastSet >= minUpdateInterval) {
+				store.set(lowFreqVolumeAtom, curValue);
+				lastSet = dt;
+			}
 			lt = dt;
 			rafId = requestAnimationFrame(onFrame);
 		};

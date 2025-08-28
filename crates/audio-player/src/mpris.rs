@@ -4,7 +4,7 @@
 use std::sync::{Arc, Mutex};
 
 use types::errors::Result;
-use types::songs::Song;
+use types::tracks::MediaContent;
 use types::ui::player_details::{PlayerEvents, PlayerState};
 use types::mpris::MprisPlayerDetails;
 
@@ -66,11 +66,11 @@ impl AudioPlayer {
                                     }
                                     mpris::MediaControlEvent::Next => {
                                         tracing::debug!("MPRIS next event received");
-                                        // TODO: Implement next song logic
+                                        // TODO: Implement next track logic
                                     }
                                     mpris::MediaControlEvent::Previous => {
                                         tracing::debug!("MPRIS previous event received");
-                                        // TODO: Implement previous song logic
+                                        // TODO: Implement previous track logic
                                     }
                                     mpris::MediaControlEvent::SetPosition(pos) => {
                                         tracing::debug!("MPRIS seek event: {:?}", pos);
@@ -96,14 +96,14 @@ impl AudioPlayer {
     }
 
     /// Notify MPRIS of metadata changes
-    pub fn notify_mpris_metadata(&self, song: &Song) {
+    pub fn notify_mpris_metadata(&self, track: &MediaContent) {
         // Use direct MPRIS integration if available
         if let Some(ref mpris) = self.mpris_holder {
             let metadata = MprisPlayerDetails {
-                id: song.song._id.clone(),
-                title: song.song.title.clone(),
+                id: track.track._id.clone(),
+                title: track.track.title.clone(),
                 artist_name: Some(
-                    song.artists
+                    track.artists
                         .as_ref()
                         .map(|artists| {
                             artists
@@ -115,9 +115,9 @@ impl AudioPlayer {
                         })
                         .unwrap_or_else(|| "Unknown Artist".to_string()),
                 ),
-                album_name: song.album.as_ref().and_then(|a| a.album_name.clone()),
-                album_artist: song.album.as_ref().and_then(|a| a.album_artist.clone()),
-                genres: song
+                album_name: track.album.as_ref().and_then(|a| a.album_name.clone()),
+                album_artist: track.album.as_ref().and_then(|a| a.album_artist.clone()),
+                genres: track
                     .genre
                     .as_ref()
                     .map(|genres| {
@@ -126,18 +126,18 @@ impl AudioPlayer {
                             .filter_map(|g| g.genre_name.clone())
                             .collect::<Vec<String>>()
                     }),
-                duration: song.song.duration,
-                thumbnail: song
-                    .song
-                    .song_cover_path_high
+                duration: track.track.duration,
+                thumbnail: track
+                    .track
+                    .track_cover_path_high
                     .clone()
-                    .or_else(|| song.song.song_cover_path_low.clone()),
+                    .or_else(|| track.track.track_cover_path_low.clone()),
             };
 
-            if let Err(err) = mpris.set_metadata(metadata) {
-                tracing::debug!("MPRIS metadata update failed (expected in headless): {:?}", err);
+            if let Err(_e) = mpris.set_metadata(metadata) {
+                // tracing::debug!("MPRIS metadata update failed (expected in headless)");
             } else {
-                tracing::debug!("Updated MPRIS metadata for: {:?}", song.song.title);
+                tracing::debug!("Updated MPRIS metadata for: {:?}", track.track.title);
             }
         }
     }
@@ -146,10 +146,9 @@ impl AudioPlayer {
     pub fn notify_mpris_state(&self, state: PlayerState) {
         // Use direct MPRIS integration if available
         if let Some(ref mpris) = self.mpris_holder {
-            if let Err(err) = mpris.set_playback_state(state) {
+            if let Err(_e) = mpris.set_playback_state(state) {
                 tracing::debug!(
-                    "MPRIS playback state update failed (expected in headless): {:?}",
-                    err
+                    "MPRIS playback state update failed (expected in headless)"
                 );
             } else {
                 tracing::trace!("Updated MPRIS playback state: {:?}", state);
@@ -161,10 +160,9 @@ impl AudioPlayer {
     pub fn notify_mpris_position(&self, position: f64) {
         // Use direct MPRIS integration if available
         if let Some(ref mpris) = self.mpris_holder {
-            if let Err(err) = mpris.set_position(position) {
+            if let Err(_e) = mpris.set_position(position) {
                 tracing::debug!(
-                    "MPRIS position update failed (expected in headless): {:?}",
-                    err
+                    "MPRIS position update failed (expected in headless)"
                 );
             } else {
                 tracing::trace!("Updated MPRIS position: {:.2}s", position);

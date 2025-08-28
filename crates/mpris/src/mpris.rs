@@ -86,14 +86,14 @@ impl MprisHolder {
                 cover_url: metadata.thumbnail.as_deref(),
                 duration: duration.map(Duration::from_millis),
             })
-            .map_err(|e| {
+            .map_err(|_e| {
                 #[cfg(any(target_os = "macos", target_os = "windows"))]
                 {
                     MusicError::String("Failed to set metadata".into())
                 }
                 #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
                 {
-                    MusicError::MprisError(Box::new(e))
+                    MusicError::MprisError(Box::new(mpris::Error::new("Failed to set metadata")))
                 }
             })?;
 
@@ -119,14 +119,14 @@ impl MprisHolder {
         drop(last_duration);
 
         let mut controls = self.controls.lock().unwrap();
-        controls.set_playback(parsed).map_err(|e| {
+        controls.set_playback(parsed).map_err(|_e| {
             #[cfg(any(target_os = "macos", target_os = "windows"))]
             {
                 MusicError::String("Failed to set playback state".into())
             }
             #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
             {
-                MusicError::MprisError(Box::new(e))
+                MusicError::MprisError(Box::new(mpris::Error::new("Failed to set playback state")))
             }
         })?;
         drop(controls);

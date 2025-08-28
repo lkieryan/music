@@ -1,41 +1,94 @@
 import type { FC } from 'react'
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate, useLocation, useSearchParams } from 'react-router'
+import { useAtom } from 'jotai'
 import SearchIcon from '~/assets/icons/search-glass.svg?react'
 import { useDesktopLayout } from '~/providers/layout-provider'
 import { cn } from '~/lib/helper'
 import { PRESET_COLORS } from '~/constants/gradient'
+import { musicSearch } from '~/services/music-api'
+import { 
+  searchTermAtom, 
+  searchLoadingAtom, 
+  searchResultAtom, 
+  searchErrorAtom, 
+  lastSearchTermAtom 
+} from '~/atoms/search'
 
 export const Urlbar: FC = () => {
   const { t } = useTranslation('common')
   const { singleToolbar } = useDesktopLayout()
-  const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'loaded'>('idle')
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  
+  // Manage state using atoms
+  const [searchTerm, setSearchTerm] = useAtom(searchTermAtom)
+  const [loadingState, setLoadingState] = useAtom(searchLoadingAtom)
+  const [, setSearchResult] = useAtom(searchResultAtom)
+  const [, setSearchError] = useAtom(searchErrorAtom)
+  const [, setLastSearchTerm] = useAtom(lastSearchTermAtom)
+  
+  // Local UI state
   const [isFocused, setIsFocused] = useState(false)
   const [isExtended, setIsExtended] = useState(false)
-  const [inputValue, setInputValue] = useState('')
 
-  // Trigger loading animation
-  const triggerLoading = useCallback(async () => {
-    if (loadingState !== 'idle') return
+  // Sync search term from URL to search bar (only when URL changes)
+  useEffect(() => {
+    if (location.pathname === '/search') {
+      const queryParam = searchParams.get('q')
+      if (queryParam) {
+        setSearchTerm(queryParam)
+      }
+    } else {
+      // Clear search term when leaving search page
+      setSearchTerm('')
+    }
+  }, [location.pathname, searchParams, setSearchTerm])
+
+  // Function to perform search
+  const performSearch = useCallback(async (term: string) => {
+    if (!term.trim()) return
     
-    setLoadingState('loading')
-    setIsExtended(true)
+    // Navigate to search page immediately
+    navigate(`/search?q=${encodeURIComponent(term.trim())}`)
     
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    setLoadingState('loaded')
-    setIsExtended(false)
-    
-    setTimeout(() => {
-      setLoadingState('idle')
-    }, 1000)
-  }, [loadingState])
+    try {
+      setLoadingState('loading')
+      setIsExtended(true)
+      setSearchError(null)
+      setLastSearchTerm(term.trim())
+      
+      // Call search API
+      const result = await musicSearch(term.trim(), {
+        types: ["Track"],
+        page: { limit: 50, offset: 0, cursor: null }
+      })
+      
+      // Save results to atoms
+      setSearchResult(result)
+      setLoadingState('success')
+      
+    } catch (error) {
+      console.error('Search failed:', error)
+      setSearchError(error instanceof Error ? error.message : 'Search failed')
+      setLoadingState('error')
+    } finally {
+      setIsExtended(false)
+      
+      // Reset loading state
+      setTimeout(() => {
+        setLoadingState('idle')
+      }, 1000)
+    }
+  }, [setLoadingState, setSearchResult, setSearchError, setLastSearchTerm, navigate])
 
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if (e.key === 'Enter' && searchTerm.trim()) {
       e.preventDefault()
-      triggerLoading()
+      performSearch(searchTerm)
     }
   }
 
@@ -53,7 +106,7 @@ export const Urlbar: FC = () => {
         const rgba3 = color3.replace('rgb', 'rgba').replace(')', ', 0.25)')
         
         return {
-          background: `linear-gradient(to right, ${rgba1}, ${rgba2}, ${rgba3})`,
+          backgroundImage: `linear-gradient(to right, ${rgba1}, ${rgba2}, ${rgba3})`,
           backgroundSize: '200% 100%'
         }
       }
@@ -70,16 +123,6 @@ export const Urlbar: FC = () => {
       return 'shadow-[0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.2)]'
     }
     return ''
-  }
-
-  const getIconAnimation = () => {
-    if (loadingState === 'loading') {
-      return 'animate-pulse scale-110'
-    }
-    if (loadingState === 'loaded') {
-      return 'scale-100'
-    }
-    return 'scale-100'
   }
 
   return (
@@ -119,8 +162,8 @@ export const Urlbar: FC = () => {
         <input 
           className="h-full w-full border-none outline-none rounded-[8px] bg-transparent text-text px-0.5 placeholder:text-text-tertiary transition-all duration-200" 
           placeholder={t('words.search')}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -134,12 +177,17 @@ export const Urlbar: FC = () => {
         {/* Status messages */}
         {loadingState === 'loading' && (
           <div className="absolute -top-6 left-0 text-xs text-blue-500 animate-pulse">
-            Loading...
+            {t('words.searching')}...
           </div>
         )}
-        {loadingState === 'loaded' && (
+        {loadingState === 'success' && (
           <div className="absolute -top-6 left-0 text-xs text-green-500">
-            Loaded successfully!
+            {t('words.search-success')}
+          </div>
+        )}
+        {loadingState === 'error' && (
+          <div className="absolute -top-6 left-0 text-xs text-red-500">
+            {t('words.search-failed')}
           </div>
         )}
       </div>

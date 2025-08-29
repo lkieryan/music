@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { ColorDot, GradientState, GradientInternalState } from '~/types/gradient'
-import { MIN_OPACITY, MAX_DOTS, EXPLICIT_LIGHTNESS_TYPE } from '~/components/gradient/constants'
+import { MIN_OPACITY, MAX_DOTS, EXPLICIT_LIGHTNESS_TYPE } from '~/constants/gradient'
 import { getColorFromPosition, calculateCompliments } from '~/lib/color'
 import { getGradient, getMostDominantColor, shouldBeDarkMode } from '~/lib/gradient'
 

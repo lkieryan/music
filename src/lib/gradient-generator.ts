@@ -1,5 +1,5 @@
 import type { ColorDot, GradientState, GradientInternalState } from '~/types/gradient'
-import { MIN_OPACITY } from '~/components/gradient/constants'
+import { MIN_OPACITY } from '~/constants/gradient'
 import { getGradient, getMostDominantColor, shouldBeDarkMode } from './gradient'
 
 /**

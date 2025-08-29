@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
-import type { Song } from '~/types/bindings'
+import type { MediaContent } from '~/types/bindings'
 
 class ScannerService {
   private isInitialized = false
@@ -19,8 +19,8 @@ class ScannerService {
         this.emitEvent('scan-progress', event.payload)
       })
 
-      await listen('songs-added', (event) => {
-        this.emitEvent('songs-added', event.payload)
+      await listen('tracks-added', (event) => {
+        this.emitEvent('tracks-added', event.payload)
       })
 
       // 应用启动时自动初始化扫描器
@@ -103,13 +103,13 @@ class ScannerService {
     }
   }
 
-  async getLocalSongs(): Promise<Song[]> {
+  async getLocalTracks(): Promise<MediaContent[]> {
     try {
-      const songs = await invoke<Song[]>('get_local_songs')
-      return songs
+      const tracks = await invoke<MediaContent[]>('get_local_tracks')
+      return tracks
     } catch (error) {
-      console.error('[ScannerService] getLocalSongs error:', error)
-      return [] as Song[]
+      console.error('[ScannerService] getLocalTracks error:', error)
+      return [] as MediaContent[]
     }
   }
 

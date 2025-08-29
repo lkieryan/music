@@ -1,20 +1,20 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import type { Song, PlayerState, PlayerMode } from '~/types/bindings';
+import type { MediaContent, PlayerState, PlayerMode } from '~/types/bindings';
 
 
 
 // Backend Queue shape from audio-player store
 export interface BackendQueue {
-  song_queue: string[];
+  track_queue: string[];
   current_index: number;
-  data: Record<string, Song>;
+  data: Record<string, MediaContent>;
 }
 
 // Frontend-facing structures (may be reworked gradually)
 export interface QueueItem {
   id: string;
-  song: Song;
+  track: MediaContent;
 }
 
 // Use backend RepeatModes for repeat behavior; shuffle is handled via shuffleQueue().
@@ -27,7 +27,7 @@ export interface PlayerEventPayload {
 
 export interface AggregatedPlayerStatus {
   state: PlayerState;
-  current_song: Song | null;
+  current_track: MediaContent | null;
   volume: number;
   queue_index: number | null;
 }
@@ -93,10 +93,10 @@ class AudioService {
   // Playback Controls (align to backend)
   // -----------------------------
 
-  // Play specific song via unified 'audio_play' to sync store and actually load+play
-  async playSong(song: Song): Promise<void> {
+  // Play specific track via unified 'audio_play' to sync store and actually load+play
+  async playTrack(track: MediaContent): Promise<void> {
     try {
-      await invoke('audio_play', { song });
+      await invoke('audio_play', { track });
     } catch (error) {
       console.error('[AudioService] 播放歌曲失败:', error);
       throw error;
@@ -113,7 +113,7 @@ class AudioService {
     }
   }
 
-  // Resume playback (no song parameter = play current loaded song)
+  // Resume playback (no track parameter = play current loaded track)
   async play(): Promise<void> {
     try {
       await invoke('audio_play', {});
@@ -187,20 +187,20 @@ class AudioService {
   // Queue and Store interactions
   // -----------------------------
 
-  // Add single song to queue (backend expects Vec<Song>)
-  async addToQueue(song: Song): Promise<void> {
+  // Add single track to queue (backend expects Vec<MediaContent>)
+  async addToQueue(track: MediaContent): Promise<void> {
     try {
-      await invoke('add_to_queue', { songs: [song] });
+      await invoke('add_to_queue', { tracks: [track] });
     } catch (error) {
       console.error('[AudioService] 添加到队列失败:', error);
       throw error;
     }
   }
 
-  // Add multiple songs to queue
-  async addSongsToQueue(songs: Song[]): Promise<void> {
+  // Add multiple tracks to queue
+  async addTracksToQueue(tracks: MediaContent[]): Promise<void> {
     try {
-      await invoke('add_to_queue', { songs });
+      await invoke('add_to_queue', { tracks });
     } catch (error) {
       console.error('[AudioService] 批量添加到队列失败:', error);
       throw error;
@@ -228,13 +228,13 @@ class AudioService {
     }
   }
 
-  // Get queue as list of QueueItem (ordered by song_queue). This is a convenience adapter.
+  // Get queue as list of QueueItem (ordered by track_queue). This is a convenience adapter.
   async getQueue(): Promise<QueueItem[]> {
     const q = await this.getQueueRaw();
-    // Build ordered list strictly from song_queue
-    return q.song_queue
-      .map((id) => ({ id, song: q.data[id] }))
-      .filter((x): x is QueueItem => !!x.song);
+    // Build ordered list strictly from track_queue
+    return q.track_queue
+      .map((id) => ({ id, track: q.data[id] }))
+      .filter((x): x is QueueItem => !!x.track);
   }
 
   // Clear queue
@@ -248,14 +248,14 @@ class AudioService {
   }
 
   // Play a playlist: emulate via clear -> add -> play_now
-  async playPlaylist(songs: Song[], startIndex?: number): Promise<void> {
+  async playPlaylist(tracks: MediaContent[], startIndex?: number): Promise<void> {
     try {
       await this.clearQueue();
-      await this.addSongsToQueue(songs);
+      await this.addTracksToQueue(tracks);
       const idx = typeof startIndex === 'number' ? startIndex : 0;
-      const song = songs[idx];
-      if (song) {
-        await invoke('play_now', { song });
+      const track = tracks[idx];
+      if (track) {
+        await invoke('play_now', { track });
       }
     } catch (error) {
       console.error('[AudioService] 播放播放列表失败:', error);
@@ -273,24 +273,24 @@ class AudioService {
     }
   }
 
-  // Play a specific song immediately (insert next and advance index)
-  async playNow(song: Song): Promise<void> {
+  // Play a specific track immediately (insert next and advance index)
+  async playNow(track: MediaContent): Promise<void> {
     try {
-      await invoke('play_now', { song });
+      await invoke('play_now', { track });
     } catch (error) {
       console.error('[AudioService] 立即播放失败:', error);
       throw error;
     }
   }
 
-  // Play now by queue index: resolves the song from current queue
+  // Play now by queue index: resolves the track from current queue
   async playNowByIndex(index: number): Promise<void> {
     try {
       const q = await this.getQueueRaw();
-      const id = q.song_queue[index];
-      const song = id ? q.data[id] : undefined;
-      if (!song) return;
-      await invoke('play_now', { song });
+      const id = q.track_queue[index];
+      const track = id ? q.data[id] : undefined;
+      if (!track) return;
+      await invoke('play_now', { track });
     } catch (error) {
       console.error('[AudioService] 立即播放(索引)失败:', error);
       throw error;
@@ -304,9 +304,9 @@ class AudioService {
   // Aggregate status from multiple backend calls
   async getPlayerStatus(): Promise<AggregatedPlayerStatus> {
     try {
-      const [state, song, volume, queue] = await Promise.all([
+      const [state, track, volume, queue] = await Promise.all([
         invoke<PlayerState>('get_player_state'),
-        invoke<Song | null>('get_current_song'),
+        invoke<MediaContent | null>('get_current_track'),
         invoke<number>('audio_get_volume'),
         invoke<BackendQueue>('get_queue'),
       ]);
@@ -315,18 +315,18 @@ class AudioService {
         ? queue.current_index
         : null;
 
-      return { state, current_song: song, volume, queue_index };
+      return { state, current_track: track, volume, queue_index };
     } catch (error) {
       console.error('[AudioService] 获取播放器状态失败:', error);
       throw error;
     }
   }
 
-  // Get current song (pass-through)
-  async getCurrentSong(): Promise<Song | null> {
+  // Get current track (pass-through)
+  async getCurrentTrack(): Promise<MediaContent | null> {
     try {
-      const song = await invoke<Song | null>('get_current_song');
-      return song;
+      const track = await invoke<MediaContent | null>('get_current_track');
+      return track;
     } catch (error) {
       console.error('[AudioService] 获取当前歌曲失败:', error);
       throw error;
@@ -340,7 +340,7 @@ class AudioService {
   // Next/Previous track via newly exposed backend commands
   async nextTrack(): Promise<void> {
     try {
-      await invoke('next_song');
+      await invoke('next_track');
     } catch (error) {
       console.error('[AudioService] 下一首失败:', error);
       throw error;
@@ -349,7 +349,7 @@ class AudioService {
 
   async previousTrack(): Promise<void> {
     try {
-      await invoke('prev_song');
+      await invoke('prev_track');
     } catch (error) {
       console.error('[AudioService] 上一首失败:', error);
       throw error;

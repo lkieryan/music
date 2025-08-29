@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 import { compactModeAtom, sidebarPositionAtom } from '~/atoms/layout'
 import { cn } from '~/lib/helper'
@@ -23,14 +23,13 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { restrictToParentElement, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
 
-import SpotifyPng from '~/assets/icons/spotify.png'
-import YouTubePng from '~/assets/icons/youtube.png'
-import BilibiliPng from '~/assets/icons/bilibili.png'
-import QQMusicPng from '~/assets/icons/qq_music.png'
-import KugouPng from '~/assets/icons/kugou.png'
 import KieranMusicPng from '~/assets/icons/kieran_music.png'
-import Netease from '~/assets/icons/netease.png'
+import { pluginService } from '~/services/plugin-service'
+import { resolveImageUrl } from '~/lib/image'
+import { useMusicSettingKey, setMusic } from '~/atoms/settings/music'
+import { listen } from '@tauri-apps/api/event'
 
 type EssentialStub = {
   id: string
@@ -38,44 +37,15 @@ type EssentialStub = {
   iconUrl: string
 }
 
-
-const mockEssentials: EssentialStub[] = [
-  { 
-    id: 'home', 
-    title: 'Home', 
-    iconUrl: KieranMusicPng,
-  },
-  { 
-    id: 'spotify', 
-    title: 'Spotify', 
-    iconUrl: SpotifyPng,
-  },
-  { 
-    id: 'youtube', 
-    title: 'YouTube', 
-    iconUrl: YouTubePng,
-  },
-  { 
-    id: 'bilibili', 
-    title: 'Bilibili', 
-    iconUrl: BilibiliPng,
-  },
-  { 
-    id: 'qq-music', 
-    title: 'QQ Music', 
-    iconUrl: QQMusicPng,
-  },
-  { 
-    id: 'kugou', 
-    title: 'Kugou', 
-    iconUrl: KugouPng,
-  },
-  { 
-    id: 'netease', 
-    title: 'Netease', 
-    iconUrl: Netease,
-  },
-]
+// Minimal plugin info used for Essentials
+type EssentialsPlugin = {
+  id: string
+  name: string
+  display_name: string
+  plugin_type: string
+  enabled: boolean
+  icon?: string | null
+}
 
 const EssentialItem: FC<{ 
   id: string
@@ -86,8 +56,8 @@ const EssentialItem: FC<{
   sidebar?: 'left' | 'right'
   onClick?: (id: string) => void
 }> = ({ id, title, iconUrl, active = false, isCompact = false, sidebar = 'left', onClick }) => {
-  // Only apply sortable hooks for non-home items
-  const isDraggable = id !== 'home'
+  // Only apply sortable hooks for non-KieranMusic items
+  const isDraggable = id !== 'KieranMusic'
   
   const sortableProps = useSortable({
     id: id,
@@ -197,15 +167,150 @@ const EssentialItem: FC<{
 export const EssentialsSection: FC = () => {
   const isCompact = useAtomValue(compactModeAtom)
   const sidebar = useAtomValue(sidebarPositionAtom)
-  const [selectedId, setSelectedId] = useState<string>('spotify')
-  const [essentials, setEssentials] = useState(mockEssentials)
+  const [selectedId, setSelectedId] = useState<string>('KieranMusic')
+  const [essentials, setEssentials] = useState<EssentialStub[]>([])
+  const [plugins, setPlugins] = useState<EssentialsPlugin[]>([])
+  const source = useMusicSettingKey('source')
+  const sourcesOrder = useMusicSettingKey('sourcesOrder')
   const [containerWidth, setContainerWidth] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   
-  // Separate home item from draggable items
-  const homeItem = essentials.find(item => item.id === 'home')
-  const draggableItems = essentials.filter(item => item.id !== 'home')
-  
+  // Separate essential item from draggable items
+  const essentialItem = essentials.find(item => item.id === 'KieranMusic')
+  const draggableItems = essentials.filter(item => item.id !== 'KieranMusic')
+
+  // Derive selectedId from music.source
+  useEffect(() => {
+    if (!source) return
+    if (source.mode === 'all' || !source.ids || source.ids.length === 0) {
+      setSelectedId('KieranMusic')
+    } else if (source.mode === 'single') {
+      setSelectedId(source.ids[0] ?? 'KieranMusic')
+    } else if (source.mode === 'many') {
+      // Many mode not surfaced in UI yet; fallback highlight first id
+      setSelectedId(source.ids[0] ?? 'KieranMusic')
+    }
+  }, [source])
+
+  // Fetch plugins (enabled audio providers only)
+  const refreshPlugins = useCallback(async () => {
+    try {
+      const list = await pluginService.getPlugins()
+      const filtered = list.filter((p: any) => {
+        const t = String(p.plugin_type || '')
+          .toLowerCase()
+          .replace(/[-_\s]/g, '')
+        // Only accept AudioProvider, exclude AudioProcessor, etc. (robust)
+        const isAudio = t === 'audioprovider'
+        return isAudio && !!p.enabled
+      }) as EssentialsPlugin[]
+      setPlugins(filtered)
+    } catch (e) {
+      console.error('[Essentials] Failed to load plugins', e)
+      setPlugins([])
+    }
+  }, [])
+
+  // Throttle refresh requests triggered by events to avoid storms
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scheduleRefresh = useCallback(() => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current)
+      refreshTimerRef.current = null
+    }
+    refreshTimerRef.current = setTimeout(() => {
+      refreshPlugins()
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current)
+        refreshTimerRef.current = null
+      }
+    }, 200)
+  }, [refreshPlugins])
+
+  useEffect(() => {
+    let mounted = true
+    refreshPlugins()
+    // Listen backend plugin updates
+    let unlisten: (() => void) | undefined
+    listen('plugins-updated', () => {
+      if (!mounted) return
+      scheduleRefresh()
+    }).then((fn) => { unlisten = fn as any }).catch(() => {})
+    // Also refresh when window regains focus (covers cross-window/state drift)
+    let unlistenFocus: (() => void) | undefined
+    listen('tauri://focus', () => {
+      if (!mounted) return
+      scheduleRefresh()
+    }).then((fn) => { unlistenFocus = fn as any }).catch(() => {})
+    return () => {
+      mounted = false
+      if (unlisten) unlisten()
+      if (unlistenFocus) unlistenFocus()
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current)
+        refreshTimerRef.current = null
+      }
+    }
+  }, [refreshPlugins, scheduleRefresh])
+
+  // Compute ordered items from plugins + sourcesOrder
+  const orderedPluginItems: EssentialStub[] = useMemo(() => {
+    const order = Array.isArray(sourcesOrder) ? sourcesOrder : []
+    const map = new Map(plugins.map(p => [p.id, p]))
+    const pickIcon = (p: EssentialsPlugin): string => {
+      const url = resolveImageUrl(p.icon ?? null)
+      if (url) return url
+      // Fallback to app icon when plugin does not provide an icon
+      return KieranMusicPng
+    }
+    const fromOrder: EssentialStub[] = order
+      .map(id => map.get(id))
+      .filter(Boolean)
+      .map((p: any) => ({ id: p.id, title: p.display_name || p.name, iconUrl: pickIcon(p) }))
+    const remaining: EssentialStub[] = plugins
+      .filter(p => !order.includes(p.id))
+      .map(p => ({ id: p.id, title: p.display_name || p.name, iconUrl: pickIcon(p) }))
+    return [...fromOrder, ...remaining]
+  }, [plugins, sourcesOrder])
+
+  // Build essentials array: KieranMusic + ordered plugins
+  useEffect(() => {
+    const items: EssentialStub[] = [
+      { id: 'KieranMusic', title: 'KieranMusic', iconUrl: KieranMusicPng },
+      ...orderedPluginItems,
+    ]
+    setEssentials(items)
+  }, [orderedPluginItems])
+
+  // If selected source becomes invalid (plugin disabled/removed), fallback to KieranMusic
+  useEffect(() => {
+    if (!source) return
+    if (source.mode === 'single') {
+      const id = source.ids?.[0]
+      if (id && !plugins.some(p => p.id === id)) {
+        setMusic('source', { mode: 'all', ids: [] })
+      }
+    } else if (source.mode === 'many') {
+      const ids = Array.isArray(source.ids) ? source.ids : []
+      const valid = ids.filter(id => plugins.some(p => p.id === id))
+      if (valid.length !== ids.length) {
+        if (valid.length === 0) setMusic('source', { mode: 'all', ids: [] })
+        else setMusic('source', { mode: 'many', ids: valid })
+      }
+    }
+  }, [plugins, source])
+
+  // Clean invalid ids from sourcesOrder when plugin set changes
+  useEffect(() => {
+    const order = Array.isArray(sourcesOrder) ? sourcesOrder : []
+    if (order.length === 0) return
+    const validIds = new Set(plugins.map(p => p.id))
+    const cleaned = order.filter((id: string) => validIds.has(id))
+    if (cleaned.length !== order.length) {
+      setMusic('sourcesOrder', cleaned)
+    }
+  }, [plugins, sourcesOrder])
+
   // Effect to observe container width changes
   useEffect(() => {
     const container = containerRef.current
@@ -240,45 +345,44 @@ export const EssentialsSection: FC = () => {
   
   const handleItemClick = useCallback((id: string) => {
     setSelectedId(id)
-  }, [])
-  
-  const handleDragStart = useCallback((event: { active: { id: any } }) => {
-    // Future: Could be used for drag preview or state tracking
-  }, [])
-  
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    const { active, over } = event
-    
-    if (active.id !== over?.id) {
-      const newDraggableItems = [...draggableItems]
-      const oldIndex = newDraggableItems.findIndex((item) => item.id === active.id)
-      const newIndex = newDraggableItems.findIndex((item) => item.id === over?.id)
-      
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const reorderedItems = arrayMove(newDraggableItems, oldIndex, newIndex)
-        // Combine home item with reordered draggable items
-        setEssentials([homeItem!, ...reorderedItems])
-      }
+    if (id === 'KieranMusic') {
+      setMusic('source', { mode: 'all', ids: [] })
+    } else {
+      setMusic('source', { mode: 'single', ids: [id] })
     }
-  }, [draggableItems, homeItem])
+  }, [])
+  
+  const handleDragOver = useCallback((_event: DragOverEvent) => {
+    // No state mutation during drag to avoid jitter. Visual movement is handled by dnd-kit transforms.
+  }, [])
   
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    // Future: Could be used for cleanup or final state updates
-  }, [])
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    // Build current plugin id order from rendered items (excluding KieranMusic)
+    const ids = orderedPluginItems.map(i => i.id)
+    const from = ids.indexOf(String(active.id))
+    const to = ids.indexOf(String(over.id))
+    if (from === -1 || to === -1) return
+    const next = arrayMove(ids, from, to)
+    setMusic('sourcesOrder', next)
+  }, [orderedPluginItems])
 
   return (
     <section 
       className={cn(
         "flex flex-col zen-essentials-container",
         !isCompact && "px-1.5 pt-2 pb-1.5 gap-2",
-        isCompact && "px-1 pt-1 pb-0.5 gap-1.5"
+        isCompact && "px-1 pt-1 pb-0.5 gap-1.5",
+        // Prevent horizontal scrollbar during drag
+        "overflow-x-hidden"
       )}
       data-zen-essential="true"
     >
       <DndContext 
         sensors={sensors}
         collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
+        modifiers={[restrictToParentElement, restrictToFirstScrollableAncestor]}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
@@ -289,7 +393,7 @@ export const EssentialsSection: FC = () => {
           <div 
             ref={containerRef}
             className={cn(
-              "grid transition-all duration-300 ease-out",
+              "grid transition-all duration-300 ease-out overflow-x-hidden",
               !isCompact && "gap-1.5",
               isCompact && "gap-1"
             )}
@@ -303,14 +407,14 @@ export const EssentialsSection: FC = () => {
               })
             }}
           >
-            {/* Home item - fixed position, not draggable */}
-            {homeItem && (
+            {/* essential item - fixed position, not draggable */}
+            {essentialItem && (
               <EssentialItem 
-                key={homeItem.id}
-                id={homeItem.id}
-                title={homeItem.title}
-                iconUrl={homeItem.iconUrl}
-                active={selectedId === homeItem.id}
+                key={essentialItem.id}
+                id={essentialItem.id}
+                title={essentialItem.title}
+                iconUrl={essentialItem.iconUrl}
+                active={selectedId === essentialItem.id}
                 isCompact={isCompact}
                 sidebar={sidebar}
                 onClick={handleItemClick}

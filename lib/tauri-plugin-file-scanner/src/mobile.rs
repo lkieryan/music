@@ -12,7 +12,7 @@ use tauri::{
 
 use types::{
     errors::{MusicError, Result},
-    songs::Song,
+    tracks::MediaContent,
 };
 use types::errors::error_helpers;
 
@@ -48,7 +48,7 @@ pub struct ScanArgs {
 pub struct FileScanner<R: Runtime>(PluginHandle<R>);
 
 impl<R: Runtime> FileScanner<R> {
-    pub fn scan_music(&self) -> Result<Vec<Song>> {
+    pub fn scan_music(&self) -> Result<Vec<MediaContent>> {
         let (tx, rx) = mpsc_channel();
         let ret: serde_json::Value = self
             .0
@@ -57,12 +57,12 @@ impl<R: Runtime> FileScanner<R> {
                 ScanArgs {
                     channel: Channel::new(move |event| match event {
                         tauri::ipc::InvokeResponseBody::Json(payload) => {
-                            let songs: Value = serde_json::from_str(&payload).unwrap();
-                            let songs = songs.get("songs");
-                            if let Some(songs) = songs {
-                                let songs: Vec<Song> =
-                                    serde_json::from_str(songs.as_str().unwrap())?;
-                                tx.send(songs).unwrap();
+                            let tracks: Value = serde_json::from_str(&payload).unwrap();
+                            let tracks = tracks.get("tracks");
+                            if let Some(tracks) = tracks {
+                                let tracks: Vec<MediaContent> =
+                                    serde_json::from_str(tracks.as_str().unwrap())?;
+                                tx.send(tracks).unwrap();
                             }
                             Ok(())
                         }

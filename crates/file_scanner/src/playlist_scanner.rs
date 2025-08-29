@@ -8,7 +8,7 @@ use std::{
 
 use types::{
     entities::{QueryableArtist, QueryablePlaylist},
-    songs::{QueryableSong, Song, SongType},
+    tracks::{Tracks, MediaContent, TrackType},
 };
 
 use substring::Substring;
@@ -17,7 +17,7 @@ use types::errors::{MusicError, Result};
 use uuid::Uuid;
 
 use crate::{
-    song_scanner::SongScanner,
+    track_scanner::TrackScanner,
     utils::{check_directory, get_files_recursively},
 };
 
@@ -25,17 +25,17 @@ use types::errors::error_helpers;
 
 pub struct PlaylistScanner<'a> {
     dir: PathBuf,
-    song_scanner: SongScanner<'a>,
+    track_scanner: TrackScanner<'a>,
     thumbnail_dir: PathBuf,
 }
 
 impl<'a> PlaylistScanner<'a> {
-    #[tracing::instrument(level = "debug", skip(dir, thumbnail_dir, song_scanner))]
-    pub fn new(dir: PathBuf, thumbnail_dir: PathBuf, song_scanner: SongScanner<'a>) -> Self {
+    #[tracing::instrument(level = "debug", skip(dir, thumbnail_dir, track_scanner))]
+    pub fn new(dir: PathBuf, thumbnail_dir: PathBuf, track_scanner: TrackScanner<'a>) -> Self {
         Self {
             dir,
             thumbnail_dir,
-            song_scanner,
+            track_scanner,
         }
     }
 
@@ -60,13 +60,13 @@ impl<'a> PlaylistScanner<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip(self, path))]
-    fn scan_playlist(&self, path: &PathBuf) -> Result<(QueryablePlaylist, Vec<Song>)> {
+    fn scan_playlist(&self, path: &PathBuf) -> Result<(QueryablePlaylist, Vec<MediaContent>)> {
         let file = File::open(path)?;
         let lines = io::BufReader::new(file).lines();
 
-        let mut songs: Vec<Song> = vec![];
+        let mut tracks: Vec<MediaContent> = vec![];
 
-        let mut song_type: Option<String> = None;
+        let mut track_type: Option<String> = None;
         let mut duration: Option<f64> = None;
         let mut title: Option<String> = None;
         let mut artists: Option<String> = None;
@@ -108,7 +108,7 @@ impl<'a> PlaylistScanner<'a> {
             }
 
             if line.starts_with("#MOOSINF:") {
-                song_type = Some(line.substring(9, line.len()).to_string());
+                track_type = Some(line.substring(9, line.len()).to_string());
                 continue;
             }
 
@@ -122,23 +122,23 @@ impl<'a> PlaylistScanner<'a> {
                     line = line[8..].to_string();
                 } else if line.starts_with("http") {
                     line = line.replace("http://", "").replace("https://", "");
-                    song_type = Some("URL".to_string());
+                    track_type = Some("URL".to_string());
                 } else if !line.is_empty() {
                     // pass
                 } else {
                     continue;
                 }
 
-                let mut song = QueryableSong::default();
+                let mut track = Tracks::default();
 
-                let s_type = song_type.clone();
+                let s_type = track_type.clone();
 
-                song.type_ = SongType::from_str(s_type.unwrap_or("LOCAL".to_string()).as_str())?;
-                song._id = Some(Uuid::new_v4().to_string());
+                track.type_ = TrackType::from_str(s_type.unwrap_or("LOCAL".to_string()).as_str())?;
+                track._id = Some(Uuid::new_v4().to_string());
 
-                if song.type_ == SongType::LOCAL {
-                    let song_path = PathBuf::from_str(line.as_str());
-                    let Ok(mut path_parsed) = song_path;
+                if track.type_ == TrackType::LOCAL {
+                    let track_path = PathBuf::from_str(line.as_str());
+                    let Ok(mut path_parsed) = track_path;
                     if path_parsed.is_relative() {
                         path_parsed = path.parent().unwrap().join(path_parsed).canonicalize()?;
                     }
@@ -147,29 +147,29 @@ impl<'a> PlaylistScanner<'a> {
                         artists = None;
                         duration = None;
                         title = None;
-                        song_type = None;
+                        track_type = None;
                         continue;
                     }
 
                     let metadata = fs::metadata(&path_parsed)?;
-                    song.size = Some(metadata.len() as f64);
-                    song.path = Some(path_parsed.to_string_lossy().to_string());
+                    track.size = Some(metadata.len() as f64);
+                    track.path = Some(path_parsed.to_string_lossy().to_string());
 
-                    if song.path.is_none() {
-                        song.path = Some(line);
+                    if track.path.is_none() {
+                        track.path = Some(line);
                     }
 
-                    song.playback_url = None;
+                    track.playback_url = None;
                 } else {
-                    song.playback_url = Some(line);
+                    track.playback_url = Some(line);
                 }
 
-                // song.artists = ;
-                song.duration = duration;
-                song.title = title;
-                // song.playlist_id = Some(playlist_id.clone());
-                songs.push(Song {
-                    song,
+                // track.artists = ;
+                track.duration = duration;
+                track.title = title;
+                // track.playlist_id = Some(playlist_id.clone());
+                tracks.push(MediaContent {
+                    track: track,
                     album: None,
                     artists: Some(self.parse_artists(artists)),
                     genre: Some(vec![]),
@@ -178,7 +178,7 @@ impl<'a> PlaylistScanner<'a> {
                 artists = None;
                 duration = None;
                 title = None;
-                song_type = None;
+                track_type = None;
             }
         }
 
@@ -189,35 +189,35 @@ impl<'a> PlaylistScanner<'a> {
                 playlist_path: Some(path.to_string_lossy().to_string()),
                 ..Default::default()
             },
-            songs,
+            tracks,
         ))
     }
 
-    #[tracing::instrument(level = "debug", skip(self, tx_song, s, playlist_id))]
-    fn scan_song_in_pool(
+    #[tracing::instrument(level = "debug", skip(self, tx_track, s, playlist_id))]
+    fn scan_track_in_pool(
         &self,
-        tx_song: Sender<(Option<String>, Result<Song>)>,
-        s: Song,
+        tx_track: Sender<(Option<String>, Result<MediaContent>)>,
+        s: MediaContent,
         playlist_id: Option<String>,
     ) {
-        if s.song.type_ == SongType::LOCAL && s.song.path.is_some() {
-            self.song_scanner.scan_in_pool(
-                tx_song,
-                s.song.size.unwrap_or_default(),
-                PathBuf::from_str(s.song.path.unwrap().as_str()).unwrap(),
+        if s.track.type_ == TrackType::LOCAL && s.track.path.is_some() {
+            self.track_scanner.scan_in_pool(
+                tx_track,
+                s.track.size.unwrap_or_default(),
+                PathBuf::from_str(s.track.path.unwrap().as_str()).unwrap(),
                 playlist_id,
             )
         } else {
-            tx_song
+            tx_track
                 .send((playlist_id, Ok(s)))
                 .expect("channel will be there waiting for the pool");
         }
     }
 
-    #[tracing::instrument(level = "debug", skip(self, tx_song, tx_playlist))]
+    #[tracing::instrument(level = "debug", skip(self, tx_track, tx_playlist))]
     pub fn start(
         &self,
-        tx_song: Sender<(Option<String>, Result<Song>)>,
+        tx_track: Sender<(Option<String>, Result<MediaContent>)>,
         tx_playlist: Sender<Result<QueryablePlaylist>>,
     ) -> Result<usize> {
         self.check_dirs()?;
@@ -239,20 +239,20 @@ impl<'a> PlaylistScanner<'a> {
                 continue;
             }
 
-            let (playlist_dets, songs) = playlist_scan_res.unwrap();
+            let (playlist_dets, tracks) = playlist_scan_res.unwrap();
             tx_playlist
                 .send(Ok(playlist_dets.clone()))
                 .expect("channel will be there waiting for the pool");
 
-            len += songs.len();
+            len += tracks.len();
 
-            for s in songs {
-                self.scan_song_in_pool(tx_song.clone(), s, playlist_dets.playlist_id.clone());
+            for s in tracks {
+                self.scan_track_in_pool(tx_track.clone(), s, playlist_dets.playlist_id.clone());
             }
             continue;
         }
 
-        drop(tx_song);
+        drop(tx_track);
         drop(tx_playlist);
 
         Ok(len)

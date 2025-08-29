@@ -9,7 +9,7 @@ import androidx.annotation.RequiresApi
 import app.kieran.filescanner.utils.Album
 import app.kieran.filescanner.utils.Artist
 import app.kieran.filescanner.utils.Genre
-import app.kieran.filescanner.utils.Song
+import app.kieran.filescanner.utils.Track
 import getUriFromID
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -19,7 +19,7 @@ class AudioScanner {
 
     suspend fun readDirectory(
         mContext: Context, scanPath: String = "/storage/emulated/0"
-    ): List<Song> {
+    ): List<Track> {
         val scanDone = scanFileSuspend(mContext, scanPath)
         if (!scanDone) {
             Log.e(TAG, "readDirectory: scan failed or canceled")
@@ -38,8 +38,8 @@ class AudioScanner {
         }
     }
 
-    private fun queryMediaStore(context: Context): List<Song> {
-        val songList = mutableListOf<Song>()
+    private fun queryMediaStore(context: Context): List<Track> {
+        val trackList = mutableListOf<Track>()
         val proj = arrayListOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -87,7 +87,7 @@ class AudioScanner {
                                     MediaStore.Audio.Media.DISPLAY_NAME
                                 )
 
-                            val song = Song(
+                            val track = Track(
                                 title = cursor.getString(titleIndex),
                                 duration = cursor.getLong(
                                     cursor.getColumnIndexOrThrow(
@@ -103,19 +103,19 @@ class AudioScanner {
                                     null
                                 },
                                 playbackUrl = id.toString(),
-                                song_coverPath_high = getUriFromID(context, id),
-                                song_coverPath_low = getUriFromID(context, id),
+                                track_coverPath_high = getUriFromID(context, id),
+                                track_coverPath_low = getUriFromID(context, id),
                                 type = "LOCAL"
                             )
-                            songList.add(song)
+                            trackList.add(track)
                         } catch (e: Exception) {
-                            Log.e(TAG, "queryMediaStore: error parsing song", e)
+                            Log.e(TAG, "queryMediaStore: error parsing track", e)
                         }
                     }
                 }
             }
 
-        return songList
+        return trackList
     }
 
     private fun getArtist(cursor: android.database.Cursor): List<Artist>? {

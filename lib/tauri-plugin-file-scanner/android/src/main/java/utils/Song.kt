@@ -8,7 +8,7 @@ data class Album(val album_name: String, val album_coverpath_high: String?, val 
 
 data class Genre(val genre_name: String) : Serializable
 
-data class Song(
+data class Track(
         val title: String,
         val duration: Long,
         val path: String?,
@@ -16,7 +16,7 @@ data class Song(
         val album: Album?,
         val genre: List<Genre>?,
         val playbackUrl: String?,
-        val song_coverPath_low: String?,
-        val song_coverPath_high: String?,
+        val track_coverPath_low: String?,
+        val track_coverPath_high: String?,
         val type: String
 ) : Serializable

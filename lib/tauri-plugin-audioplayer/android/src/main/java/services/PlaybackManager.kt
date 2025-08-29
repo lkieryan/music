@@ -3,7 +3,7 @@ package app.kieran.audioplayer.services
 
 import android.content.Context
 import android.util.Log
-import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.Track
 import app.kieran.audioplayer.services.players.GenericPlayer
 import app.kieran.audioplayer.services.players.LocalPlayer
 import app.kieran.audioplayer.services.players.PlayerListeners
@@ -39,8 +39,8 @@ class PlaybackManager(mContext: Context, private val playerListeners: PlayerList
         players[key]?.progress = pos
     }
 
-    fun canPlay(key: String, song: Song): Boolean {
-        return players[key]?.canPlay(song) == true
+    fun canPlay(key: String, track: Track): Boolean {
+        return players[key]?.canPlay(track) == true
     }
 
     fun load(key: String, context: Context, src: String, autoPlay: Boolean) {

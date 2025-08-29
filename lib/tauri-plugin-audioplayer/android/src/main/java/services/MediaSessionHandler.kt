@@ -17,7 +17,7 @@ import android.util.Log
 
 import androidx.core.net.toUri
 import app.kieran.audioplayer.models.MetadataArgs
-import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.Track
 import app.kieran.audioplayer.models.toArtistString
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -82,17 +82,17 @@ class MediaSessionHandler(private val mContext: Context) {
         )
     }
 
-    fun updateMetadata(song: MetadataArgs?) {
-        if (song != null) {
+    fun updateMetadata(track: MetadataArgs?) {
+        if (track != null) {
             val builder = MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.title)
+                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, track.title)
                 .putString(
                     MediaMetadataCompat.METADATA_KEY_ARTIST,
-                    song.artistName ?: ""
+                    track.artistName ?: ""
                 )
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.duration)
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, track.duration)
 
-            val thumbnail = song.thumbnail
+            val thumbnail = track.thumbnail
             if (thumbnail != null) {
                 var thumbnail_uri = thumbnail
                 if (thumbnail.startsWith("/data/data")) {

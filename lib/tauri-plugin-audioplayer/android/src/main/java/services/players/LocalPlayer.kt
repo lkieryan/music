@@ -10,7 +10,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
-import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.Track
 import java.util.Timer
 
 class LocalPlayer : GenericPlayer() {
@@ -22,7 +22,7 @@ class LocalPlayer : GenericPlayer() {
         get() = playerInstance.currentPosition
         set(value) { playerInstance.seekTo(value) }
 
-    private var ignoreSongEnded = false
+    private var ignoreTrackEnded = false
 
     override val isPlaying: Boolean
         get() {
@@ -37,8 +37,8 @@ class LocalPlayer : GenericPlayer() {
     private var isPlayerPrepared = false
     private val afterPreparedMethodCalls: MutableList<() -> Unit> = mutableListOf()
 
-    override fun canPlay(song: Song): Boolean {
-        return !song.path.isNullOrEmpty()
+    override fun canPlay(track: Track): Boolean {
+        return !track.path.isNullOrEmpty()
     }
 
     private fun buildUri(id: String): Uri {
@@ -66,7 +66,7 @@ class LocalPlayer : GenericPlayer() {
     }
 
     override fun load(mContext: Context, src: String, autoPlay: Boolean) {
-        ignoreSongEnded = true
+        ignoreTrackEnded = true
         isPlayerPrepared = false
 
         playerInstance.reset()
@@ -83,7 +83,7 @@ class LocalPlayer : GenericPlayer() {
             }
 
             isPlayerPrepared = true
-            ignoreSongEnded = false
+            ignoreTrackEnded = false
             runQueuedMethods()
         }
         playerInstance.prepareAsync()
@@ -99,9 +99,9 @@ class LocalPlayer : GenericPlayer() {
 
     override fun setPlayerListeners(playerListeners: PlayerListeners) {
         playerInstance.setOnCompletionListener {
-            if (!ignoreSongEnded)  {
-                playerListeners.onSongEnded(key)
-                ignoreSongEnded = false
+            if (!ignoreTrackEnded)  {
+                playerListeners.onTrackEnded(key)
+                ignoreTrackEnded = false
             }
         }
 

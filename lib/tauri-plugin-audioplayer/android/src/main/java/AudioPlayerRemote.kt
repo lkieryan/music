@@ -9,7 +9,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat.Callback
 import android.util.Log
-import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.Track
 import app.kieran.audioplayer.services.Constants.ACTION_FROM_MAIN_ACTIVITY
 import app.kieran.audioplayer.services.MediaPlayerService
 import app.kieran.audioplayer.services.NotificationHandler

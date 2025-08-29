@@ -36,8 +36,8 @@ class MediaController(private val mContext: Context) {
         emitInAllCallbacks {it.onTimeChange(key, time)}
     }
 
-    private fun handleSongEnded(key: String) {
-        emitInAllCallbacks {it.onSongEnded(key)}
+    private fun handleTrackEnded(key: String) {
+        emitInAllCallbacks {it.onTrackEnded(key)}
     }
 
     fun addPlayerCallbacks(callbacks: MediaPlayerCallbacks) {
@@ -104,8 +104,8 @@ class MediaController(private val mContext: Context) {
         })
 
         playbackManager = PlaybackManager(mContext, object : PlayerListeners {
-            override fun onSongEnded(key: String) {
-                handleSongEnded(key)
+            override fun onTrackEnded(key: String) {
+                handleTrackEnded(key)
             }
 
             override fun onTimeChange(key: String, time: Int) {

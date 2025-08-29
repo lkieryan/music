@@ -20,7 +20,7 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class app.kieran.filescanner.utils.Song {
+-keep class app.kieran.filescanner.utils.Track {
     *;
 }
 

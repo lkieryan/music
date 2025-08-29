@@ -6,7 +6,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import android.webkit.WebView
 import app.kieran.audioplayer.models.MetadataArgs
-import app.kieran.audioplayer.models.Song
+import app.kieran.audioplayer.models.Track
 import app.kieran.audioplayer.services.interfaces.MediaPlayerCallbacks
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
@@ -82,11 +82,11 @@ class AudioPlayerPlugin(private val activity: Activity): Plugin(activity) {
                     trigger("onPause", ret)
                 }
 
-                override fun onSongEnded(key: String) {
-                    super.onSongEnded(key)
+                override fun onTrackEnded(key: String) {
+                    super.onTrackEnded(key)
                     val ret = JSObject()
                     ret.put("key", key);
-                    trigger("onSongEnded", ret)
+                    trigger("onTrackEnded", ret)
                 }
 
                 override fun onStop(key: String) {

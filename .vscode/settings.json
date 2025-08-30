@@ -4,5 +4,9 @@
     "terminal.integrated.env.windows": {
         "HTTP_PROXY": "http://127.0.0.1:7890",
         "HTTPS_PROXY": "http://127.0.0.1:7890"
-    }
+    },
+    "chatgpt.apiBase": "https://oai-api.fkclaude.com/v1",
+  "chatgpt.config": {
+    "preferred_auth_method":"apikey"
+  }
 }

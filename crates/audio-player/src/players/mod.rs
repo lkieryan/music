@@ -3,3 +3,4 @@ pub mod base;
 pub mod mobile;
 pub mod librespot;
 pub mod rodio;
+// DASH backend temporarily removed

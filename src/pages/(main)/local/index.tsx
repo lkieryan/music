@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~
 import { Checkbox } from '~/components/ui/checkbox'
 import { audioService } from '~/services/audio-service'
 import { scannerService } from '~/services/scanner-service'
-import type { Song } from '~/types/bindings'
+import type { MediaContent } from '~/types/bindings'
 import { resolveImageUrl } from '~/lib/image'
 import IconPlay from '~/assets/icons/icon_play.svg?react'
 import IconPause from '~/assets/icons/icon_pause.svg?react'
@@ -41,7 +41,7 @@ function formatBitrate(bitrate?: number): string {
 
 export function Component() {
   const { t } = useTranslation('app')
-  const [songs, setSongs] = useState<Song[]>([])
+  const [tracks, setTracks] = useState<MediaContent[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
@@ -50,15 +50,15 @@ export function Component() {
   const [scannerStatus, setScannerStatus] = useState<ScannerStatus>({ state: 'Not initialized' })
   // removed unused isPlaying
 
-  const loadSongs = useCallback(async () => {
+  const loadTracks = useCallback(async () => {
     try {
       setLoading(true)
-      const localSongs = await scannerService.getLocalSongs()
-      console.log('localSongs', localSongs)
-      setSongs(localSongs)
+      const localTracks = await scannerService.getLocalTracks()
+      console.log('localTracks', localTracks)
+      setTracks(localTracks)
       setLoading(false)
     } catch (error) {
-      console.error('Failed to load local songs:', error)
+      console.error('Failed to load local tracks:', error)
       setLoading(false)
     }
   }, [])
@@ -66,12 +66,12 @@ export function Component() {
   const checkScannerStatus = useCallback(async () => {
     try {
       const status = await scannerService.getStatus()
-      setScannerStatus({ state: status as any })
+      setScannerStatus({ state: status as ScannerStatus['state'] })
     } catch (error) {
       console.error('Failed to get scanner status:', error)
       setScannerStatus({ state: 'Not initialized', message: t('pages.local.scanner.not_initialized') })
     }
-  }, [])
+  }, [t])
 
   const startAutoScanner = useCallback(async () => {
     try {
@@ -85,14 +85,14 @@ export function Component() {
   const triggerManualScan = useCallback(async () => {
     try {
       await scannerService.triggerManualScan()
-      // setTimeout(loadSongs, 2000)
+      // setTimeout(loadTracks, 2000)
     } catch (error) {
       console.error('Manual scan failed:', error)
     }
-  }, [loadSongs])
+  }, [])
 
   useEffect(() => {
-    loadSongs()
+    loadTracks()
     checkScannerStatus()
 
     const unsubscribeStarted = scannerService.on('scanner-started', () => {
@@ -106,40 +106,40 @@ export function Component() {
     const unsubscribeScanTriggered = scannerService.on('scan-triggered', () => {
       setScannerStatus({ state: 'Scanning' })
       setTimeout(() => {
-        loadSongs()
+        loadTracks()
         checkScannerStatus()
       }, 3000)
     })
 
-    const unsubscribeError = scannerService.on('scanner-error', (error: any) => {
+    const unsubscribeError = scannerService.on('scanner-error', (error: unknown) => {
       console.error('Scanner error:', error)
       setScannerStatus({ state: 'Stopped', message: 'Scanner error' })
     })
 
-    const unsubscribeScanProgress = scannerService.on('scan-progress', (result: any) => {
+    const unsubscribeScanProgress = scannerService.on('scan-progress', (result: unknown) => {
       console.log('Scan progress:', result)
     })
 
-    const unsubscribeSongsAdded = scannerService.on('songs-added', (count: number) => {
-      console.log(`Added ${count} songs`)
-      loadSongs()
+    const unsubscribeTracksAdded = scannerService.on('tracks-added', (count: number) => {
+      console.log(`Added ${count} tracks`)
+      loadTracks()
     })
 
     return () => {
       unsubscribeStarted()
-      unsubscribeStopped() 
+      unsubscribeStopped()
       unsubscribeScanTriggered()
       unsubscribeError()
       unsubscribeScanProgress()
-      unsubscribeSongsAdded()
+      unsubscribeTracksAdded()
     }
-  }, [loadSongs, checkScannerStatus])
+  }, [loadTracks, checkScannerStatus])
 
-  const filteredAndSortedSongs = useMemo(() => {
-    let filtered = songs.filter(song => 
-      song.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.artists?.[0]?.artist_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.album?.album_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAndSortedTracks = useMemo(() => {
+    const filtered = tracks.filter(track =>
+      track.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      track.artists?.[0]?.artist_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      track.album?.album_name?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     filtered.sort((a, b) => {
@@ -168,18 +168,18 @@ export function Component() {
       }
 
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortOrder === 'asc' 
+        return sortOrder === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue)
       } else {
-        return sortOrder === 'asc' 
+        return sortOrder === 'asc'
           ? (aValue as number) - (bValue as number)
           : (bValue as number) - (aValue as number)
       }
     })
 
     return filtered
-  }, [songs, searchQuery, sortBy, sortOrder])
+  }, [tracks, searchQuery, sortBy, sortOrder])
 
   const handleSelectTrack = useCallback((id: string) => {
     const newSelected = new Set(selectedTracks)
@@ -193,19 +193,24 @@ export function Component() {
 
   const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
-      setSelectedTracks(new Set(filteredAndSortedSongs.map(s => s._id!).filter(Boolean)))
+      setSelectedTracks(new Set(filteredAndSortedTracks.map(t => t._id!).filter(Boolean)))
     } else {
       setSelectedTracks(new Set())
     }
-  }, [filteredAndSortedSongs])
+  }, [filteredAndSortedTracks])
 
-  const handlePlayTrack = useCallback(async (song: Song) => {
+  const handlePlayTrack = useCallback(async (track: MediaContent) => {
     try {
-      await audioService.playSong(song)
+      // 确保本地歌曲有正确的 type 字段
+      const trackWithType = {
+        ...track,
+        type: track.type || 'LOCAL' // 为本地歌曲设置默认类型
+      }
+      await audioService.playTrack(trackWithType as MediaContent)
     } catch (error) {
-      console.error('Failed to play song:', error)
+      console.error('Failed to play track:', error)
     }
-  }, [filteredAndSortedSongs])
+  }, [])
 
   // read global player state for button/icon rendering
   const currentPlayingId = useAtomValue(musicIdAtom)
@@ -213,25 +218,25 @@ export function Component() {
 
   const handlePlayAll = useCallback(async () => {
     try {
-      if (filteredAndSortedSongs.length > 0) {
-        await audioService.playPlaylist(filteredAndSortedSongs, 0)
+      if (filteredAndSortedTracks.length > 0) {
+        await audioService.playPlaylist(filteredAndSortedTracks, 0)
       }
     } catch (error) {
       console.error('Failed to play all:', error)
     }
-  }, [filteredAndSortedSongs])
+  }, [filteredAndSortedTracks])
 
   const handleAddToQueue = useCallback(async () => {
     try {
-      const selectedSongs = filteredAndSortedSongs.filter(s => selectedTracks.has(s._id!))
-      if (selectedSongs.length > 0) {
-        await audioService.addSongsToQueue(selectedSongs)
+      const selectedTracksList = filteredAndSortedTracks.filter(t => selectedTracks.has(t._id!))
+      if (selectedTracksList.length > 0) {
+        await audioService.addTracksToQueue(selectedTracksList)
         setSelectedTracks(new Set())
       }
     } catch (error) {
       console.error('Failed to add to queue:', error)
     }
-  }, [filteredAndSortedSongs, selectedTracks])
+  }, [filteredAndSortedTracks, selectedTracks])
 
   return (
     <div className="flex flex-col h-full">
@@ -239,42 +244,41 @@ export function Component() {
       <div className="border-b border-border p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-text-primary">{t('pages.local.title')}</h1>
-          
+
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <div className={`w-2 h-2 rounded-full ${
-                scannerStatus.state === 'Watching' ? 'bg-green-500' :
+              <div className={`w-2 h-2 rounded-full ${scannerStatus.state === 'Watching' ? 'bg-green-500' :
                 scannerStatus.state === 'Scanning' ? 'bg-yellow-500 animate-pulse' :
-                scannerStatus.state === 'Stopped' ? 'bg-red-500' :
-                'bg-gray-400'
-              }`} />
+                  scannerStatus.state === 'Stopped' ? 'bg-red-500' :
+                    'bg-gray-400'
+                }`} />
               <span>{
                 scannerStatus.state === 'Watching' ? t('pages.local.scanner.watching') :
-                scannerStatus.state === 'Scanning' ? t('pages.local.scanner.scanning') :
-                scannerStatus.state === 'Stopped' ? t('pages.local.scanner.stopped') :
-                scannerStatus.state === 'Idle' ? t('pages.local.scanner.idle') :
-                t('pages.local.scanner.not_initialized')
+                  scannerStatus.state === 'Scanning' ? t('pages.local.scanner.scanning') :
+                    scannerStatus.state === 'Stopped' ? t('pages.local.scanner.stopped') :
+                      scannerStatus.state === 'Idle' ? t('pages.local.scanner.idle') :
+                        t('pages.local.scanner.not_initialized')
               }</span>
             </div>
-            
+
             {scannerStatus.state === 'Not initialized' && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={startAutoScanner}
               >
                 {t('pages.local.scanner.start')}
               </Button>
             )}
-            
-            <Button 
-              variant="ghost" 
+
+            <Button
+              variant="ghost"
               size="sm"
               onClick={triggerManualScan}
               disabled={scannerStatus.state === 'Scanning'}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {scannerStatus.state === 'Scanning' ? t('pages.local.status.scanning') : t('pages.local.refresh')}
             </Button>
@@ -284,26 +288,26 @@ export function Component() {
         {/* Controls */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               size="sm"
               onClick={handlePlayAll}
-              disabled={filteredAndSortedSongs.length === 0}
+              disabled={filteredAndSortedTracks.length === 0}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M8 5v14l11-7z" fill="currentColor"/>
+                <path d="M8 5v14l11-7z" fill="currentColor" />
               </svg>
               {t('pages.local.play_all')}
             </Button>
-            
-            <Button 
-              variant="ghost" 
+
+            <Button
+              variant="ghost"
               size="sm"
               onClick={handleAddToQueue}
               disabled={selectedTracks.size === 0}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor" />
               </svg>
               {t('pages.local.add_to_queue')} ({selectedTracks.size})
             </Button>
@@ -317,15 +321,15 @@ export function Component() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-64 pl-9"
               />
-              <svg 
-                width="16" 
-                height="16" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"
               >
-                <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
-                <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2"/>
+                <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
+                <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2" />
               </svg>
             </div>
           </div>
@@ -339,16 +343,16 @@ export function Component() {
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-lg font-medium">{t('pages.local.status.loading')}</p>
           </div>
-        ) : filteredAndSortedSongs.length === 0 ? (
+        ) : filteredAndSortedTracks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mb-4 opacity-50">
-              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/>
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor" />
             </svg>
             <p className="text-lg font-medium mb-2">
-              {songs.length === 0 ? t('pages.local.empty.no_songs') : t('pages.local.empty.no_match')}
+              {tracks.length === 0 ? t('pages.local.empty.no_tracks') : t('pages.local.empty.no_match')}
             </p>
             <p className="text-sm">
-              {songs.length === 0 
+              {tracks.length === 0
                 ? t('pages.local.empty.suggestion_setup')
                 : t('pages.local.empty.suggestion_adjust')
               }
@@ -360,8 +364,8 @@ export function Component() {
               <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={selectedTracks.size === filteredAndSortedSongs.length && filteredAndSortedSongs.length > 0}
-                    indeterminate={selectedTracks.size > 0 && selectedTracks.size < filteredAndSortedSongs.length}
+                    checked={selectedTracks.size === filteredAndSortedTracks.length && filteredAndSortedTracks.length > 0}
+                    indeterminate={selectedTracks.size > 0 && selectedTracks.size < filteredAndSortedTracks.length}
                     onCheckedChange={handleSelectAll}
                     className="border border-border/40"
                   />
@@ -375,16 +379,16 @@ export function Component() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedSongs.map((song) => (
+              {filteredAndSortedTracks.map((track) => (
                 <TableRow
-                  key={song._id}
+                  key={track._id}
                   className="group hover:bg-accent/5"
-                  data-state={selectedTracks.has(song._id!) ? 'selected' : undefined}
+                  data-state={selectedTracks.has(track._id!) ? 'selected' : undefined}
                 >
                   <TableCell>
                     <Checkbox
-                      checked={selectedTracks.has(song._id!)}
-                      onCheckedChange={() => handleSelectTrack(song._id!)}
+                      checked={selectedTracks.has(track._id!)}
+                      onCheckedChange={() => handleSelectTrack(track._id!)}
                       onClick={(e) => e.stopPropagation()}
                       className="border border-border/40"
                     />
@@ -392,14 +396,14 @@ export function Component() {
                   <TableCell>
                     <div className="relative w-10 h-10 bg-accent/10 rounded overflow-hidden flex items-center justify-center flex-shrink-0 group">
                       {(() => {
-                        const coverUrl = resolveImageUrl(song.song_coverPath_high)
+                        const coverUrl = resolveImageUrl(track.track_coverpath_high)
                         return coverUrl ? (
-                          <img 
-                            src={coverUrl} 
+                          <img
+                            src={coverUrl}
                             alt=""
                             className="w-full h-full object-cover rounded"
                             onError={(e) => {
-                              const lowResUrl = resolveImageUrl(song.song_coverPath_low)
+                              const lowResUrl = resolveImageUrl(track.track_coverpath_low)
                               if (lowResUrl && e.currentTarget.src !== lowResUrl) {
                                 e.currentTarget.src = lowResUrl
                               } else {
@@ -417,14 +421,14 @@ export function Component() {
                           />
                         ) : (
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-accent/60">
-                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/>
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor" />
                           </svg>
                         )
                       })()}
                       <div className="absolute inset-0 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center
                         bg-[rgba(255,255,255,0.04)] dark:bg-[rgba(0,0,0,0.08)] backdrop-blur-[2px] border border-transparent shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
                         {(() => {
-                          const isCurrent = !!song._id && currentPlayingId === song._id
+                          const isCurrent = !!track._id && currentPlayingId === track._id
                           const showPause = isCurrent && isGlobalPlaying
                           const onClick = async (e: React.MouseEvent) => {
                             e.stopPropagation()
@@ -436,7 +440,7 @@ export function Component() {
                                   await audioService.play()
                                 }
                               } else {
-                                await handlePlayTrack(song)
+                                await handlePlayTrack(track)
                               }
                             } catch (err) {
                               console.error('change play state failed:', err)
@@ -462,30 +466,30 @@ export function Component() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-medium text-text-primary truncate">
-                          {song.title || t('pages.local.unknown.song')}
+                          {track.title || t('pages.local.unknown.track')}
                         </h3>
-                        {song.codec === 'FLAC' && (
+                        {track.codec === 'FLAC' && (
                           <span className="px-1.5 py-0.5 text-xs bg-accent/20 text-accent rounded">{t('pages.local.lossless')}</span>
                         )}
                       </div>
                       <p className="text-xs text-text-tertiary truncate">
-                        {song.artists?.[0]?.artist_name || t('pages.local.unknown.artist')} • {song.album?.album_name || t('pages.local.unknown.album')}
+                        {track.artists?.[0]?.artist_name || t('pages.local.unknown.artist')} • {track.album?.album_name || t('pages.local.unknown.album')}
                       </p>
                     </div>
                   </TableCell>
                   <TableCell className="text-right text-text-secondary">
-                    {formatDuration(song.duration ?? undefined)}
+                    {formatDuration(track.duration ?? undefined)}
                   </TableCell>
                   <TableCell className="text-right text-text-secondary">
-                    {formatSize(song.size ?? undefined)}
+                    {formatSize(track.size ?? undefined)}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className="text-xs text-text-tertiary">
-                      {song.codec || '--'}
+                      {track.codec || '--'}
                     </span>
-                    {song.bitrate && (
+                    {track.bitrate && (
                       <div className="text-xs text-text-tertiary opacity-60">
-                        {formatBitrate(song.bitrate)}
+                        {formatBitrate(track.bitrate)}
                       </div>
                     )}
                   </TableCell>
@@ -498,9 +502,9 @@ export function Component() {
                       }}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-text-secondary">
-                        <circle cx="12" cy="12" r="1" fill="currentColor"/>
-                        <circle cx="19" cy="12" r="1" fill="currentColor"/>
-                        <circle cx="5" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="1" fill="currentColor" />
+                        <circle cx="19" cy="12" r="1" fill="currentColor" />
+                        <circle cx="5" cy="12" r="1" fill="currentColor" />
                       </svg>
                     </button>
                   </TableCell>
@@ -510,10 +514,10 @@ export function Component() {
           </Table>
         )}
       </div>
-      {filteredAndSortedSongs.length > 0 && (
+      {filteredAndSortedTracks.length > 0 && (
         <div className="border-t border-border px-6 py-3 text-sm text-text-secondary bg-background-secondary">
-          {t('pages.local.status.total')} {filteredAndSortedSongs.length} {t('pages.local.status.songs_count')}
-          {songs.length !== filteredAndSortedSongs.length && ` (${t('pages.local.status.filtered')} ${songs.length - filteredAndSortedSongs.length} 首)`}
+          {t('pages.local.status.total')} {filteredAndSortedTracks.length} {t('pages.local.status.tracks_count')}
+          {tracks.length !== filteredAndSortedTracks.length && ` (${t('pages.local.status.filtered')} ${tracks.length - filteredAndSortedTracks.length} 首)`}
           {selectedTracks.size > 0 && ` • ${t('pages.local.status.selected')} ${selectedTracks.size} 首`}
         </div>
       )}

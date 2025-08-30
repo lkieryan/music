@@ -1,0 +1,15 @@
+{
+  "capabilities": [
+    "Search",
+    "Playlists",
+    "Streaming",
+    "Authentication"
+  ],
+  "display_name": "YouTube Music",
+  "entry": null,
+  "icon": "assets/icons/icon.png",
+  "id": "e1e9756f-ad59-5232-8a09-25c173a56de5",
+  "name": "youtube",
+  "type": "AudioProvider",
+  "version": "1.0.0"
+}

@@ -1,0 +1,53 @@
+[package]
+name = "music-plugin-sdk"
+version = "0.1.0"
+edition = "2021"
+description = "SDK for developing music player plugins"
+license = "MIT"
+repository = "https://github.com/kieran/music-1"
+documentation = "https://docs.rs/music-plugin-sdk"
+authors = ["kieran"]
+
+# Enable publishing to crates.io
+publish = true
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# URL handling
+url = { version = "2.0", features = ["serde"] }
+
+# UUID generation
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# TypeScript bindings
+ts-rs = "10.1"
+
+# Optional WebAssembly support
+wasmtime = { version = "26.0", optional = true }
+
+[features]
+default = []
+wasm = ["wasmtime"]
+ts-rs = []
+
+[[example]]
+name = "example_plugin"
+path = "examples/example_plugin.rs"
+
+[lib]
+name = "music_plugin_sdk"
+path = "src/lib.rs"

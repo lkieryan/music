@@ -1,0 +1,14 @@
+{
+  "capabilities": [
+    "Search",
+    "Playlists",
+    "Streaming"
+  ],
+  "display_name": "Bilibili Audio",
+  "entry": null,
+  "icon": "assets/icons/icon.png",
+  "id": "fb405d92-4ff2-5317-a86a-cc3e8d91ec72",
+  "name": "bilibili",
+  "type": "AudioProvider",
+  "version": "1.0.0"
+}

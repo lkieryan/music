@@ -1,0 +1,15 @@
+{
+  "capabilities": [
+    "Search",
+    "Playlists",
+    "Streaming",
+    "Authentication"
+  ],
+  "display_name": "Spotify Music",
+  "entry": null,
+  "icon": "assets/icons/icon.png",
+  "id": "b218a6c3-88ec-5c6c-be13-14723e14710b",
+  "name": "spotify",
+  "type": "AudioProvider",
+  "version": "1.0.0"
+}

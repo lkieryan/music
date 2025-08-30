@@ -33,12 +33,12 @@ export const onPlayOrResumeAtom = atom(c(() => {}))
 /**
  * 请求播放上一首歌曲时的回调。
  */
-export const onRequestPrevSongAtom = atom(c(() => {}))
+export const onRequestPrevTrackAtom = atom(c(() => {}))
 
 /**
  * 请求播放下一首歌曲时的回调。
  */
-export const onRequestNextSongAtom = atom(c(() => {}))
+export const onRequestNextTrackAtom = atom(c(() => {}))
 
 /**
  * 拖拽进度条或点击进度条时的回调。

@@ -11,7 +11,7 @@ use tauri::{
 use types::{
     errors::{MusicError, Result},
     mpris::MprisPlayerDetails,
-    songs::Song,
+    tracks::MediaContent,
 };
 use types::errors::error_helpers;
 

@@ -1,4 +1,4 @@
-import { LINE_PATH, SINE_PATH } from '../components/gradient/constants'
+import { LINE_PATH, SINE_PATH } from '~/constants/gradient'
 
 export interface PathPoint {
   x: number

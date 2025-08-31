@@ -10,8 +10,8 @@ import {
   musicCoverAtom,
   musicPlayingAtom,
   onPlayOrResumeAtom,
-  onRequestPrevSongAtom,
-  onRequestNextSongAtom,
+  onRequestPrevTrackAtom,
+  onRequestNextTrackAtom,
   playlistCardOpenedAtom,
   isLyricPageOpenedAtom
 } from '~/atoms/player'
@@ -53,8 +53,8 @@ export function GlobalPlayer({ height }: { height: number }) {
 
   // Use callback atoms' value and call onEmit
   const onPlayOrResume = useAtomValue(onPlayOrResumeAtom)
-  const onRequestPrevSong = useAtomValue(onRequestPrevSongAtom)
-  const onRequestNextSong = useAtomValue(onRequestNextSongAtom)
+  const onRequestPrevTrack = useAtomValue(onRequestPrevTrackAtom)
+  const onRequestNextTrack = useAtomValue(onRequestNextTrackAtom)
 
   const playbarRef = useRef<HTMLDivElement>(null)
   const dragRef = useWindowDrag()
@@ -136,7 +136,7 @@ export function GlobalPlayer({ height }: { height: number }) {
           <div className="hidden sm:flex items-center justify-center flex-1 basis-1/3 gap-8">
             <MediaButton 
               className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2 no-drag"
-              onClick={() => onRequestPrevSong.onEmit?.()} 
+              onClick={() => onRequestPrevTrack.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
               <IconRewind style={{ scale: "1.25" }} className="press-anim" />
@@ -156,7 +156,7 @@ export function GlobalPlayer({ height }: { height: number }) {
             
             <MediaButton 
               className="press-anim-parent cursor-pointer !min-w-12 !min-h-12 !p-2 no-drag"
-              onClick={() => onRequestNextSong.onEmit?.()} 
+              onClick={() => onRequestNextTrack.onEmit?.()} 
               style={{ scale: "1.5" }}
             >
               <IconForward style={{ scale: "1.25" }} className="press-anim" />
@@ -168,7 +168,7 @@ export function GlobalPlayer({ height }: { height: number }) {
             <div className="flex sm:hidden items-center gap-1">
               <button 
                 className={cn('press-anim-parent no-drag', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
-                onClick={() => onRequestPrevSong.onEmit?.()}
+                onClick={() => onRequestPrevTrack.onEmit?.()}
               >
                 <IconRewind className="w-4 h-4 press-anim" />
               </button>
@@ -180,7 +180,7 @@ export function GlobalPlayer({ height }: { height: number }) {
               </button>
               <button 
                 className={cn('press-anim-parent no-drag', styles.mediaButton, "!min-w-10 !min-h-10 !p-2")}
-                onClick={() => onRequestNextSong.onEmit?.()}
+                onClick={() => onRequestNextTrack.onEmit?.()}
               >
                 <IconForward className="w-4 h-4 press-anim" />
               </button>

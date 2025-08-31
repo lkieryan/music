@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/E:\\workspace\\kieran\\music-1/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\.claude\\agents/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\crates\\plugins\\src\\internal\\bilibili/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\crates\\plugins\\src\\system/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\crates\\plugins\\src\\system/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\crates\\plugins\\src\\internal\\bilibili/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\crates\\music-plugin-sdk\\src\\traits/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\crates\\music-plugin-sdk\\src\\traits/**)",
+      "Read(/E:\\workspace\\kieran\\music-1\\src-tauri\\src\\music/**)",
+      "Bash(cargo check:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

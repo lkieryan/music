@@ -12,9 +12,9 @@ import type { PlayerMode } from "~/types/bindings"
  * - `local`: 代表本地文件歌曲。
  * - `custom`: 代表通过自定义数据源（如API）获取的歌曲。
  */
-export type SongData =
+export type TrackData =
 	| { type: "local"; filePath: string; origOrder: number }
-	| { type: "custom"; id: string; songJsonData: string; origOrder: number };
+	| { type: "custom"; id: string; trackJsonData: string; origOrder: number };
 
 /**
  * 定义了艺术家信息的标准结构。
@@ -149,7 +149,7 @@ export const musicQualityTagAtom = atom<{
 /**
  * 当前的播放列表。
  */
-export const currentPlaylistAtom = atom<SongData[]>([]);
+export const currentPlaylistAtom = atom<TrackData[]>([]);
 
 /**
  * 当前歌曲在播放列表中的索引。

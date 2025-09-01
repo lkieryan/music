@@ -5,7 +5,7 @@ use std::{
     time::{Duration, UNIX_EPOCH},
 };
 
-use crossbeam_channel::unbounded;
+use crossbeam_channel::unbounded as _;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher, Event, EventKind};
 use serde::{Deserialize, Serialize};
 use tokio::{sync::mpsc, time::interval};
@@ -13,7 +13,7 @@ use tracing::{debug, error, info, warn};
 use types::{
     entities::QueryablePlaylist,
     errors::Result,
-    songs::Song,
+    tracks::MediaContent,
 };
 
 use crate::{
@@ -39,7 +39,7 @@ pub enum ScanEvent {
 /// 扫描结果
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ScanResult {
-    pub songs: Vec<Song>,
+    pub tracks: Vec<MediaContent>,
     pub playlists: Vec<QueryablePlaylist>,
     pub deleted_files: Vec<PathBuf>,
 }
@@ -181,7 +181,7 @@ impl AutoScanner {
             if !deleted.is_empty() {
                 if let Some(tx) = &self.result_tx {
                     let _ = tx.send(ScanResult {
-                        songs: Vec::new(),
+                        tracks: Vec::new(),
                         playlists: Vec::new(),
                         deleted_files: deleted,
                     });
@@ -398,19 +398,19 @@ impl AutoScanner {
         
         if !Self::should_scan_file(&path, &config.read().unwrap()) {
             return Ok(ScanResult {
-                songs: Vec::new(),
+                tracks: Vec::new(),
                 playlists: Vec::new(),
                 deleted_files: Vec::new(),
             });
         }
 
         let config_guard = config.read().unwrap();
-        let mut songs = Self::scan_single_file(
+        let mut tracks = Self::scan_single_file(
             &path,
             &config_guard.thumbnail_dir,
             &config_guard.artist_splitter,
         ).await?;
-        Self::filter_songs_by_min_duration(&mut songs, &config_guard.scan_min_duration);
+        Self::filter_tracks_by_min_duration(&mut tracks, &config_guard.scan_min_duration);
 
         if let Ok(metadata) = std::fs::metadata(&path) {
             let file_meta = FileMetadata {
@@ -422,7 +422,7 @@ impl AutoScanner {
         }
 
         Ok(ScanResult {
-            songs,
+            tracks,
             playlists: Vec::new(),
             deleted_files: Vec::new(),
         })
@@ -442,7 +442,7 @@ impl AutoScanner {
         //         if cached.size == metadata.len() &&
         //            cached.modified == metadata.modified().unwrap_or(UNIX_EPOCH) {
         //             return Ok(ScanResult {
-        //                 songs: Vec::new(),
+        //                 tracks: Vec::new(),
         //                 playlists: Vec::new(),
         //                 deleted_files: Vec::new(),
         //             });
@@ -464,7 +464,7 @@ impl AutoScanner {
         file_cache.remove_file(&path);
         
         Ok(ScanResult {
-            songs: Vec::new(),
+            tracks: Vec::new(),
             playlists: Vec::new(),
             deleted_files: vec![path],
         })
@@ -477,7 +477,7 @@ impl AutoScanner {
         info!("Handling full scan");
         
         let config_guard = config.read().unwrap();
-        let mut all_songs = Vec::new();
+        let mut all_tracks = Vec::new();
         let all_playlists = Vec::new();
         let mut deleted_files = Vec::new();
 
@@ -517,9 +517,9 @@ impl AutoScanner {
                             &config_guard.thumbnail_dir,
                             &config_guard.artist_splitter,
                         ).await {
-                            Ok(mut songs) => {
-                                Self::filter_songs_by_min_duration(&mut songs, &config_guard.scan_min_duration);
-                                all_songs.append(&mut songs);
+                            Ok(mut tracks) => {
+                                Self::filter_tracks_by_min_duration(&mut tracks, &config_guard.scan_min_duration);
+                                all_tracks.append(&mut tracks);
                                 
                                 if let Ok(metadata) = std::fs::metadata(&file_path) {
                                     let file_meta = FileMetadata {
@@ -545,7 +545,7 @@ impl AutoScanner {
         }
 
         Ok(ScanResult {
-            songs: all_songs,
+            tracks: all_tracks,
             playlists: all_playlists,
             deleted_files,
         })
@@ -553,13 +553,13 @@ impl AutoScanner {
 
     async fn handle_manual_scan(
         config: &Arc<RwLock<AutoScannerConfig>>,
-        file_cache: &Arc<FileCache>,
+        _file_cache: &Arc<FileCache>,
         paths: Vec<PathBuf>,
     ) -> Result<ScanResult> {
         info!("Handling manual scan for {} paths", paths.len());
         
         let config_guard = config.read().unwrap();
-        let mut all_songs = Vec::new();
+        let mut all_tracks = Vec::new();
         
         for path in paths {
             if path.is_file() && Self::should_scan_file(&path, &config_guard) {
@@ -568,9 +568,9 @@ impl AutoScanner {
                     &config_guard.thumbnail_dir,
                     &config_guard.artist_splitter,
                 ).await {
-                    Ok(mut songs) => {
-                        Self::filter_songs_by_min_duration(&mut songs, &config_guard.scan_min_duration);
-                        all_songs.append(&mut songs);
+                    Ok(mut tracks) => {
+                        Self::filter_tracks_by_min_duration(&mut tracks, &config_guard.scan_min_duration);
+                        all_tracks.append(&mut tracks);
                     }
                     Err(e) => {
                         warn!("Failed to scan file {:?}: {}", path, e);
@@ -585,9 +585,9 @@ impl AutoScanner {
                             &config_guard.thumbnail_dir,
                             &config_guard.artist_splitter,
                         ).await {
-                            Ok(mut songs) => {
-                                Self::filter_songs_by_min_duration(&mut songs, &config_guard.scan_min_duration);
-                                all_songs.append(&mut songs);
+                            Ok(mut tracks) => {
+                                Self::filter_tracks_by_min_duration(&mut tracks, &config_guard.scan_min_duration);
+                                all_tracks.append(&mut tracks);
                             }
                             Err(e) => {
                                 warn!("Failed to scan file {:?}: {}", file_path, e);
@@ -599,7 +599,7 @@ impl AutoScanner {
         }
         
         Ok(ScanResult {
-            songs: all_songs,
+            tracks: all_tracks,
             playlists: Vec::new(),
             deleted_files: Vec::new(),
         })
@@ -609,13 +609,13 @@ impl AutoScanner {
         path: &Path,
         thumbnail_dir: &Path,
         artist_splitter: &str,
-    ) -> Result<Vec<Song>> {
+    ) -> Result<Vec<MediaContent>> {
         let size = std::fs::metadata(path)
             .map(|m| m.len() as f64)
             .unwrap_or(0.0);
         
-        let song = scan_file(&path.to_path_buf(), thumbnail_dir, size, false, artist_splitter)?;
-        Ok(vec![song])
+        let track = scan_file(&path.to_path_buf(), thumbnail_dir, size, false, artist_splitter)?;
+        Ok(vec![track])
     }
 
     fn should_scan_file(path: &Path, config: &AutoScannerConfig) -> bool {
@@ -664,13 +664,13 @@ impl AutoScanner {
         }
     }
 
-    fn filter_songs_by_min_duration(songs: &mut Vec<Song>, scan_min_duration: &str) {
+    fn filter_tracks_by_min_duration(tracks: &mut Vec<MediaContent>, scan_min_duration: &str) {
         let threshold_secs = Self::parse_min_duration_threshold(scan_min_duration);
         if threshold_secs <= 0.0 {
             return;
         }
-        songs.retain(|s| {
-            let dur = s.song.duration.unwrap_or(0.0);
+        tracks.retain(|s| {
+            let dur = s.track.duration.unwrap_or(0.0);
             dur >= threshold_secs
         });
     }

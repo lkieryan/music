@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::Read,
+    io::Read as _,
     num::NonZeroU32,
     path::{Path, PathBuf},
 };
@@ -20,7 +20,7 @@ use regex::Regex;
 use types::{
     entities::{QueryableAlbum, QueryableArtist, QueryableGenre},
     errors::Result,
-    songs::{QueryableSong, Song, SongType},
+    tracks::{Tracks, MediaContent, TrackType},
 };
 use uuid::Uuid;
 
@@ -69,7 +69,7 @@ pub fn get_files_recursively(dir: PathBuf) -> Result<FileList> {
     let mut playlist_list: Vec<PathBuf> = vec![];
 
     lazy_static! {
-        static ref SONG_RE: Regex = Regex::new("flac|mp3|ogg|m4a|webm|wav|wv|aac|opus").unwrap();
+        static ref TRACK_RE: Regex = Regex::new("flac|mp3|ogg|m4a|webm|wav|wv|aac|opus").unwrap();
         static ref PLAYLIST_RE: Regex = Regex::new("m3u|m3u8").unwrap();
     }
 
@@ -88,7 +88,7 @@ pub fn get_files_recursively(dir: PathBuf) -> Result<FileList> {
                 .to_str()
                 .unwrap_or_default();
             if !extension.is_empty() {
-                if SONG_RE.is_match(extension) {
+                if TRACK_RE.is_match(extension) {
                     file_list.push((dir.clone(), metadata.len() as f64));
                 }
 
@@ -238,24 +238,24 @@ pub fn scan_file(
     size: f64,
     guess: bool,
     artist_split: &str,
-) -> Result<Song> {
-    let mut song: Song = Song {
-        song: QueryableSong::default(),
+) -> Result<MediaContent> {
+    let mut track: MediaContent = MediaContent {
+        track: Tracks::default(),
         album: None,
         artists: Some(vec![]),
         genre: Some(vec![]),
     };
     // Don't set ID here - let database logic use MD5 hash as ID
-    song.song.title = Some(path.file_name().unwrap().to_string_lossy().to_string());
-    song.song.path = Some(dunce::canonicalize(path)?.to_string_lossy().to_string());
-    song.song.size = Some(size);
-    song.song.duration = Some(0f64);
-    song.song.type_ = SongType::LOCAL;
+    track.track.title = Some(path.file_name().unwrap().to_string_lossy().to_string());
+    track.track.path = Some(dunce::canonicalize(path)?.to_string_lossy().to_string());
+    track.track.size = Some(size);
+    track.track.duration = Some(0f64);
+    track.track.type_ = TrackType::LOCAL;
     
     // Calculate file MD5 hash
     match calculate_file_md5(path) {
         Ok(hash) => {
-            song.song.hash = Some(hash);
+            track.track.hash = Some(hash);
             tracing::debug!("Calculated MD5 hash for file: {}", path.display());
         }
         Err(e) => {
@@ -274,7 +274,7 @@ pub fn scan_file(
             .read();
         if file_res.is_err() {
             tracing::info!("Error reading file without guess {:?}", file_res.err());
-            return Ok(song);
+            return Ok(track);
         }
         file_res.unwrap()
     };
@@ -284,9 +284,9 @@ pub fn scan_file(
     if tags.is_none() {
         tags = file.first_tag();
     }
-    song.song.bitrate = Some((properties.audio_bitrate().unwrap_or_default() * 1000) as f64);
-    song.song.sample_rate = properties.sample_rate().map(|v| v as f64);
-    song.song.duration = Some(properties.duration().as_secs() as f64);
+    track.track.bitrate = Some((properties.audio_bitrate().unwrap_or_default() * 1000) as f64);
+    track.track.sample_rate = properties.sample_rate().map(|v| v as f64);
+    track.track.duration = Some(properties.duration().as_secs() as f64);
 
     if tags.is_some() {
         let metadata = tags.unwrap();
@@ -302,8 +302,8 @@ pub fn scan_file(
         if let Some(picture) = found_picture.or_else(|| metadata.pictures().first()) {
             match store_picture(thumbnail_dir, picture) {
                 Ok((high_path, low_path)) => {
-                    song.song.song_cover_path_high = Some(high_path.to_string_lossy().to_string());
-                    song.song.song_cover_path_low = Some(low_path.to_string_lossy().to_string());
+                    track.track.track_cover_path_high = Some(high_path.to_string_lossy().to_string());
+                    track.track.track_cover_path_low = Some(low_path.to_string_lossy().to_string());
                 }
                 Err(e) => {
                     tracing::error!("Error storing picture {:?}", e);
@@ -337,8 +337,8 @@ pub fn scan_file(
                         Ok(bytes) => {
                             match store_picture_from_bytes(thumbnail_dir, &bytes) {
                                 Ok((high_path, low_path)) => {
-                                    song.song.song_cover_path_high = Some(high_path.to_string_lossy().to_string());
-                                    song.song.song_cover_path_low = Some(low_path.to_string_lossy().to_string());
+                                    track.track.track_cover_path_high = Some(high_path.to_string_lossy().to_string());
+                                    track.track.track_cover_path_low = Some(low_path.to_string_lossy().to_string());
                                 }
                                 Err(e) => tracing::error!("Error generating thumbnails from fallback image {:?}: {:?}", img_path, e),
                             }
@@ -359,11 +359,11 @@ pub fn scan_file(
             lyrics = scan_lrc(path.clone());
         }
 
-        song.song.title = metadata
+        track.track.title = metadata
             .title()
             .map(|s| s.to_string())
             .or(path.file_name().map(|s| s.to_string_lossy().to_string()));
-        // song.album = metadata.album().map(|s| s.to_string());
+        // track.album = metadata.album().map(|s| s.to_string());
         let artists: Option<Vec<QueryableArtist>> = metadata.artist().map(|s| {
             s.split(artist_split)
                 .map(|s| QueryableArtist {
@@ -376,15 +376,15 @@ pub fn scan_file(
 
         let album = metadata.album();
         if album.is_some() {
-            song.song.track_no = metadata
+            track.track.track_no = metadata
                 .get_string(&lofty::prelude::ItemKey::TrackNumber)
                 .map(|s| s.parse().unwrap_or_default());
 
-            song.album = Some(QueryableAlbum {
+            track.album = Some(QueryableAlbum {
                 album_id: Some(Uuid::new_v4().to_string()),
                 album_name: album.map(|v| v.to_string()),
-                album_coverpath_high: song.song.song_cover_path_high.clone(),
-                album_coverpath_low: song.song.song_cover_path_low.clone(),
+                album_coverpath_high: track.track.track_cover_path_high.clone(),
+                album_coverpath_low: track.track.track_cover_path_low.clone(),
                 album_artist: metadata
                     .get_string(&lofty::prelude::ItemKey::AlbumArtist)
                     .map(|s| s.to_owned()),
@@ -392,17 +392,17 @@ pub fn scan_file(
             })
         }
 
-        song.artists = artists;
+        track.artists = artists;
 
-        song.song.year = metadata.year().map(|s| s.to_string());
-        song.genre = metadata.genre().map(|s| {
+        track.track.year = metadata.year().map(|s| s.to_string());
+        track.genre = metadata.genre().map(|s| {
             vec![QueryableGenre {
                 genre_name: Some(s.to_string()),
                 ..Default::default()
             }]
         });
-        song.song.lyrics = lyrics;
+        track.track.lyrics = lyrics;
     }
 
-    Ok(song)
+    Ok(track)
 }

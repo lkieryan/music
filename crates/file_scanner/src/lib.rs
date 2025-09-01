@@ -8,7 +8,7 @@ mod scanner;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub use scanner::{ScanState, ScannerHolder};
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
-mod song_scanner;
+mod track_scanner;
 
 mod types;
 mod utils;

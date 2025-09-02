@@ -5,12 +5,14 @@ use std::{
     time::Duration,
 };
 
-use crossbeam_channel::{Receiver, Sender};
+// use crossbeam_channel::{Receiver, Sender};
 use database::database::Database;
 use file_scanner::{AutoScanner, AutoScannerConfig, ScanResult, ScannerHolder};
 use settings::settings::SettingsConfig;
 use tauri::{AppHandle, Manager, State, Emitter};
-use types::{errors::Result, songs::Song};
+use types::{errors::Result, tracks::MediaContent};
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 #[tracing::instrument(level = "debug", skip())]
 pub fn get_scanner_state() -> ScannerHolder {
@@ -248,27 +250,33 @@ impl ScanTask {
 
 /// handle scan result
 fn handle_scan_result(app: &AppHandle, result: ScanResult) -> Result<()> {
-    let database = app.state::<Arc<Database>>();
+    let database = app.state::<Database>();
     
-    // emit scan progress event
-    let progress_info = serde_json::json!({
-        "songs_count": result.songs.len(),
-        "playlists_count": result.playlists.len(),
-        "deleted_files_count": result.deleted_files.len()
-    });
-    
-    if let Err(e) = app.emit("scan-progress", progress_info) {
-        tracing::warn!("Failed to emit scan progress event: {}", e);
+    // emit scan progress event（节流：<= 每 250ms 一次）
+    static LAST_PROGRESS_EMIT_MS: AtomicU64 = AtomicU64::new(0);
+    let now_ms = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64;
+    let last = LAST_PROGRESS_EMIT_MS.load(Ordering::Relaxed);
+    if now_ms.saturating_sub(last) >= 250 {
+        let progress_info = serde_json::json!({
+            "tracks_count": result.tracks.len(),
+            "playlists_count": result.playlists.len(),
+            "deleted_files_count": result.deleted_files.len()
+        });
+
+        if let Err(e) = app.emit("scan-progress", progress_info) {
+            tracing::warn!("Failed to emit scan progress event: {}", e);
+        }
+        LAST_PROGRESS_EMIT_MS.store(now_ms, Ordering::Relaxed);
     }
     
-    // handle new/modified songs
-    if !result.songs.is_empty() {
-        tracing::info!("Processing {} scanned songs", result.songs.len());
-        database.insert_songs(result.songs.clone())?;
+    // handle new/modified tracks
+    if !result.tracks.is_empty() {
+        tracing::info!("Processing {} scanned tracks", result.tracks.len());
+        database.insert_tracks(result.tracks.clone())?;
         
-        // emit songs-added event
-        if let Err(e) = app.emit("songs-added", result.songs.len()) {
-            tracing::warn!("Failed to emit songs-added event: {}", e);
+        // emit tracks-added event
+        if let Err(e) = app.emit("tracks-added", result.tracks.len()) {
+            tracing::warn!("Failed to emit tracks-added event: {}", e);
         }
     }
     
@@ -285,20 +293,20 @@ fn handle_scan_result(app: &AppHandle, result: ScanResult) -> Result<()> {
         tracing::info!("Processing {} deleted files", result.deleted_files.len());
 
         for deleted_path in result.deleted_files {
-            if let Ok(songs) = database.get_songs_by_options(types::songs::GetSongOptions {
-                song: Some(types::songs::SearchableSong {
+            if let Ok(tracks) = database.get_tracks_by_options(types::tracks::GetTrackOptions {
+                track: Some(types::tracks::SearchableTrack {
                     path: Some(deleted_path.to_string_lossy().to_string()),
                     ..Default::default()
                 }),
                 ..Default::default()
             }) {
-                let song_ids: Vec<String> = songs
+                let track_ids: Vec<String> = tracks
                     .into_iter()
-                    .filter_map(|s| s.song._id)
+                    .filter_map(|s| s.track._id)
                     .collect();
                 
-                if !song_ids.is_empty() {
-                    let _ = database.remove_songs(song_ids);
+                if !track_ids.is_empty() {
+                    let _ = database.remove_tracks(track_ids);
                 }
             }
         }
@@ -350,9 +358,9 @@ pub async fn get_auto_scanner_status(app: AppHandle) -> Result<String> {
 #[tracing::instrument(level = "debug", skip(app))]
 #[tauri_invoke_proc::parse_tauri_command]
 #[tauri::command(async)]
-pub async fn get_local_songs(app: AppHandle) -> Result<Vec<Song>> {
+pub async fn get_local_tracks(app: AppHandle) -> Result<Vec<MediaContent>> {
 
-    let database = match app.try_state::<Arc<Database>>() {
+    let database = match app.try_state::<Database>() {
         Some(db) => db,
         None => {
             tracing::error!("database not initialized");
@@ -360,19 +368,19 @@ pub async fn get_local_songs(app: AppHandle) -> Result<Vec<Song>> {
         }
     };
     
-    match database.get_songs_by_options(types::songs::GetSongOptions {
-        song: Some(types::songs::SearchableSong {
+    match database.get_tracks_by_options(types::tracks::GetTrackOptions {
+        track: Some(types::tracks::SearchableTrack {
             path: Some("%".to_string()),
-            type_: Some(types::songs::SongType::LOCAL),
+            type_: Some(types::tracks::TrackType::LOCAL),
             ..Default::default()
         }),
         ..Default::default()
     }) {
-        Ok(songs) => {
-            Ok(songs)
+        Ok(tracks) => {
+            Ok(tracks)
         },
         Err(e) => {
-            tracing::error!("Failed to get local songs: {}", e);
+            tracing::error!("Failed to get local tracks: {}", e);
             Ok(vec![])
         }
     }
@@ -407,7 +415,7 @@ pub fn start_scan_inner(app: AppHandle, mut paths: Option<Vec<String>>) -> Resul
         tracing::info!("Scanning path: {}", path);
 
         let (playlist_tx, playlist_rx) = channel();
-        let (song_tx, song_rx) = channel::<(Option<String>, Vec<Song>)>();
+        let (track_tx, track_rx) = channel::<(Option<String>, Vec<MediaContent>)>();
 
         let app_clone = app.clone();
         thread::spawn(move || {
@@ -419,14 +427,14 @@ pub fn start_scan_inner(app: AppHandle, mut paths: Option<Vec<String>>) -> Resul
                 }
             }
 
-            for (playlist_id, songs) in song_rx {
-                let res = database.insert_songs(songs);
+            for (playlist_id, tracks) in track_rx {
+                let res = database.insert_tracks(tracks);
                 if let Ok(res) = res {
                     if let Some(playlist_id) = playlist_id.as_ref() {
-                        for song in res {
-                            if let Some(song_id) = song.song._id {
+                        for track in res {
+                            if let Some(track_id) = track.track._id {
                                 let _ =
-                                    database.add_to_playlist_bridge(playlist_id.clone(), song_id);
+                                    database.add_to_playlist_bridge(playlist_id.clone(), track_id);
                             }
                         }
                     }
@@ -440,7 +448,7 @@ pub fn start_scan_inner(app: AppHandle, mut paths: Option<Vec<String>>) -> Resul
             thumbnail_dir.clone(),
             artist_split.clone(),
             scan_threads,
-            song_tx,
+            track_tx,
             playlist_tx,
         )?;
     }
@@ -454,12 +462,12 @@ pub fn start_scan_inner(app: AppHandle, mut paths: Option<Vec<String>>) -> Resul
 
     tracing::debug!("calling file scanner");
     let file_scanner = app.file_scanner();
-    let res: Vec<Song> = file_scanner.scan_music()?;
+    let res: Vec<MediaContent> = file_scanner.scan_music()?;
 
-    tracing::debug!("Got scanned songs {:?}", res);
+    tracing::debug!("Got scanned tracks {:?}", res);
 
     let database = app.state::<Database>();
-    database.insert_songs(res)?;
+    database.insert_tracks(res)?;
 
     Ok(())
 }

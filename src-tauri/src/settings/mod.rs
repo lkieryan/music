@@ -1,4 +1,4 @@
-use std::thread;
+// use std::thread;
 
 use macros::generate_command;
 use ::settings::settings::SettingsConfig;
@@ -9,7 +9,6 @@ use std::io::Write;
 use types::errors::Result;
 
 use crate::{
-    providers::{handler::ProviderHandler, init_enabled_instances},
     scanner::{start_scan, ScanTask},
 };
 
@@ -25,6 +24,11 @@ const UI_KEYS: &[&str] = &[
     "prefs.general.language",
     "prefs.general.minimize_to_tray",
     "prefs.general.launch_at_login",
+    // music domain (platform selection, playback, effects)
+    "prefs.music.source",
+    "prefs.music.sources_order",
+    "prefs.music.playback",
+    "prefs.music.effects",
 ];
 
 #[tracing::instrument(level = "debug", skip(app))]
@@ -97,10 +101,6 @@ pub fn handle_settings_changes(app: AppHandle) {
                 tracing::info!("Mirrored prefs.general.scanFormats -> general.scan_formats");
                 let _ = app.state::<crate::scanner::ScanTask>().update_auto_scanner_config(&app);
             }
-
-           if key == "prefs.providers.instances" {
-              init_enabled_instances(&app).await;
-           }
 
             // if key == "prefs.general.launch_at_login" { // unified key (bool)
             //     #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -276,4 +276,3 @@ pub fn save_domain_partial(config: State<'_, SettingsConfig>, domain: Option<Str
     f.flush()?;
     Ok(())
 }
-

@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 use serde_json;
 use std::{cmp::min, collections::HashMap, sync::Arc};
 use types::{
-    songs::Song,
+    tracks::MediaContent,
     ui::player_details::{PlayerState, PlayerMode, VolumeMode},
     errors::Result,
 };
@@ -17,16 +17,16 @@ fn set_playback_state(_state: PlayerState) { /* noop */ }
 
 #[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Queue {
-    pub song_queue: Vec<String>,
+    pub track_queue: Vec<String>,
     pub current_index: usize,
-    pub data: HashMap<String, Song>,
+    pub data: HashMap<String, MediaContent>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PlayerDetails {
     pub current_time: f64,
-    pub last_song: Option<String>,
-    pub last_song_played_duration: f64,
+    pub last_track: Option<String>,
+    pub last_track_played_duration: f64,
     pub force_seek: f64,
     pub state: PlayerState,
     pub has_repeated: bool,
@@ -43,10 +43,10 @@ pub struct PlayerDetails {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PlayerStoreData {
     pub queue: Queue,
-    pub current_song: Option<Song>,
+    pub current_track: Option<MediaContent>,
     pub player_details: PlayerDetails,
     pub player_blacklist: Vec<String>,
-    pub force_load_song: bool,
+    pub force_load_track: bool,
     // Shuffle bag for random playback: contains shuffled indices of the queue
     #[serde(skip)]
     pub shuffle_bag: Vec<usize>,
@@ -86,7 +86,7 @@ impl PlayerStore {
     #[tracing::instrument(level = "debug", skip(self))]
     fn load_from_db(&mut self) -> Result<()> {
         if let Some(db) = &self.db {
-            let keys = vec!["player_state", "song_queue", "current_index", "queue_data"];
+            let keys = vec!["player_state", "track_queue", "current_index", "queue_data"];
             let values = db.get_player_store_values(keys)?;
             
             if let Some(player_state_str) = values.get("player_state") {
@@ -97,9 +97,9 @@ impl PlayerStore {
                 }
             }
             
-            if let Some(song_queue_str) = values.get("song_queue") {
-                if let Ok(song_queue) = serde_json::from_str::<Vec<String>>(song_queue_str) {
-                    self.data.queue.song_queue = song_queue;
+            if let Some(track_queue_str) = values.get("track_queue") {
+                if let Ok(track_queue) = serde_json::from_str::<Vec<String>>(track_queue_str) {
+                    self.data.queue.track_queue = track_queue;
                 }
             }
             
@@ -110,14 +110,14 @@ impl PlayerStore {
             }
             
             if let Some(queue_data_str) = values.get("queue_data") {
-                if let Ok(queue_data) = serde_json::from_str::<HashMap<String, Song>>(queue_data_str) {
+                if let Ok(queue_data) = serde_json::from_str::<HashMap<String, MediaContent>>(queue_data_str) {
                     self.data.queue.data = queue_data;
                 }
             }
             
-            // Update current song based on loaded data
-            if let Some(song_id) = self.data.queue.song_queue.get(self.data.queue.current_index) {
-                self.data.current_song = self.data.queue.data.get(song_id).cloned();
+            // Update current track based on loaded data
+            if let Some(track_id) = self.data.queue.track_queue.get(self.data.queue.current_index) {
+                self.data.current_track = self.data.queue.data.get(track_id).cloned();
             }
             
             tracing::debug!("Loaded player store from database");
@@ -137,10 +137,10 @@ impl PlayerStore {
                             .map_err(|e| types::errors::MusicError::String(format!("Failed to serialize player_details: {}", e)))?;
                         values.push(("player_state", json));
                     },
-                    "song_queue" => {
-                        let json = serde_json::to_string(&self.data.queue.song_queue)
-                            .map_err(|e| types::errors::MusicError::String(format!("Failed to serialize song_queue: {}", e)))?;
-                        values.push(("song_queue", json));
+                    "track_queue" => {
+                        let json = serde_json::to_string(&self.data.queue.track_queue)
+                            .map_err(|e| types::errors::MusicError::String(format!("Failed to serialize track_queue: {}", e)))?;
+                        values.push(("track_queue", json));
                     },
                     "current_index" => {
                         let json = serde_json::to_string(&self.data.queue.current_index)
@@ -167,8 +167,8 @@ impl PlayerStore {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    pub fn get_current_song(&self) -> Option<Song> {
-        self.data.current_song.clone()
+    pub fn get_current_track(&self) -> Option<MediaContent> {
+        self.data.current_track.clone()
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -183,7 +183,7 @@ impl PlayerStore {
 
     #[tracing::instrument(level = "debug", skip(self))]
     pub fn get_queue_len(&self) -> usize {
-        self.data.queue.song_queue.len()
+        self.data.queue.track_queue.len()
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -193,7 +193,7 @@ impl PlayerStore {
 
     #[tracing::instrument(level = "debug", skip(self))]
     pub fn get_force_load(&self) -> bool {
-        self.data.force_load_song
+        self.data.force_load_track
     }
 
     #[tracing::instrument(level = "debug", skip(self, has_repeated))]
@@ -227,57 +227,51 @@ impl PlayerStore {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    pub fn update_current_song(&mut self, force: bool) {
-        self.data.player_details.last_song_played_duration = self.data.player_details.current_time;
-        self.data.player_details.last_song =
-            self.get_current_song().map(|s| s.song._id.unwrap().clone());
+    pub fn update_current_track(&mut self, force: bool) {
+        self.data.player_details.last_track_played_duration = self.data.player_details.current_time;
+        self.data.player_details.last_track =
+            self.get_current_track().map(|s| s.track._id.unwrap().clone());
 
-        // Record play statistics for the last song if it played for more than 30 seconds
-        if let Some(last_song_id) = &self.data.player_details.last_song {
-            if self.data.player_details.last_song_played_duration > 30.0 {
-                self.record_play_statistics(last_song_id.clone(), self.data.player_details.last_song_played_duration);
-            }
-        }
-
+        // TODO: Record play statistics for the last track if it played for more than 30 seconds
         self.data.player_details.current_time = 0f64;
         set_position(self.data.player_details.current_time);
 
-        if self.data.queue.current_index >= self.data.queue.song_queue.len() {
+        if self.data.queue.current_index >= self.data.queue.track_queue.len() {
             self.data.queue.current_index = 0;
         }
         let id = self
             .data
             .queue
-            .song_queue
+            .track_queue
             .get(self.data.queue.current_index)
             .cloned()
             .unwrap_or_default();
 
-        let song = self.data.queue.data.get(&id).cloned();
+        let track = self.data.queue.data.get(&id).cloned();
 
-        if !force && song == self.data.current_song && self.data.player_blacklist.is_empty() {
+        if !force && track == self.data.current_track && self.data.player_blacklist.is_empty() {
             return;
         }
 
-        tracing::debug!("Updating song in queue");
-        self.data.current_song = song.clone();
-        if self.data.current_song.is_none() {
+        tracing::debug!("Updating track in queue");
+        self.data.current_track = track.clone();
+        if self.data.current_track.is_none() {
             self.data.player_details.current_time = 0f64;
         }
 
-        // Set metadata for new song (handled via callbacks in AudioPlayer)
-        if let Some(ref current_song) = self.data.current_song {
+        // Set metadata for new track (handled via callbacks in AudioPlayer)
+        if let Some(ref current_track) = self.data.current_track {
             // title is Option<String>; clone and unwrap to avoid Display issue
             tracing::debug!(
-                "Current song updated: {}",
-                current_song.song.title.clone().unwrap_or_default()
+                "Current track updated: {}",
+                current_track.track.title.clone().unwrap_or_default()
             );
         }
 
         self.clear_blacklist();
 
         if force {
-            self.data.force_load_song = !self.data.force_load_song;
+            self.data.force_load_track = !self.data.force_load_track;
         }
 
         self.scrobble_time = 0f64;
@@ -286,84 +280,47 @@ impl PlayerStore {
         let _ = self.save_to_db(&["current_index", "player_state"]);
     }
 
-    /// Record play statistics (play count and play time) for a song
-    #[tracing::instrument(level = "debug", skip(self))]
-    fn record_play_statistics(&self, song_id: String, duration: f64) {
-        if let Some(db) = &self.db {
-            // Record play history
-            if let Err(e) = db.add_play_history(song_id.clone(), duration) {
-                tracing::error!("Failed to record play history: {:?}", e);
-            }
-            
-            // Increment play count
-            if let Err(e) = db.increment_play_count(song_id.clone()) {
-                tracing::error!("Failed to increment play count: {:?}", e);
-            }
-            
-            // Increment play time
-            if let Err(e) = db.increment_play_time(song_id.clone(), duration) {
-                tracing::error!("Failed to increment play time: {:?}", e);
-            }
-            
-            tracing::debug!("Recorded play statistics for song: {}, duration: {}", song_id, duration);
-        }
+
+
+    #[tracing::instrument(level = "debug", skip(self, tracks))]
+    pub fn add_to_queue(&mut self, tracks: Vec<MediaContent>) {
+        self.add_to_queue_at_index(tracks, self.data.queue.track_queue.len());
+        self.update_current_track(false);
     }
 
-    /// Get top played songs statistics
-    #[tracing::instrument(level = "debug", skip(self))]
-    pub fn get_play_statistics(&self) -> Option<types::songs::AllAnalytics> {
-        if let Some(db) = &self.db {
-            match db.get_top_listened_songs() {
-                Ok(analytics) => Some(analytics),
-                Err(e) => {
-                    tracing::error!("Failed to get play statistics: {:?}", e);
-                    None
-                }
-            }
-        } else {
-            None
-        }
-    }
-
-    #[tracing::instrument(level = "debug", skip(self, songs))]
-    pub fn add_to_queue(&mut self, songs: Vec<Song>) {
-        self.add_to_queue_at_index(songs, self.data.queue.song_queue.len());
-        self.update_current_song(false);
-    }
-
-    #[tracing::instrument(level = "debug", skip(self, songs, index))]
-    fn add_to_queue_at_index(&mut self, songs: Vec<Song>, index: usize) {
+    #[tracing::instrument(level = "debug", skip(self, tracks, index))]
+    fn add_to_queue_at_index(&mut self, tracks: Vec<MediaContent>, index: usize) {
         let mut index = index;
-        for song in songs {
-            self.insert_song_at_index(song, index, false);
+        for track in tracks {
+            self.insert_track_at_index(track, index, false);
             index += 1;
         }
 
-        let _ = self.save_to_db(&["queue_data", "song_queue"]);
+        let _ = self.save_to_db(&["queue_data", "track_queue"]);
     }
 
     #[tracing::instrument(level = "debug", skip(self, index))]
     pub fn remove_from_queue(&mut self, index: usize) {
-        self.data.queue.song_queue.remove(index);
+        self.data.queue.track_queue.remove(index);
         if self.data.queue.current_index > index {
             self.data.queue.current_index -= 1;
         }
 
         if self.data.queue.current_index == index {
-            self.update_current_song(false);
+            self.update_current_track(false);
         }
 
-        let _ = self.save_to_db(&["song_queue", "queue_data"]);
+        let _ = self.save_to_db(&["track_queue", "queue_data"]);
     }
 
-    #[tracing::instrument(level = "debug", skip(self, song, index))]
-    fn insert_song_at_index(&mut self, song: Song, index: usize, dump: bool) {
-        let song_id = song.song._id.clone().unwrap();
+    #[tracing::instrument(level = "debug", skip(self, track, index))]
+    fn insert_track_at_index(&mut self, track: MediaContent, index: usize, dump: bool) {
+        let track_id = track.track._id.clone().unwrap();
         // Update metadata in data map
-        self.data.queue.data.insert(song_id.clone(), song);
+        self.data.queue.data.insert(track_id.clone(), track);
 
-        // Skip insertion if song already exists in queue (avoid duplicates)
-        if self.data.queue.song_queue.contains(&song_id) {
+        // Skip insertion if track already exists in queue (avoid duplicates)
+        if self.data.queue.track_queue.contains(&track_id) {
             if dump {
                 // Persist metadata changes if any
                 let _ = self.save_to_db(&["queue_data"]);
@@ -371,81 +328,81 @@ impl PlayerStore {
             return;
         }
 
-        let insertion_index = min(self.data.queue.song_queue.len(), index);
-        self.data.queue.song_queue.insert(insertion_index, song_id);
+        let insertion_index = min(self.data.queue.track_queue.len(), index);
+        self.data.queue.track_queue.insert(insertion_index, track_id);
 
         if dump {
-            let _ = self.save_to_db(&["queue_data", "song_queue"]);
+            let _ = self.save_to_db(&["queue_data", "track_queue"]);
         }
     }
 
-    #[tracing::instrument(level = "debug", skip(self, song))]
-    pub fn play_now(&mut self, song: Song) {
+    #[tracing::instrument(level = "debug", skip(self, track))]
+    pub fn play_now(&mut self, track: MediaContent) {
         self.set_state(PlayerState::Playing);
-        let song_id = song.song._id.clone().unwrap();
+        let track_id = track.track._id.clone().unwrap();
 
-        // If song already exists in queue, jump to it instead of inserting duplicate
+        // If track already exists in queue, jump to it instead of inserting duplicate
         if let Some(existing_index) = self
             .data
             .queue
-            .song_queue
+            .track_queue
             .iter()
-            .position(|id| id == &song_id)
+            .position(|id| id == &track_id)
         {
-            self.data.queue.data.insert(song_id.clone(), song); // refresh metadata
+            self.data.queue.data.insert(track_id.clone(), track); // refresh metadata
             self.data.queue.current_index = existing_index;
-            self.update_current_song(true);
+            self.update_current_track(true);
             let _ = self.save_to_db(&["current_index", "queue_data"]);
             return;
         }
 
         // Otherwise insert after current and advance index
-        self.insert_song_at_index(song, self.data.queue.current_index + 1, true);
+        self.insert_track_at_index(track, self.data.queue.current_index + 1, true);
         self.data.queue.current_index += 1;
-        self.update_current_song(true);
+        self.update_current_track(true);
     }
 
-    #[tracing::instrument(level = "debug", skip(self, songs))]
-    pub fn play_now_multiple(&mut self, songs: Vec<Song>) {
-        if songs.is_empty() {
+    #[tracing::instrument(level = "debug", skip(self, tracks))]
+    pub fn play_now_multiple(&mut self, tracks: Vec<MediaContent>) {
+        if tracks.is_empty() {
             return;
         }
 
-        let first_song = songs.first();
-        if let Some(first_song) = first_song {
-            self.play_now(first_song.clone())
+        let first_track = tracks.first();
+        if let Some(first_track) = first_track {
+            self.play_now(first_track.clone())
         }
 
-        if songs.len() > 1 {
-            self.add_to_queue_at_index(songs[1..].to_vec(), self.data.queue.current_index + 1);
+        if tracks.len() > 1 {
+            self.add_to_queue_at_index(tracks[1..].to_vec(), self.data.queue.current_index + 1);
         }
     }
 
-    #[tracing::instrument(level = "debug", skip(self, song))]
-    pub fn play_next(&mut self, song: Song) {
-        self.insert_song_at_index(song, self.data.queue.current_index + 1, true);
+    #[tracing::instrument(level = "debug", skip(self, track))]
+    pub fn play_next(&mut self, track: MediaContent) {
+        self.insert_track_at_index(track, self.data.queue.current_index + 1, true);
     }
 
-    #[tracing::instrument(level = "debug", skip(self, songs))]
-    pub fn play_next_multiple(&mut self, songs: Vec<Song>) {
-        if songs.is_empty() {
+    #[tracing::instrument(level = "debug", skip(self, tracks))]
+    pub fn play_next_multiple(&mut self, tracks: Vec<MediaContent>) {
+        if tracks.is_empty() {
             return;
         }
 
-        let first_song = songs.first();
-        if let Some(first_song) = first_song {
-            self.play_next(first_song.clone())
+        let first_track = tracks.first();
+        if let Some(first_track) = first_track {
+            self.play_next(first_track.clone())
         }
 
-        if songs.len() > 1 {
-            self.add_to_queue_at_index(songs[1..].to_vec(), self.data.queue.current_index + 1);
+        if tracks.len() > 1 {
+            self.add_to_queue_at_index(tracks[1..].to_vec(), self.data.queue.current_index + 1);
         }
     }
 
     #[tracing::instrument(level = "debug", skip(self, new_index))]
     pub fn change_index(&mut self, new_index: usize, force: bool) {
         self.data.queue.current_index = new_index;
-        self.update_current_song(force);
+        self.update_current_track(force);
     }
 
     #[tracing::instrument(level = "debug", skip(self, new_time))]
@@ -454,9 +411,9 @@ impl PlayerStore {
         self.data.player_details.current_time = new_time;
 
         if self.scrobble_time > 20f64 && !self.scrobbled {
-            if let Some(_current_song) = self.get_current_song() {
+            if let Some(_current_track) = self.get_current_track() {
                 self.scrobbled = true;
-                // send_extension_event(ExtensionExtraEvent::Scrobble([current_song]));
+                // send_extension_event(ExtensionExtraEvent::Scrobble([current_track]));
             }
         }
 
@@ -470,8 +427,8 @@ impl PlayerStore {
 
     #[tracing::instrument(level = "debug", skip(self, new_time))]
     pub fn force_seek_percent(&mut self, new_time: f64) {
-        let new_time_c = if let Some(current_song) = &self.data.current_song {
-            current_song.song.duration.unwrap_or_default() * new_time
+        let new_time_c = if let Some(current_track) = &self.data.current_track {
+            current_track.track.duration.unwrap_or_default() * new_time
         } else {
             0f64
         };
@@ -479,7 +436,7 @@ impl PlayerStore {
         tracing::debug!(
             "Got seek {}, {:?}, {}",
             new_time,
-            self.data.current_song.clone().map(|c| c.song.duration),
+            self.data.current_track.clone().map(|c| c.track.duration),
             new_time_c
         );
         self.data.player_details.force_seek = new_time_c;
@@ -503,13 +460,13 @@ impl PlayerStore {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    fn get_song_key(&self) -> String {
-        if let Some(current_song) = &self.data.current_song {
-            return current_song
-                .song
+    fn get_track_key(&self) -> String {
+        if let Some(current_track) = &self.data.current_track {
+            return current_track
+                .track
                 .provider_extension
                 .clone()
-                .unwrap_or(current_song.song.type_.to_string());
+                .unwrap_or(current_track.track.type_.to_string());
         }
         "".to_string()
     }
@@ -517,10 +474,10 @@ impl PlayerStore {
     #[tracing::instrument(level = "debug", skip(self, volume))]
     pub fn set_volume(&mut self, volume: f64) {
         if let VolumeMode::PersistSeparate = self.data.player_details.volume_mode {
-            let song_key = self.get_song_key();
-            if !song_key.is_empty() {
-                tracing::debug!("Setting volume for song: {}, {}", song_key, volume);
-                self.data.player_details.volume_map.insert(song_key, volume);
+            let track_key = self.get_track_key();
+            if !track_key.is_empty() {
+                tracing::debug!("Setting volume for track: {}, {}", track_key, volume);
+                self.data.player_details.volume_map.insert(track_key, volume);
             }
         }
         self.data.player_details.volume = volume;
@@ -548,16 +505,16 @@ impl PlayerStore {
 
         let mut clamp = 100f64;
         let mut volume = self.data.player_details.volume;
-        let song_key = self.get_song_key();
-        if !song_key.is_empty() {
+        let track_key = self.get_track_key();
+        if !track_key.is_empty() {
             if let VolumeMode::PersistSeparate = self.data.player_details.volume_mode {
-                if let Some(current_volume) = self.data.player_details.volume_map.get(&song_key) {
+                if let Some(current_volume) = self.data.player_details.volume_map.get(&track_key) {
                     volume = *current_volume;
                 }
             }
 
             if let VolumeMode::PersistClamp = self.data.player_details.volume_mode {
-                if let Some(current_clamp) = self.data.player_details.clamp_map.get(&song_key) {
+                if let Some(current_clamp) = self.data.player_details.clamp_map.get(&track_key) {
                     clamp = *current_clamp;
                 }
             }
@@ -574,9 +531,9 @@ impl PlayerStore {
     #[tracing::instrument(level = "debug", skip(self))]
     pub fn get_raw_volume(&self) -> f64 {
         if let VolumeMode::PersistSeparate = self.data.player_details.volume_mode {
-            let song_key = self.get_song_key();
-            if !song_key.is_empty() {
-                if let Some(volume) = self.data.player_details.volume_map.get(&song_key) {
+            let track_key = self.get_track_key();
+            if !track_key.is_empty() {
+                if let Some(volume) = self.data.player_details.volume_map.get(&track_key) {
                     return *volume;
                 }
             }
@@ -585,10 +542,10 @@ impl PlayerStore {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    pub fn get_queue_songs(&self) -> Vec<Song> {
+    pub fn get_queue_tracks(&self) -> Vec<MediaContent> {
         self.data
             .queue
-            .song_queue
+            .track_queue
             .iter()
             .map(|index| {
                 self.data
@@ -596,28 +553,28 @@ impl PlayerStore {
                     .data
                     .get(index)
                     .cloned()
-                    .expect("Song does not exist in data")
+                    .expect("MediaContent does not exist in data")
             })
             .collect()
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    pub fn next_song(&mut self) {
+    pub fn next_track(&mut self) {
         self.data.queue.current_index += 1;
-        if self.data.queue.current_index >= self.data.queue.song_queue.len() {
+        if self.data.queue.current_index >= self.data.queue.track_queue.len() {
             self.data.queue.current_index = 0;
         }
-        self.update_current_song(true);
+        self.update_current_track(true);
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    pub fn prev_song(&mut self) {
+    pub fn prev_track(&mut self) {
         if self.data.queue.current_index == 0 {
-            self.data.queue.current_index = self.data.queue.song_queue.len() - 1;
+            self.data.queue.current_index = self.data.queue.track_queue.len() - 1;
         } else {
             self.data.queue.current_index -= 1;
         }
-        self.update_current_song(false);
+        self.update_current_track(false);
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -656,7 +613,7 @@ impl PlayerStore {
     /// Rebuild shuffle bag with all queue indices except current
     #[tracing::instrument(level = "debug", skip(self))]
     pub fn rebuild_shuffle_bag(&mut self) {
-        let queue_len = self.data.queue.song_queue.len();
+        let queue_len = self.data.queue.track_queue.len();
         if queue_len <= 1 {
             self.data.shuffle_bag.clear();
             self.data.shuffle_index = 0;
@@ -686,7 +643,7 @@ impl PlayerStore {
         }
         
         if self.data.shuffle_bag.is_empty() {
-            return None; // Only happens if queue has <= 1 song
+            return None; // Only happens if queue has <= 1 track
         }
         
         let next_index = self.data.shuffle_bag[self.data.shuffle_index];
@@ -696,45 +653,45 @@ impl PlayerStore {
 
     #[tracing::instrument(level = "debug", skip(self))]
     pub fn shuffle_queue(&mut self) {
-        let binding = self.data.queue.song_queue.clone();
-        let current_song = binding.get(self.data.queue.current_index).unwrap();
+        let binding = self.data.queue.track_queue.clone();
+        let current_track = binding.get(self.data.queue.current_index).unwrap();
         let mut rng = thread_rng();
-        self.data.queue.song_queue.shuffle(&mut rng);
+        self.data.queue.track_queue.shuffle(&mut rng);
         let new_index = self
             .data
             .queue
-            .song_queue
+            .track_queue
             .iter()
-            .position(|v| v == current_song)
+            .position(|v| v == current_track)
             .unwrap();
         self.data.queue.current_index = new_index;
 
-        let _ = self.save_to_db(&["current_index", "song_queue"]);
+        let _ = self.save_to_db(&["current_index", "track_queue"]);
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     pub fn clear_queue(&mut self) {
-        self.data.queue.song_queue.clear();
+        self.data.queue.track_queue.clear();
         self.data.queue.current_index = 0;
-        self.update_current_song(false);
+        self.update_current_track(false);
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
     pub fn clear_queue_except_current(&mut self) {
-        let current_song = self.get_current_song();
+        let current_track = self.get_current_track();
 
-        let only_one_song = self.get_queue().song_queue.len() == 1;
-        self.data.queue.song_queue.clear();
+        let only_one_track = self.get_queue().track_queue.len() == 1;
+        self.data.queue.track_queue.clear();
         self.data.queue.current_index = 0;
 
-        if !only_one_song {
-            if let Some(current_song) = current_song {
-                self.add_to_queue(vec![current_song]);
+        if !only_one_track {
+            if let Some(current_track) = current_track {
+                self.add_to_queue(vec![current_track]);
             }
         }
 
-        self.update_current_song(false);
-        let _ = self.save_to_db(&["queue_data", "song_queue"]);
+        self.update_current_track(false);
+        let _ = self.save_to_db(&["queue_data", "track_queue"]);
     }
 
     #[tracing::instrument(level = "debug", skip(self, key))]
@@ -743,7 +700,7 @@ impl PlayerStore {
             return;
         }
         self.data.player_blacklist.push(key);
-        self.data.force_load_song = !self.data.force_load_song
+        self.data.force_load_track = !self.data.force_load_track
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -762,7 +719,7 @@ impl PlayerStore {
 
     /// Static method to load state from database
     pub fn load_state_from_db(db: &Database) -> Option<PlayerStoreData> {
-        let keys = vec!["player_state", "song_queue", "current_index", "queue_data"];
+        let keys = vec!["player_state", "track_queue", "current_index", "queue_data"];
         
         match db.get_player_store_values(keys) {
             Ok(values) => {
@@ -775,9 +732,9 @@ impl PlayerStore {
                     }
                 }
                 
-                if let Some(song_queue_str) = values.get("song_queue") {
-                    if let Ok(song_queue) = serde_json::from_str::<Vec<String>>(song_queue_str) {
-                        data.queue.song_queue = song_queue;
+                if let Some(track_queue_str) = values.get("track_queue") {
+                    if let Ok(track_queue) = serde_json::from_str::<Vec<String>>(track_queue_str) {
+                        data.queue.track_queue = track_queue;
                     }
                 }
                 
@@ -788,14 +745,14 @@ impl PlayerStore {
                 }
                 
                 if let Some(queue_data_str) = values.get("queue_data") {
-                    if let Ok(queue_data) = serde_json::from_str::<HashMap<String, Song>>(queue_data_str) {
+                    if let Ok(queue_data) = serde_json::from_str::<HashMap<String, MediaContent>>(queue_data_str) {
                         data.queue.data = queue_data;
                     }
                 }
                 
-                // Update current song based on loaded data
-                if let Some(song_id) = data.queue.song_queue.get(data.queue.current_index) {
-                    data.current_song = data.queue.data.get(song_id).cloned();
+                // Update current track based on loaded data
+                if let Some(track_id) = data.queue.track_queue.get(data.queue.current_index) {
+                    data.current_track = data.queue.data.get(track_id).cloned();
                 }
                 
                 tracing::debug!("Loaded player store state from database");

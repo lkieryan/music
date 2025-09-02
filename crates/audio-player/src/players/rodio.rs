@@ -8,7 +8,7 @@ use std::{
 };
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use tracing::{trace, debug, info, error};
-use types::{errors::{Result, error_helpers}, songs::{SongType}, ui::player_details::PlayerEvents};
+use types::{errors::{Result, error_helpers}, tracks::{TrackType}, ui::player_details::PlayerEvents};
 use stream_download::{StreamDownload, Settings};
 use stream_download::storage::temp::TempStorageProvider;
 use hls_client::{config::ConfigBuilder, stream::HLSStream};
@@ -16,8 +16,8 @@ use rodio::Sink;
 
 use super::base::{BasePlayer, PlayerEventsSender};
 
-// Supported song types for Rodio backend
-static PROVIDES: [SongType; 4] = [SongType::LOCAL, SongType::URL, SongType::HLS, SongType::DASH];
+// Supported track types for Rodio backend (DASH handled by dash backend)
+static PROVIDES: [TrackType; 3] = [TrackType::LOCAL, TrackType::URL, TrackType::HLS];
 
 #[derive(Debug, Clone)]
 pub struct RodioPlayer {
@@ -208,6 +208,7 @@ impl RodioPlayer {
                             Self::send_event(events_tx.clone(), PlayerEvents::TimeUpdate(0f64));
                             Self::send_event(events_tx.clone(), PlayerEvents::Loading);
 
+                            // TODO
                             if let Err(err) =
                                 Self::set_src(cache_dir.clone(), src.clone(), &sink).await
                             {
@@ -222,7 +223,7 @@ impl RodioPlayer {
                                 // clone playing flag for move into thread
                                 let ended_playing_flag = playing_flag.clone();
 
-                                // Send ended event only if song hasn't changed yet
+                                // Send ended event only if track hasn't changed yet
                                 thread::spawn(move || {
                                     sink.sleep_until_end();
                                     let last_src = last_src.clone();
@@ -319,7 +320,6 @@ impl BasePlayer for RodioPlayer {
 
     #[tracing::instrument(level = "debug", skip(self, src, resolver))]
     fn load(&self, src: String, _autoplay: bool, resolver: tokio::sync::oneshot::Sender<()>) {
-        info!("Loading src={}", src);
         let _ = self.tx.send(RodioCommand::SetSrc(src.clone()));
         // Resolve immediately to avoid blocking caller
         let _ = resolver.send(());
@@ -352,10 +352,10 @@ impl BasePlayer for RodioPlayer {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    fn provides(&self) -> &[types::songs::SongType] { &PROVIDES }
+    fn provides(&self) -> &[types::tracks::TrackType] { &PROVIDES }
 
-    #[tracing::instrument(level = "debug", skip(self, _song))]
-    fn can_play(&self, _song: &types::songs::Song) -> bool { true }
+    #[tracing::instrument(level = "debug", skip(self, _track))]
+    fn can_play(&self, _track: &types::tracks::MediaContent) -> bool { true }
 
     #[tracing::instrument(level = "debug", skip(self, volume))]
     fn set_volume(&self, volume: f64) -> types::errors::Result<()> {

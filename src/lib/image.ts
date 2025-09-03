@@ -1,4 +1,5 @@
 import { convertFileSrc } from '@tauri-apps/api/core'
+import type { MediaContent } from '~/types/bindings'
 
 /**
  * Resolve a provided path or URL to a browser-usable image URL.
@@ -11,8 +12,19 @@ export function resolveImageUrl(input?: string | null): string | null {
   const s = input.trim()
   if (!s) return null
 
+  // Handle protocol-relative URLs (e.g., //domain/path)
+  // Treat them as HTTPS by default
+  if (s.startsWith('//')) {
+    return `https:${s}`
+  }
+
   // Already a usable URL
-  if (s.startsWith('data:') || s.startsWith('blob:') || /^https?:\/\//i.test(s)) {
+  if (
+    s.startsWith('data:') ||
+    s.startsWith('blob:') ||
+    /^https?:\/\//i.test(s) ||
+    s.startsWith('asset://')
+  ) {
     return s
   }
 
@@ -26,19 +38,15 @@ export function resolveImageUrl(input?: string | null): string | null {
 }
 
 /**
- * Try to resolve song cover by priority: song-high -> album-high -> song-low -> album-low
+ * Try to resolve track cover by priority: track-high -> album-high -> track-low -> album-low
  */
-export function resolveSongCoverUrl(song: any): string | null {
-  if (!song) return null
+export function resolveTrackCoverUrl(track: MediaContent): string | null {
+  if (!track) return null
   const candidates: Array<string | undefined | null> = [
-    song.song_coverPath_high,
-    song.album?.album_coverPath_high,
-    song.song_coverPath_low,
-    song.album?.album_coverPath_low,
-    // Optional generic fields for robustness
-    song.coverPath,
-    song.album?.coverPath,
-    song.cover_url,
+    track.track_coverpath_high,
+    track.album?.album_coverPath_high,
+    track.track_coverpath_low,
+    track.album?.album_coverPath_low,
   ]
 
   for (const c of candidates) {

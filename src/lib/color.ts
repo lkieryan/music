@@ -1,5 +1,5 @@
-import { COLOR_HARMONIES, PICKER_SIZE, PICKER_PADDING } from '../components/gradient/constants'
-import type { ColorHarmony, ColorDot } from '../types/gradient'
+import { COLOR_HARMONIES, PICKER_SIZE, PICKER_PADDING } from '~/constants/gradient'
+import type { ColorHarmony, ColorDot } from '~/types/gradient'
 
 /**
  * Converts an HSL color value to RGB. Conversion formula

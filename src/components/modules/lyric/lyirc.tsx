@@ -47,8 +47,8 @@ import React from "react";
 import { useLyricsSettingValue } from "~/atoms/settings/lyrics";
 import {
 	onRequestOpenMenuAtom,
-	onRequestPrevSongAtom,
-	onRequestNextSongAtom,
+	onRequestPrevTrackAtom,
+	onRequestNextTrackAtom,
 	onPlayOrResumeAtom,
 	onClickAudioQualityTagAtom,
 	onSeekPositionAtom,
@@ -134,8 +134,8 @@ const PrebuiltMediaButtons: FC<{
 	showOtherButtons?: boolean;
 }> = ({ showOtherButtons }) => {
 	const musicIsPlaying = useAtomValue(musicPlayingAtom);
-	const onRequestPrevSong = useAtomValue(onRequestPrevSongAtom).onEmit;
-	const onRequestNextSong = useAtomValue(onRequestNextSongAtom).onEmit;
+	const onRequestPrevTrack = useAtomValue(onRequestPrevTrackAtom).onEmit;
+	const onRequestNextTrack = useAtomValue(onRequestNextTrackAtom).onEmit;
 	const onPlayOrResume = useAtomValue(onPlayOrResumeAtom).onEmit;
 
 	const isShuffleOn = useAtomValue(isShuffleActiveAtom);
@@ -164,7 +164,7 @@ const PrebuiltMediaButtons: FC<{
 	return (
 		<>
 			{showOtherButtons && (
-				<MediaButton className={styles.songMediaButton} onClick={toggleShuffle}>
+				<MediaButton className={styles.trackMediaButton} onClick={toggleShuffle}>
 					{isShuffleOn ? (
 						<ShuffleActiveIcon color="#ffffffff" style={iconStyle} />
 					) : (
@@ -173,13 +173,13 @@ const PrebuiltMediaButtons: FC<{
 				</MediaButton>
 			)}
 			<MediaButton
-				className={styles.songMediaButton}
-				onClick={onRequestPrevSong}
+				className={styles.trackMediaButton}
+				onClick={onRequestPrevTrack}
 			>
 				<IconRewind color="#FFFFFF" />
 			</MediaButton>
 			<MediaButton
-				className={styles.songMediaPlayButton}
+				className={styles.trackMediaPlayButton}
 				onClick={onPlayOrResume}
 			>
 				{musicIsPlaying ? (
@@ -189,14 +189,14 @@ const PrebuiltMediaButtons: FC<{
 				)}
 			</MediaButton>
 			<MediaButton
-				className={styles.songMediaButton}
-				onClick={onRequestNextSong}
+				className={styles.trackMediaButton}
+				onClick={onRequestNextTrack}
 			>
 				<IconForward color="#FFFFFF" />
 			</MediaButton>
 
 			{showOtherButtons && (
-				<MediaButton className={styles.songMediaButton} onClick={cycleRepeat}>
+				<MediaButton className={styles.trackMediaButton} onClick={cycleRepeat}>
 					{renderRepeatIcon()}
 				</MediaButton>
 			)}

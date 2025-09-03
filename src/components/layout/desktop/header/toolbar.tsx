@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router'
 import BackIcon from '~/assets/icons/back.svg?react'
 import ForwardIcon from '~/assets/icons/forward.svg?react'
 import ReloadIcon from '~/assets/icons/reload.svg?react'
-import SaveIcon from '~/assets/icons/save.svg?react'
+import ExtensionIcon from '~/assets/icons/extension.svg?react'
 import SettingsIcon from '~/assets/icons/settings.svg?react'
 import MenuIcon from '~/assets/icons/menu.svg?react'
 
@@ -70,12 +70,19 @@ export const LeftToolbar: FC = () => {
 
 export const RightToolbar: FC = () => {  
   const settingModalPresent = useSettingModal()
+  const navigate = useNavigate()
+  
+  const goToExtensions = useCallback(() => {
+    navigate('/extensions')
+  }, [navigate])
+  
   return (
     <div className="inline-flex items-center gap-1.5" aria-label="Right toolbar">
       <ToolbarButton
-        title="Downloads"
-        ariaLabel="Downloads"
-        icon={<SaveIcon className={iconClassName} width={16} height={16} />}
+        title="Extensions"
+        ariaLabel="Extensions"
+        onClick={goToExtensions}
+        icon={<ExtensionIcon className={iconClassName} width={16} height={16} />}
       />
       <ToolbarButton
         title="Settings"

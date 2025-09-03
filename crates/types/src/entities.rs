@@ -15,14 +15,14 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "db")]
 use crate::schema::{
-    album_bridge, albums, analytics, artist_bridge, artists, genre_bridge, genres, playlist_bridge,
+    album_bridge, albums, artist_bridge, artists, genre_bridge, genres, playlist_bridge,
     playlists, player_store_kv,
 };
 
 use super::{
     common::{deserialize_default, BridgeUtils, SearchByTerm},
-    songs::Song,
 };
+use serde_with::skip_serializing_none;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Encode, Decode)]
 #[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts", type = "string"))]
@@ -61,6 +61,7 @@ where
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
+#[skip_serializing_none]
 #[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
@@ -75,7 +76,7 @@ pub struct QueryableAlbum {
     #[serde(rename = "album_coverPath_high")]
     pub album_coverpath_high: Option<String>,
     #[serde(default)]
-    pub album_song_count: f64,
+    pub album_track_count: f64,
     pub year: Option<String>,
     #[serde(rename = "album_coverPath_low")]
     pub album_coverpath_low: Option<String>,
@@ -132,6 +133,7 @@ impl SearchByTerm for QueryableAlbum {
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
+#[skip_serializing_none]
 #[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
@@ -141,22 +143,23 @@ impl SearchByTerm for QueryableAlbum {
 #[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct AlbumBridge {
     pub id: Option<i32>,
-    pub song: Option<String>,
+    pub track: Option<String>,
     pub album: Option<String>,
 }
 
 impl BridgeUtils for AlbumBridge {
-    #[tracing::instrument(level = "debug", skip(entity, song))]
-    fn insert_value(entity: String, song: String) -> Self {
+    #[tracing::instrument(level = "debug", skip(entity, track))]
+    fn insert_value(entity: String, track: String) -> Self {
         Self {
             album: Some(entity),
-            song: Some(song),
+            track: Some(track),
             ..Default::default()
         }
     }
 }
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug, Encode, Decode)]
+#[skip_serializing_none]
 #[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
 #[cfg_attr(
     feature = "db",
@@ -171,7 +174,7 @@ pub struct QueryableArtist {
     #[serde(rename = "artist_coverPath")]
     pub artist_coverpath: Option<String>,
     #[serde(default)]
-    pub artist_song_count: f64,
+    pub artist_track_count: f64,
     pub artist_extra_info: Option<EntityInfo>,
     pub sanitized_artist_name: Option<String>,
 }
@@ -234,16 +237,16 @@ impl SearchByTerm for QueryableArtist {
 #[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct ArtistBridge {
     pub id: Option<i32>,
-    pub song: Option<String>,
+    pub track: Option<String>,
     pub artist: Option<String>,
 }
 
 impl BridgeUtils for ArtistBridge {
-    #[tracing::instrument(level = "debug", skip(entity, song))]
-    fn insert_value(entity: String, song: String) -> Self {
+    #[tracing::instrument(level = "debug", skip(entity, track))]
+    fn insert_value(entity: String, track: String) -> Self {
         Self {
             artist: Some(entity),
-            song: Some(song),
+            track: Some(track),
             ..Default::default()
         }
     }
@@ -261,7 +264,7 @@ pub struct QueryableGenre {
     pub genre_id: Option<String>,
     pub genre_name: Option<String>,
     #[serde(default)]
-    pub genre_song_count: f64,
+    pub genre_track_count: f64,
 }
 
 impl std::hash::Hash for QueryableGenre {
@@ -322,16 +325,16 @@ impl SearchByTerm for QueryableGenre {
 #[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct GenreBridge {
     pub id: Option<i32>,
-    pub song: Option<String>,
+    pub track: Option<String>,
     pub genre: Option<String>,
 }
 
 impl BridgeUtils for GenreBridge {
-    #[tracing::instrument(level = "debug", skip(entity, song))]
-    fn insert_value(entity: String, song: String) -> Self {
+    #[tracing::instrument(level = "debug", skip(entity, track))]
+    fn insert_value(entity: String, track: String) -> Self {
         Self {
             genre: Some(entity),
-            song: Some(song),
+            track: Some(track),
             ..Default::default()
         }
     }
@@ -356,16 +359,16 @@ pub struct GetEntityOptions {
 #[cfg_attr(feature = "db", diesel(primary_key(id)))]
 pub struct PlaylistBridge {
     pub id: Option<i32>,
-    pub song: Option<String>,
+    pub track: Option<String>,
     pub playlist: Option<String>,
 }
 
 impl BridgeUtils for PlaylistBridge {
-    #[tracing::instrument(level = "debug", skip(entity, song))]
-    fn insert_value(entity: String, song: String) -> Self {
+    #[tracing::instrument(level = "debug", skip(entity, track))]
+    fn insert_value(entity: String, track: String) -> Self {
         Self {
             playlist: Some(entity),
-            song: Some(song),
+            track: Some(track),
             ..Default::default()
         }
     }
@@ -387,7 +390,7 @@ pub struct QueryablePlaylist {
     #[serde(rename = "playlist_coverPath")]
     pub playlist_coverpath: Option<String>,
     #[serde(default)]
-    pub playlist_song_count: f64,
+    pub playlist_track_count: f64,
     pub playlist_desc: Option<String>,
     pub playlist_path: Option<String>,
     pub extension: Option<String>,
@@ -436,34 +439,7 @@ impl SearchByTerm for QueryablePlaylist {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Default, Clone)]
-#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
-pub struct SearchResult {
-    #[serde(deserialize_with = "deserialize_default")]
-    pub songs: Vec<Song>,
-    #[serde(deserialize_with = "deserialize_default")]
-    pub artists: Vec<QueryableArtist>,
-    #[serde(deserialize_with = "deserialize_default")]
-    pub playlists: Vec<QueryablePlaylist>,
-    #[serde(deserialize_with = "deserialize_default")]
-    pub albums: Vec<QueryableAlbum>,
-    #[serde(deserialize_with = "deserialize_default")]
-    pub genres: Vec<QueryableGenre>,
-}
 
-#[derive(Deserialize, Serialize, Default, Clone, Debug)]
-#[cfg_attr(
-    feature = "db",
-    derive(Insertable, Queryable, Identifiable, AsChangeset,)
-)]
-#[cfg_attr(feature = "db", diesel(table_name = analytics))]
-#[cfg_attr(feature = "db", diesel(primary_key(id)))]
-pub struct Analytics {
-    pub id: Option<String>,
-    pub song_id: Option<String>,
-    pub play_count: Option<i32>,
-    pub play_time: Option<f64>,
-}
 
 #[derive(Deserialize, Serialize, Default, Clone, Debug)]
 #[cfg_attr(
@@ -476,4 +452,33 @@ pub struct PlayerStoreKv {
     pub key: String,
     pub value: String,
     pub updated_at: Option<chrono::NaiveDateTime>,
+}
+
+/// Plugin state entity for database storage
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
+#[cfg_attr(feature = "ts-rs", derive(TS), ts(export, export_to = "bindings.d.ts"))]
+#[cfg_attr(
+    feature = "db",
+    derive(Insertable, Queryable, Identifiable, AsChangeset,)
+)]
+#[cfg_attr(feature = "db", diesel(table_name = crate::schema::plugin_states))]
+#[cfg_attr(feature = "db", diesel(primary_key(id)))]
+pub struct PluginState {
+    pub id: String,
+    pub name: String,
+    pub display_name: String,
+    pub version: String,
+    pub plugin_type: String,
+    pub enabled: bool,
+    pub installed: bool,
+    pub builtin: bool,
+    pub config: String,
+    pub icon: Option<String>,
+    pub manifest: Option<String>,
+    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    pub installed_at: chrono::NaiveDateTime,
+    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    pub last_updated: chrono::NaiveDateTime,
+    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    pub last_used: Option<chrono::NaiveDateTime>,
 }
